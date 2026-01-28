@@ -1,15 +1,19 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import GameHeader from "@/components/game/GameHeader";
 import DiceRoller from "@/components/game/DiceRoller";
 import StampCard from "@/components/game/StampCard";
 import StatusMessage from "@/components/game/StatusMessage";
+import QRScanner from "@/components/game/QRScanner";
 
 // Mock user for demo (in production, this would come from LINE LIFF)
 const MOCK_USER = {
   userId: "demo_user_123",
   displayName: "測試會員",
 };
+
+// 💡 店家設定的 QR Code 內容（實際使用時請更換）
+const EXPECTED_QR_CODE = "STORE_LOYALTY_2024";
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -18,24 +22,20 @@ const Index = () => {
   const [statusMessage, setStatusMessage] = useState("正在連線至 LINE 帳號...");
   const [statusType, setStatusType] = useState<"info" | "success" | "error" | "loading">("loading");
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // QR Code verification state
+  const [isQRVerified, setIsQRVerified] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
-    // Simulate LIFF initialization
     const initLiff = async () => {
       try {
-        // In production, you would initialize LIFF here:
-        // await liff.init({ liffId: "YOUR_LIFF_ID" });
-        // const profile = await liff.getProfile();
-        
-        // Simulating async load
         await new Promise(resolve => setTimeout(resolve, 1500));
         
-        // Mock successful login
         setUserName(MOCK_USER.displayName);
-        setStatusMessage("已成功綁定 LINE 帳號");
-        setStatusType("success");
+        setStatusMessage("請先掃描店家 QR Code 以開始遊戲");
+        setStatusType("info");
         
-        // Load existing points (mock)
         const savedPoints = localStorage.getItem(`points_${MOCK_USER.userId}`);
         if (savedPoints) {
           setTotalPoints(parseInt(savedPoints));
@@ -53,22 +53,29 @@ const Index = () => {
     initLiff();
   }, []);
 
-  const handleDiceRoll = async (points: number, times: number) => {
+  const handleQRSuccess = () => {
+    setIsQRVerified(true);
+    setShowScanner(false);
+    setStatusMessage("✅ 驗證成功！可以開始擲骰");
+    setStatusType("success");
+  };
+
+  const handleDiceRoll = async (points: number) => {
     setIsProcessing(true);
     setStatusMessage("正在更新電子集點卡...");
     setStatusType("loading");
 
     try {
-      // Simulate API call to Google Apps Script
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const newTotal = totalPoints + points;
       setTotalPoints(newTotal);
       
-      // Save to localStorage (in production, this would be synced to backend)
       localStorage.setItem(`points_${MOCK_USER.userId}`, newTotal.toString());
       
-      setStatusMessage(`目前累積總點數：${newTotal}`);
+      // 擲骰後需要重新掃描 QR Code
+      setIsQRVerified(false);
+      setStatusMessage(`獲得 ${points} 點！下次需重新掃描 QR Code`);
       setStatusType("success");
     } catch (error) {
       console.error("Sync failed", error);
@@ -93,11 +100,47 @@ const Index = () => {
           <h2 className="text-lg font-bold text-foreground mb-4 text-center">
             擲骰遊戲
           </h2>
-          
-          <DiceRoller
-            onRoll={handleDiceRoll}
-            disabled={isLoading || isProcessing}
-          />
+
+          {/* QR Code verification gate */}
+          {!isQRVerified ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center space-y-4"
+            >
+              <div className="py-8">
+                <motion.div
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="text-6xl mb-4"
+                >
+                  📱
+                </motion.div>
+                <p className="text-foreground font-medium mb-2">
+                  請先掃描店家 QR Code
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  消費後請向店員索取 QR Code 進行驗證
+                </p>
+              </div>
+              
+              <button
+                onClick={() => setShowScanner(true)}
+                disabled={isLoading}
+                className="dice-button"
+              >
+                <span className="flex items-center justify-center gap-2">
+                  <span className="text-xl">📷</span>
+                  開始掃描 QR Code
+                </span>
+              </button>
+            </motion.div>
+          ) : (
+            <DiceRoller
+              onRoll={handleDiceRoll}
+              disabled={isLoading || isProcessing}
+            />
+          )}
           
           <div className="mt-4">
             <StatusMessage message={statusMessage} type={statusType} />
@@ -110,12 +153,23 @@ const Index = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="text-center text-xs text-muted-foreground pb-4"
+          className="text-center text-xs text-muted-foreground pb-4 space-y-1"
         >
-          <p>💡 提示：此為展示版本</p>
+          <p>💡 展示版 QR Code 內容：<code className="bg-muted px-2 py-0.5 rounded">{EXPECTED_QR_CODE}</code></p>
           <p>實際使用需綁定 LINE LIFF 與後端服務</p>
         </motion.div>
       </motion.main>
+
+      {/* QR Scanner Modal */}
+      <AnimatePresence>
+        {showScanner && (
+          <QRScanner
+            expectedCode={EXPECTED_QR_CODE}
+            onSuccess={handleQRSuccess}
+            onClose={() => setShowScanner(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
