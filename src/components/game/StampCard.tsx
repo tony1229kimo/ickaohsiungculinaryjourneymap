@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import gameCharacter from "@/assets/game-character.png";
 
 interface StampCardProps {
   totalPoints: number;
@@ -44,7 +45,7 @@ const StampCard = ({ totalPoints, maxPoints = 15 }: StampCardProps) => {
         {/* 起點 */}
         <div className="flex justify-center mb-3">
           <motion.div
-            className={`w-16 h-16 rounded-xl flex flex-col items-center justify-center text-xs font-bold border-2 ${
+            className={`relative w-16 h-16 rounded-xl flex flex-col items-center justify-center text-xs font-bold border-2 ${
               currentPosition === 0 
                 ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/30' 
                 : 'bg-muted/50 text-muted-foreground border-muted'
@@ -55,13 +56,7 @@ const StampCard = ({ totalPoints, maxPoints = 15 }: StampCardProps) => {
             <span className="text-xl">🚀</span>
             <span>起點</span>
             {currentPosition === 0 && (
-              <motion.div
-                className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center text-xs"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 0.5, repeat: Infinity }}
-              >
-                👤
-              </motion.div>
+              <GameCharacter />
             )}
           </motion.div>
         </div>
@@ -123,7 +118,7 @@ const StampCard = ({ totalPoints, maxPoints = 15 }: StampCardProps) => {
       {/* 圖例說明 */}
       <div className="mt-4 flex flex-wrap gap-3 justify-center text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-primary/20 border border-primary/50"></span>
+          <img src={gameCharacter} alt="角色" className="w-4 h-4 object-contain" />
           目前位置
         </span>
         <span className="flex items-center gap-1">
@@ -143,6 +138,38 @@ const StampCard = ({ totalPoints, maxPoints = 15 }: StampCardProps) => {
   );
 };
 
+// 可愛角色元件
+const GameCharacter = () => {
+  return (
+    <motion.div
+      className="absolute -top-6 left-1/2 -translate-x-1/2 z-20"
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ 
+        y: [0, -8, 0],
+        opacity: 1,
+      }}
+      transition={{ 
+        y: { duration: 1.2, repeat: Infinity, ease: "easeInOut" },
+        opacity: { duration: 0.3 }
+      }}
+    >
+      <motion.img
+        src={gameCharacter}
+        alt="遊戲角色"
+        className="w-12 h-12 object-contain drop-shadow-lg"
+        animate={{ 
+          rotate: [-3, 3, -3],
+        }}
+        transition={{ 
+          duration: 2, 
+          repeat: Infinity, 
+          ease: "easeInOut" 
+        }}
+      />
+    </motion.div>
+  );
+};
+
 // 棋盤格子元件
 interface BoardTileProps {
   number: number;
@@ -156,7 +183,7 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed }: BoardTilePro
     <motion.div
       className={`relative w-14 h-14 rounded-lg flex flex-col items-center justify-center text-xs font-medium border-2 transition-all cursor-default group ${
         isCurrentPosition
-          ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/40 scale-110 z-10'
+          ? 'bg-primary/20 text-foreground border-primary shadow-lg shadow-primary/40 scale-110 z-10'
           : isPassed
           ? 'bg-primary/60 text-primary-foreground border-primary/80'
           : reward.isSpecial
@@ -165,9 +192,12 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed }: BoardTilePro
       }`}
       initial={false}
       animate={isCurrentPosition ? { 
-        y: [0, -3, 0],
+        boxShadow: [
+          "0 0 0 0 rgba(34, 197, 94, 0.4)",
+          "0 0 0 8px rgba(34, 197, 94, 0)",
+        ],
       } : {}}
-      transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+      transition={{ duration: 1.5, repeat: Infinity }}
       whileHover={{ scale: isCurrentPosition ? 1.1 : 1.05 }}
     >
       {/* 格子編號 */}
@@ -176,16 +206,8 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed }: BoardTilePro
         {number}
       </span>
 
-      {/* 玩家標記 */}
-      {isCurrentPosition && (
-        <motion.div
-          className="absolute -top-2 -right-2 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center shadow-md"
-          animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
-          transition={{ duration: 1, repeat: Infinity }}
-        >
-          <span className="text-xs">👤</span>
-        </motion.div>
-      )}
+      {/* 可愛角色 - 當前位置 */}
+      {isCurrentPosition && <GameCharacter />}
 
       {/* 已通過標記 */}
       {isPassed && !isCurrentPosition && (
