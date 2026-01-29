@@ -6,58 +6,55 @@ interface StampCardProps {
   maxPoints?: number;
 }
 
-// 獎項對照表
-const REWARDS: Record<number, { name: string; isSpecial: boolean; icon: string }> = {
-  1: { name: "機會/命運", isSpecial: false, icon: "❓" },
-  2: { name: "指定 Deli 甜點免費兌換", isSpecial: true, icon: "🍰" },
-  3: { name: "機會/命運", isSpecial: false, icon: "❓" },
-  4: { name: "機會/命運", isSpecial: false, icon: "❓" },
-  5: { name: "機會/命運", isSpecial: false, icon: "❓" },
-  6: { name: "NT$ 500 Voucher", isSpecial: true, icon: "💵" },
-  7: { name: "機會/命運", isSpecial: false, icon: "❓" },
-  8: { name: "NT$ 800 Voucher", isSpecial: true, icon: "💰" },
-  9: { name: "機會/命運", isSpecial: false, icon: "❓" },
-  10: { name: "機會/命運", isSpecial: false, icon: "❓" },
-  11: { name: "好運 1+1 買一送一", isSpecial: true, icon: "🎁" },
-  12: { name: "機會/命運", isSpecial: false, icon: "❓" },
-  13: { name: "機會/命運", isSpecial: false, icon: "❓" },
-  14: { name: "機會/命運", isSpecial: false, icon: "❓" },
-  15: { name: "招牌餐點免費兌換", isSpecial: true, icon: "🏆" },
+// 獎項對照表 - 更新為洲際酒店主題
+const REWARDS: Record<number, { name: string; isSpecial: boolean; icon: string; type: "lottery" | "fixed" }> = {
+  1: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  2: { name: "指定 Deli 甜點免費兌換", isSpecial: true, icon: "🍰", type: "fixed" },
+  3: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  4: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  5: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  6: { name: "NT$ 500 折價券", isSpecial: true, icon: "💵", type: "fixed" },
+  7: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  8: { name: "NT$ 800 折價券", isSpecial: true, icon: "💰", type: "fixed" },
+  9: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  10: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  11: { name: "餐飲買一送一", isSpecial: true, icon: "🎁", type: "fixed" },
+  12: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  13: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  14: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  15: { name: "招牌餐點免費兌換 (價值$3,880)", isSpecial: true, icon: "🏆", type: "fixed" },
 };
 
 const StampCard = ({ totalPoints, maxPoints = 15 }: StampCardProps) => {
-  // 當前位置（0 = 起點，1-15 為格子位置）
   const currentPosition = totalPoints;
 
   return (
     <div className="stamp-card overflow-hidden">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-          🎲 大富翁集點
+          <span className="text-accent">♔</span> 洲際大富翁
         </h3>
         <span className="text-sm font-medium text-muted-foreground">
           目前位置：第 {currentPosition} 格
         </span>
       </div>
 
-      {/* 大富翁棋盤 - 蛇形路徑 */}
-      <div className="relative bg-gradient-to-br from-emerald-900/20 to-emerald-800/10 rounded-2xl p-4 border-2 border-primary/30">
+      {/* 大富翁棋盤 - 洲際酒店主題 */}
+      <div className="relative bg-gradient-to-br from-primary/10 to-secondary/30 rounded-2xl p-4 border-2 border-primary/20">
         {/* 起點 */}
         <div className="flex justify-center mb-3">
           <motion.div
             className={`relative w-16 h-16 rounded-xl flex flex-col items-center justify-center text-xs font-bold border-2 ${
               currentPosition === 0 
                 ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/30' 
-                : 'bg-muted/50 text-muted-foreground border-muted'
+                : 'bg-secondary/50 text-foreground border-secondary'
             }`}
             animate={currentPosition === 0 ? { scale: [1, 1.05, 1] } : {}}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
-            <span className="text-xl">🚀</span>
+            <span className="text-xl">🏨</span>
             <span>起點</span>
-            {currentPosition === 0 && (
-              <GameCharacter />
-            )}
+            {currentPosition === 0 && <GameCharacter />}
           </motion.div>
         </div>
 
@@ -108,9 +105,11 @@ const StampCard = ({ totalPoints, maxPoints = 15 }: StampCardProps) => {
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mt-4 p-3 rounded-xl text-center bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-500/30"
+            className="mt-4 p-3 rounded-xl text-center bg-gradient-to-r from-accent/20 to-yellow-500/20 border border-accent/30"
           >
-            <span className="text-lg font-bold reward-text">🎉 恭喜抵達終點！可兌換大獎</span>
+            <span className="text-lg font-bold reward-text">
+              🎉 恭喜抵達終點！獲得招牌餐點兌換券
+            </span>
           </motion.div>
         )}
       </div>
@@ -122,15 +121,15 @@ const StampCard = ({ totalPoints, maxPoints = 15 }: StampCardProps) => {
           目前位置
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-muted/50"></span>
+          <span className="w-3 h-3 rounded bg-secondary/50"></span>
           未達成
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded bg-primary/60"></span>
+          <span className="w-3 h-3 rounded bg-accent/60"></span>
           已通過
         </span>
         <span className="flex items-center gap-1">
-          <span className="text-destructive">★</span>
+          <span className="text-accent">★</span>
           特殊獎勵
         </span>
       </div>
@@ -138,7 +137,7 @@ const StampCard = ({ totalPoints, maxPoints = 15 }: StampCardProps) => {
   );
 };
 
-// 可愛角色元件
+// 金色西洋棋角色元件
 const GameCharacter = () => {
   return (
     <motion.div
@@ -155,16 +154,10 @@ const GameCharacter = () => {
     >
       <motion.img
         src={gameCharacter}
-        alt="遊戲角色"
+        alt="金色棋子"
         className="w-12 h-12 object-contain drop-shadow-lg"
-        animate={{ 
-          rotate: [-3, 3, -3],
-        }}
-        transition={{ 
-          duration: 2, 
-          repeat: Infinity, 
-          ease: "easeInOut" 
-        }}
+        animate={{ rotate: [-3, 3, -3] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
       />
     </motion.div>
   );
@@ -173,28 +166,32 @@ const GameCharacter = () => {
 // 棋盤格子元件
 interface BoardTileProps {
   number: number;
-  reward: { name: string; isSpecial: boolean; icon: string };
+  reward: { name: string; isSpecial: boolean; icon: string; type: "lottery" | "fixed" };
   isCurrentPosition: boolean;
   isPassed: boolean;
 }
 
 const BoardTile = ({ number, reward, isCurrentPosition, isPassed }: BoardTileProps) => {
+  const isLottery = reward.type === "lottery";
+  
   return (
     <motion.div
       className={`relative w-14 h-14 rounded-lg flex flex-col items-center justify-center text-xs font-medium border-2 transition-all cursor-default group ${
         isCurrentPosition
-          ? 'bg-primary/20 text-foreground border-primary shadow-lg shadow-primary/40 scale-110 z-10'
+          ? 'bg-accent/20 text-foreground border-accent shadow-lg shadow-accent/40 scale-110 z-10'
           : isPassed
-          ? 'bg-primary/60 text-primary-foreground border-primary/80'
+          ? 'bg-accent/60 text-accent-foreground border-accent/80'
           : reward.isSpecial
-          ? 'bg-destructive/10 text-foreground border-destructive/40'
+          ? 'bg-accent/10 text-foreground border-accent/40'
+          : isLottery
+          ? 'bg-gradient-to-br from-purple-500/10 to-blue-500/10 text-foreground border-purple-400/30'
           : 'bg-card text-foreground border-border'
       }`}
       initial={false}
       animate={isCurrentPosition ? { 
         boxShadow: [
-          "0 0 0 0 rgba(34, 197, 94, 0.4)",
-          "0 0 0 8px rgba(34, 197, 94, 0)",
+          "0 0 0 0 rgba(217, 170, 78, 0.4)",
+          "0 0 0 8px rgba(217, 170, 78, 0)",
         ],
       } : {}}
       transition={{ duration: 1.5, repeat: Infinity }}
@@ -202,7 +199,7 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed }: BoardTilePro
     >
       {/* 格子編號 */}
       <span className="text-lg">{reward.icon}</span>
-      <span className={`text-[10px] ${reward.isSpecial ? 'text-destructive font-bold' : ''}`}>
+      <span className={`text-[10px] ${reward.isSpecial ? 'text-accent font-bold' : ''}`}>
         {number}
       </span>
 
@@ -214,9 +211,9 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed }: BoardTilePro
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="absolute inset-0 flex items-center justify-center bg-primary/20 rounded-lg"
+          className="absolute inset-0 flex items-center justify-center bg-accent/20 rounded-lg"
         >
-          <span className="text-white text-lg">✓</span>
+          <span className="text-accent-foreground text-lg">✓</span>
         </motion.div>
       )}
 
