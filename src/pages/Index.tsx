@@ -238,9 +238,16 @@ const Index = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="text-center text-xs text-muted-foreground pb-4 space-y-1"
+          className="text-center text-xs text-muted-foreground pb-4 space-y-2"
         >
-          <p>💡 展示版 QR Code：<code className="bg-muted px-2 py-0.5 rounded">{EXPECTED_QR_CODE}</code></p>
+          <p>
+            <a 
+              href="/qrcode" 
+              className="inline-flex items-center gap-1 bg-accent/20 hover:bg-accent/30 px-3 py-1.5 rounded-full transition-colors text-foreground font-medium"
+            >
+              📱 查看店家 QR Code
+            </a>
+          </p>
           <p>高雄洲際酒店 InterContinental Kaohsiung</p>
         </motion.div>
       </motion.main>
