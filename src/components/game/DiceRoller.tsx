@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import iconDice from "@/assets/icon-dice.png";
 
 interface DiceRollerProps {
   onRoll: (points: number) => void;
@@ -17,7 +18,7 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
 
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    const points = Math.floor(Math.random() * 3) + 1; // 1-3 points
+    const points = Math.floor(Math.random() * 3) + 1;
 
     setRollResult(points);
     setIsRolling(false);
@@ -29,7 +30,7 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
   const diceEmojis = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <p className="text-sm text-muted-foreground text-center">
         每次掃描可擲骰一次，獲得 1-3 點
       </p>
@@ -39,15 +40,15 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
         disabled={disabled || isRolling}
         className="dice-button"
       >
-        <span className="flex items-center justify-center gap-2">
-          <motion.span
+        <span className="flex items-center justify-center gap-3">
+          <motion.img
+            src={iconDice}
+            alt="骰子"
+            className="w-7 h-7 object-contain"
             animate={isRolling ? { rotate: 360 } : {}}
-            transition={{ duration: 0.3, repeat: isRolling ? Infinity : 0 }}
-            className="text-2xl"
-          >
-            🎲
-          </motion.span>
-          {isRolling ? "擲骰中..." : "擲骰累積點數"}
+            transition={{ duration: 0.4, repeat: isRolling ? Infinity : 0 }}
+          />
+          <span>{isRolling ? "擲骰中..." : "擲骰累積點數"}</span>
         </span>
       </button>
 
@@ -60,13 +61,13 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
             className="result-card"
           >
             <motion.div
-              className="text-4xl mb-3"
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 0.5 }}
+              className="text-5xl mb-3"
+              animate={{ scale: [1, 1.3, 1], rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 0.6 }}
             >
               {diceEmojis[Math.min(rollResult - 1, 5)]}
             </motion.div>
-            <p className="text-2xl font-black reward-text">
+            <p className="text-2xl font-black shimmer-text">
               獲得 {rollResult} 點！
             </p>
           </motion.div>

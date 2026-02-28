@@ -7,6 +7,7 @@ import StatusMessage from "@/components/game/StatusMessage";
 import QRScanner from "@/components/game/QRScanner";
 import LotteryCard, { isLotteryTile, getRandomLotteryType, LotteryResult } from "@/components/game/LotteryCard";
 import CharacterSelect, { GameCharacterInfo } from "@/components/game/CharacterSelect";
+import iconScan from "@/assets/icon-scan.png";
 
 const MOCK_USER = {
   userId: "demo_user_123",
@@ -140,27 +141,33 @@ const Index = () => {
         className="w-full max-w-md px-4 -mt-4 space-y-6"
       >
         <div className="stamp-card">
-          <h2 className="text-lg font-bold text-foreground mb-4 text-center flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-2 mb-1">
             {selectedCharacter && (
-              <img src={selectedCharacter.image} alt="" className="w-8 h-8 object-contain" />
+              <img src={selectedCharacter.image} alt="" className="w-9 h-9 object-contain drop-shadow-md" />
             )}
-            洲際味蕾旅遊地圖集點遊戲
-          </h2>
+            <h2 className="text-lg font-black text-foreground tracking-wide">
+              洲際味蕾旅遊地圖
+            </h2>
+          </div>
+          <p className="text-xs text-muted-foreground text-center mb-4">集點遊戲</p>
+          <div className="gold-divider mb-5" />
 
           {!isQRVerified ? (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-4">
-              <div className="py-8">
-                <motion.div
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="text-6xl mb-4"
-                >📱</motion.div>
-                <p className="text-foreground font-medium mb-2">請掃描店家 QR Code</p>
-                <p className="text-sm text-muted-foreground">每次掃描可擲骰一次，完成集點</p>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-5">
+              <div className="scan-prompt">
+                <motion.img
+                  src={iconScan}
+                  alt="掃描"
+                  className="w-16 h-16 mx-auto mb-4 opacity-80"
+                  animate={{ scale: [1, 1.06, 1] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                />
+                <p className="text-foreground font-bold mb-1.5">請掃描店家 QR Code</p>
+                <p className="text-xs text-muted-foreground">每次掃描可擲骰一次，完成集點</p>
               </div>
               <button onClick={() => setShowScanner(true)} disabled={isLoading} className="dice-button">
                 <span className="flex items-center justify-center gap-2">
-                  <span className="text-xl">📷</span> 開始掃描 QR Code
+                  📷 開始掃描 QR Code
                 </span>
               </button>
             </motion.div>
@@ -168,7 +175,7 @@ const Index = () => {
             <DiceRoller onRoll={handleDiceRoll} disabled={isLoading || isProcessing} />
           )}
 
-          <div className="mt-4">
+          <div className="mt-5">
             <StatusMessage message={statusMessage} type={statusType} />
           </div>
         </div>
@@ -178,21 +185,28 @@ const Index = () => {
         {/* Earned rewards */}
         {earnedRewards.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="stamp-card">
-            <h3 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">🎁 已獲得獎項</h3>
-            <div className="space-y-2">
+            <h3 className="text-base font-bold text-foreground mb-4 flex items-center gap-2">
+              🎁 <span>已獲得獎項</span>
+              <span className="ml-auto text-xs font-normal text-muted-foreground">{earnedRewards.length} 項</span>
+            </h3>
+            <div className="space-y-2.5">
               {earnedRewards.map((reward, index) => (
-                <div
+                <motion.div
                   key={index}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="flex items-center gap-3 p-3 rounded-2xl border border-border/60"
+                  style={{ background: "hsl(0 0% 100% / 0.5)" }}
                 >
                   <span className="text-2xl">{reward.reward.icon}</span>
-                  <div className="flex-1">
-                    <p className="font-medium text-foreground text-sm">{reward.reward.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-foreground text-sm truncate">{reward.reward.name}</p>
+                    <p className="text-[11px] text-muted-foreground">
                       {reward.type === "chance" ? "機會卡" : "命運卡"}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.div>
