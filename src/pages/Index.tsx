@@ -11,7 +11,7 @@ import iconScan from "@/assets/icon-scan.png";
 
 const MOCK_USER = {
   userId: "demo_user_123",
-  displayName: "洲際會員",
+  displayName: "洲際玩家",
 };
 
 const EXPECTED_QR_CODE = "INTERCONTINENTAL_2026";
