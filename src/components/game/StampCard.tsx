@@ -6,49 +6,44 @@ interface StampCardProps {
   totalPoints: number;
   maxPoints?: number;
   character?: GameCharacterInfo;
-  animatingPosition?: number | null;
 }
 
 // 獎項對照表
-const REWARDS: Record<number, { name: string; isSpecial: boolean; icon: string; type: "lottery" | "fixed"; color: string; sideColor: string }> = {
-  1:  { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery", color: "hsl(40 28% 66%)", sideColor: "hsl(40 28% 52%)" },
-  2:  { name: "Deli 甜點", isSpecial: true, icon: "🍰", color: "hsl(20 22% 78%)", sideColor: "hsl(20 22% 64%)", type: "fixed" },
-  3:  { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery", color: "hsl(60 5% 65%)", sideColor: "hsl(60 5% 50%)" },
-  4:  { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery", color: "hsl(40 28% 66%)", sideColor: "hsl(40 28% 52%)" },
-  5:  { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery", color: "hsl(0 1% 88%)", sideColor: "hsl(0 1% 72%)" },
-  6:  { name: "$500 折價", isSpecial: true, icon: "💵", color: "hsl(20 22% 78%)", sideColor: "hsl(20 22% 64%)", type: "fixed" },
-  7:  { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery", color: "hsl(60 5% 65%)", sideColor: "hsl(60 5% 50%)" },
-  8:  { name: "$800 折價", isSpecial: true, icon: "💰", color: "hsl(40 40% 60%)", sideColor: "hsl(40 40% 46%)", type: "fixed" },
-  9:  { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery", color: "hsl(40 28% 66%)", sideColor: "hsl(40 28% 52%)" },
-  10: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery", color: "hsl(0 1% 88%)", sideColor: "hsl(0 1% 72%)" },
-  11: { name: "買一送一", isSpecial: true, icon: "🎁", color: "hsl(20 22% 78%)", sideColor: "hsl(20 22% 64%)", type: "fixed" },
-  12: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery", color: "hsl(60 5% 65%)", sideColor: "hsl(60 5% 50%)" },
-  13: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery", color: "hsl(40 28% 66%)", sideColor: "hsl(40 28% 52%)" },
-  14: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery", color: "hsl(0 1% 88%)", sideColor: "hsl(0 1% 72%)" },
-  15: { name: "大獎 $3,880", isSpecial: true, icon: "🏆", color: "hsl(40 50% 55%)", sideColor: "hsl(40 50% 40%)", type: "fixed" },
+const REWARDS: Record<number, { name: string; isSpecial: boolean; icon: string; type: "lottery" | "fixed" }> = {
+  1: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  2: { name: "指定 Deli 甜點免費兌換", isSpecial: true, icon: "🍰", type: "fixed" },
+  3: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  4: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  5: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  6: { name: "NT$ 500 折價券", isSpecial: true, icon: "💵", type: "fixed" },
+  7: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  8: { name: "NT$ 800 折價券", isSpecial: true, icon: "💰", type: "fixed" },
+  9: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  10: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  11: { name: "餐飲買一送一", isSpecial: true, icon: "🎁", type: "fixed" },
+  12: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  13: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  14: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  15: { name: "招牌餐點免費兌換 (價值$3,880)", isSpecial: true, icon: "🏆", type: "fixed" },
 };
 
-// 蛇形排列
+// 蛇形排列：第一行左→右，第二行右→左，第三行左→右
 const ROWS = [
   [1, 2, 3, 4, 5],
-  [10, 9, 8, 7, 6],
+  [10, 9, 8, 7, 6],     // 顯示順序反轉（蛇形）
   [11, 12, 13, 14, 15],
 ];
 
-const TILE_W = 60;
-const TILE_H = 50;
-const TILE_DEPTH = 14;
-
-const StampCard = ({ totalPoints, maxPoints = 15, character, animatingPosition }: StampCardProps) => {
+const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) => {
   const [viewAngle, setViewAngle] = useState(0);
-  const displayPosition = animatingPosition != null ? animatingPosition : totalPoints;
   const currentPosition = totalPoints;
 
+  // 3D perspective angles
   const perspectives = [
-    { rotateX: 50, rotateY: 0, label: "俯瞰" },
-    { rotateX: 35, rotateY: -20, label: "左側" },
-    { rotateX: 35, rotateY: 20, label: "右側" },
-    { rotateX: 25, rotateY: 0, label: "正面" },
+    { rotateX: 45, rotateY: 0, label: "俯瞰" },
+    { rotateX: 30, rotateY: -15, label: "左側" },
+    { rotateX: 30, rotateY: 15, label: "右側" },
+    { rotateX: 20, rotateY: 0, label: "正面" },
   ];
 
   const currentPerspective = perspectives[viewAngle];
@@ -83,9 +78,9 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, animatingPosition }
       </div>
 
       {/* 3D Board */}
-      <div className="flex justify-center py-6" style={{ perspective: "900px" }}>
+      <div className="flex justify-center" style={{ perspective: "800px" }}>
         <motion.div
-          className="relative"
+          className="relative w-full max-w-[340px]"
           animate={{
             rotateX: currentPerspective.rotateX,
             rotateY: currentPerspective.rotateY,
@@ -93,70 +88,87 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, animatingPosition }
           transition={{ type: "spring", damping: 20, stiffness: 100 }}
           style={{ transformStyle: "preserve-3d" }}
         >
-          {/* 起點 tile */}
-          <div className="flex justify-center mb-3" style={{ transformStyle: "preserve-3d" }}>
-            <IsometricTile
-              label="起點"
-              icon="🏨"
-              topColor="hsl(20 7% 22%)"
-              sideColor="hsl(20 7% 14%)"
-              textColor="#fff"
-              isActive={currentPosition === 0}
-              isCurrent={displayPosition === 0}
-              character={displayPosition === 0 ? character : undefined}
-              width={80}
-            />
-          </div>
-
-          {/* Board rows */}
-          <div className="space-y-1" style={{ transformStyle: "preserve-3d" }}>
-            {ROWS.map((row, rowIndex) => (
-              <div key={rowIndex} className="flex gap-1 justify-center" style={{ transformStyle: "preserve-3d" }}>
-                {row.map((num, colIndex) => {
-                  const reward = REWARDS[num];
-                  const isCurrent = displayPosition === num;
-                  const isPassed = currentPosition > num || (animatingPosition != null && num < animatingPosition);
-                  return (
-                    <IsometricTile
-                      key={num}
-                      label={reward.name}
-                      icon={reward.icon}
-                      number={num}
-                      topColor={reward.color}
-                      sideColor={reward.sideColor}
-                      isActive={isPassed || isCurrent}
-                      isCurrent={isCurrent}
-                      isPassed={isPassed}
-                      isSpecial={reward.isSpecial}
-                      character={isCurrent ? character : undefined}
-                      delay={rowIndex * 0.1 + colIndex * 0.05}
-                    />
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-
-          {/* Grand prize notice */}
-          <AnimatePresence>
-            {totalPoints >= maxPoints && (
+          {/* Board base */}
+          <div
+            className="rounded-2xl p-4 border-2 border-accent/30"
+            style={{
+              background: "linear-gradient(135deg, hsl(40 20% 72%) 0%, hsl(30 18% 80%) 50%, hsl(20 12% 72%) 100%)",
+              boxShadow: "0 20px 60px -15px hsl(20 7% 22% / 0.4), inset 0 1px 0 hsl(0 0% 100% / 0.3)",
+            }}
+          >
+            {/* 起點 */}
+            <div className="flex justify-center mb-3">
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mt-4 p-3 rounded-xl text-center border border-accent/40"
-                style={{ background: "linear-gradient(135deg, hsl(40 20% 72% / 0.5), hsl(43 85% 55% / 0.3))" }}
+                className={`relative w-16 h-16 rounded-xl flex flex-col items-center justify-center text-xs font-bold border-2 ${
+                  currentPosition === 0
+                    ? "bg-foreground text-primary-foreground border-accent shadow-lg"
+                    : "text-foreground border-muted"
+                }`}
+                style={{
+                  background: currentPosition === 0
+                    ? "linear-gradient(135deg, hsl(20 7% 22%), hsl(20 10% 30%))"
+                    : "hsl(0 0% 100% / 0.6)",
+                }}
+                animate={currentPosition === 0 ? { scale: [1, 1.05, 1] } : {}}
+                transition={{ duration: 1.5, repeat: Infinity }}
               >
-                <span className="text-lg font-bold reward-text">
-                  🎉 恭喜抵達終點！獲得招牌餐點兌換券
-                </span>
+                <span className="text-xl">🏨</span>
+                <span className={currentPosition === 0 ? "text-primary-foreground" : ""}>起點</span>
+                {currentPosition === 0 && character && (
+                  <CharacterToken image={character.image} />
+                )}
               </motion.div>
-            )}
-          </AnimatePresence>
+            </div>
+
+            {/* Board rows */}
+            <div className="space-y-2">
+              {ROWS.map((row, rowIndex) => (
+                <div key={rowIndex} className="flex gap-2 justify-center">
+                  {row.map((num) => (
+                    <BoardTile
+                      key={num}
+                      number={num}
+                      reward={REWARDS[num]}
+                      isCurrentPosition={currentPosition === num}
+                      isPassed={currentPosition > num}
+                      character={character}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {/* Grand prize notice */}
+            <AnimatePresence>
+              {totalPoints >= maxPoints && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="mt-4 p-3 rounded-xl text-center border border-accent/40"
+                  style={{ background: "linear-gradient(135deg, hsl(40 20% 72% / 0.5), hsl(43 85% 55% / 0.3))" }}
+                >
+                  <span className="text-lg font-bold reward-text">
+                    🎉 恭喜抵達終點！獲得招牌餐點兌換券
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* 3D side effect */}
+          <div
+            className="absolute left-0 right-0 h-4 rounded-b-2xl -bottom-3"
+            style={{
+              background: "hsl(20 7% 22% / 0.3)",
+              transform: "rotateX(-90deg)",
+              transformOrigin: "top",
+            }}
+          />
         </motion.div>
       </div>
 
       {/* Legend */}
-      <div className="mt-4 flex flex-wrap gap-3 justify-center text-xs text-muted-foreground">
+      <div className="mt-6 flex flex-wrap gap-3 justify-center text-xs text-muted-foreground">
         {character && (
           <span className="flex items-center gap-1">
             <img src={character.image} alt="角色" className="w-4 h-4 object-contain" />
@@ -164,7 +176,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, animatingPosition }
           </span>
         )}
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded" style={{ background: "hsl(0 1% 88%)" }} />
+          <span className="w-3 h-3 rounded" style={{ background: "hsl(0 0% 100% / 0.6)" }} />
           未達成
         </span>
         <span className="flex items-center gap-1">
@@ -180,176 +192,112 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, animatingPosition }
   );
 };
 
-/* ─── Isometric 3D Tile ─── */
-interface IsometricTileProps {
-  label: string;
-  icon: string;
-  number?: number;
-  topColor: string;
-  sideColor: string;
-  textColor?: string;
-  isActive?: boolean;
-  isCurrent?: boolean;
-  isPassed?: boolean;
-  isSpecial?: boolean;
+// Character token on the board
+const CharacterToken = ({ image }: { image: string }) => (
+  <motion.div
+    className="absolute -top-7 left-1/2 -translate-x-1/2 z-20"
+    initial={{ y: -20, opacity: 0 }}
+    animate={{ y: [0, -8, 0], opacity: 1 }}
+    transition={{
+      y: { duration: 1.2, repeat: Infinity, ease: "easeInOut" },
+      opacity: { duration: 0.3 },
+    }}
+  >
+    <motion.img
+      src={image}
+      alt="棋子"
+      className="w-10 h-10 object-contain drop-shadow-lg"
+      animate={{ rotate: [-3, 3, -3] }}
+      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+    />
+  </motion.div>
+);
+
+// Board tile
+interface BoardTileProps {
+  number: number;
+  reward: { name: string; isSpecial: boolean; icon: string; type: "lottery" | "fixed" };
+  isCurrentPosition: boolean;
+  isPassed: boolean;
   character?: GameCharacterInfo;
-  width?: number;
-  delay?: number;
 }
 
-const IsometricTile = ({
-  label,
-  icon,
-  number,
-  topColor,
-  sideColor,
-  textColor,
-  isActive,
-  isCurrent,
-  isPassed,
-  isSpecial,
-  character,
-  width = TILE_W,
-  delay = 0,
-}: IsometricTileProps) => {
-  const depth = TILE_DEPTH;
-  const height = TILE_H;
+const BoardTile = ({ number, reward, isCurrentPosition, isPassed, character }: BoardTileProps) => {
+  const isLottery = reward.type === "lottery";
+
+  // Tile colors based on state, using the elegant palette
+  const getTileStyle = () => {
+    if (isCurrentPosition) {
+      return {
+        background: "linear-gradient(135deg, hsl(40 20% 72%), hsl(43 85% 55% / 0.4))",
+        borderColor: "hsl(43 85% 55%)",
+        boxShadow: "0 0 16px hsl(43 85% 55% / 0.4)",
+      };
+    }
+    if (isPassed) {
+      return {
+        background: "hsl(40 20% 72% / 0.8)",
+        borderColor: "hsl(40 20% 60%)",
+      };
+    }
+    if (reward.isSpecial) {
+      return {
+        background: "linear-gradient(135deg, hsl(43 85% 55% / 0.15), hsl(40 20% 80%))",
+        borderColor: "hsl(43 85% 55% / 0.5)",
+      };
+    }
+    if (isLottery) {
+      return {
+        background: "linear-gradient(135deg, hsl(20 12% 72% / 0.4), hsl(120 8% 48% / 0.15))",
+        borderColor: "hsl(120 8% 48% / 0.4)",
+      };
+    }
+    return {
+      background: "hsl(0 0% 100% / 0.7)",
+      borderColor: "hsl(20 12% 72% / 0.5)",
+    };
+  };
 
   return (
     <motion.div
-      className="relative group cursor-default"
-      style={{
-        width,
-        height: height + depth,
-        transformStyle: "preserve-3d",
-      }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay, duration: 0.4 }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="relative w-14 h-14 rounded-lg flex flex-col items-center justify-center text-xs font-medium border-2 cursor-default group"
+      style={getTileStyle()}
+      initial={false}
+      animate={
+        isCurrentPosition
+          ? {
+              boxShadow: [
+                "0 0 0 0 hsl(43 85% 55% / 0.4)",
+                "0 0 0 8px hsl(43 85% 55% / 0)",
+              ],
+            }
+          : {}
+      }
+      transition={{ duration: 1.5, repeat: Infinity }}
+      whileHover={{ scale: isCurrentPosition ? 1.1 : 1.05 }}
     >
-      {/* Character token */}
-      {isCurrent && character && (
+      <span className="text-lg">{reward.icon}</span>
+      <span className={`text-[10px] ${reward.isSpecial ? "text-accent font-bold" : "text-foreground/70"}`}>
+        {number}
+      </span>
+
+      {isCurrentPosition && character && <CharacterToken image={character.image} />}
+
+      {isPassed && !isCurrentPosition && (
         <motion.div
-          className="absolute -top-10 left-1/2 -translate-x-1/2 z-30"
-          animate={{ y: [0, -6, 0] }}
-          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="absolute inset-0 flex items-center justify-center rounded-lg"
+          style={{ background: "hsl(40 20% 72% / 0.4)" }}
         >
-          <motion.img
-            src={character.image}
-            alt="棋子"
-            className="w-10 h-10 object-contain drop-shadow-lg"
-            animate={{ rotate: [-3, 3, -3] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
+          <span className="text-foreground/60 text-lg">✓</span>
         </motion.div>
       )}
 
-      {/* ── Top face ── */}
-      <div
-        className="absolute inset-x-0 top-0 rounded-lg flex flex-col items-center justify-center overflow-hidden"
-        style={{
-          height,
-          background: isCurrent
-            ? `linear-gradient(135deg, ${topColor}, hsl(40 50% 60%))`
-            : isPassed
-            ? `${topColor}99`
-            : topColor,
-          border: isCurrent
-            ? "2px solid hsl(40 50% 55%)"
-            : isSpecial
-            ? "2px solid hsl(40 40% 55% / 0.6)"
-            : "1.5px solid hsl(0 0% 100% / 0.4)",
-          boxShadow: isCurrent
-            ? "0 0 20px hsl(40 50% 55% / 0.5), inset 0 1px 2px hsl(0 0% 100% / 0.4)"
-            : "inset 0 1px 2px hsl(0 0% 100% / 0.3)",
-          zIndex: 2,
-        }}
-      >
-        {/* Shimmer on current */}
-        {isCurrent && (
-          <motion.div
-            className="absolute inset-0"
-            style={{
-              background: "linear-gradient(90deg, transparent 0%, hsl(0 0% 100% / 0.3) 50%, transparent 100%)",
-              backgroundSize: "200% 100%",
-            }}
-            animate={{ backgroundPosition: ["-200% 0", "200% 0"] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          />
-        )}
-
-        <span className="text-xl relative z-10">{icon}</span>
-        <span
-          className="text-[8px] font-bold leading-tight text-center px-1 relative z-10 mt-0.5"
-          style={{ color: textColor || (isPassed ? "hsl(20 7% 22% / 0.5)" : "hsl(20 7% 22%)") }}
-        >
-          {label}
-        </span>
-
-        {number !== undefined && (
-          <span
-            className="absolute top-0.5 right-1 text-[9px] font-black z-10"
-            style={{ color: isSpecial ? "hsl(40 50% 40%)" : "hsl(20 7% 22% / 0.4)" }}
-          >
-            {number}
-          </span>
-        )}
-
-        {/* Passed overlay */}
-        {isPassed && !isCurrent && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/30 rounded-lg z-10">
-            <span className="text-foreground/50 text-lg font-bold">✓</span>
-          </div>
-        )}
-
-        {/* Special star badge */}
-        {isSpecial && !isPassed && (
-          <div
-            className="absolute top-0.5 left-1 z-10"
-          >
-            <span className="text-[10px]">⭐</span>
-          </div>
-        )}
-      </div>
-
-      {/* ── Front face (depth) ── */}
-      <div
-        className="absolute inset-x-0 rounded-b-lg"
-        style={{
-          top: height - 1,
-          height: depth + 1,
-          background: isPassed && !isCurrent
-            ? `${sideColor}88`
-            : isCurrent
-            ? `linear-gradient(180deg, ${sideColor}, hsl(40 40% 35%))`
-            : sideColor,
-          borderLeft: "1.5px solid hsl(0 0% 0% / 0.08)",
-          borderRight: "1.5px solid hsl(0 0% 0% / 0.08)",
-          borderBottom: "1.5px solid hsl(0 0% 0% / 0.12)",
-          zIndex: 1,
-        }}
-      />
-
       {/* Hover tooltip */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-2 py-1 bg-popover text-popover-foreground text-[10px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-40 pointer-events-none border">
-        {number !== undefined ? `${number}. ` : ""}{label}
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-popover text-popover-foreground text-[10px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none border">
+        {reward.name}
       </div>
-
-      {/* Pulse ring for current */}
-      {isCurrent && (
-        <motion.div
-          className="absolute inset-x-0 top-0 rounded-lg pointer-events-none"
-          style={{ height, zIndex: 3 }}
-          animate={{
-            boxShadow: [
-              "0 0 0 0 hsl(40 50% 55% / 0.4)",
-              "0 0 0 10px hsl(40 50% 55% / 0)",
-            ],
-          }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
-      )}
     </motion.div>
   );
 };
