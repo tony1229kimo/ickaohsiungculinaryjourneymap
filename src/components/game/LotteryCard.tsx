@@ -13,16 +13,16 @@ import rewardIcon100 from "@/assets/reward-icon-100.png";
 
 // 機會獎項 (6選1)
 const CHANCE_REWARDS = [
-  { id: 1, name: "指定 Delicatesse 甜點免費兌換", icon: "🍰", image: rewardIconCake },
-  { id: 2, name: "指定飲品免費兌換", icon: "🥤", image: rewardIconDrink },
-  { id: 3, name: "贈送氣泡茶乙瓶", icon: "🧋", image: rewardIconTea },
-  { id: 4, name: "招牌前菜免費兌換", icon: "🥗", image: rewardIconCake },
-  { id: 5, name: "NT$ 200 餐飲折價券", icon: "💵", image: rewardIcon200 },
-  { id: 6, name: "NT$ 300 餐飲折價券", icon: "💰", image: rewardIcon300 },
+  { id: 1, name: "指定 Delicatesse 甜點免費兌換", icon: "🍰", image: rewardIconCake, link: "https://lin.ee/7s0cfjo" },
+  { id: 2, name: "指定飲品免費兌換", icon: "🥤", image: rewardIconDrink, link: "https://lin.ee/egEUGpY" },
+  { id: 3, name: "贈送氣泡茶乙瓶", icon: "🧋", image: rewardIconTea, link: "https://lin.ee/n9T9GuT" },
+  { id: 4, name: "招牌前菜免費兌換", icon: "🥗", image: rewardIconCake, link: "https://lin.ee/tNl7D4g" },
+  { id: 5, name: "NT$ 200 餐飲折價券", icon: "💵", image: rewardIcon200, link: "https://lin.ee/lbCp13p" },
+  { id: 6, name: "NT$ 300 餐飲折價券", icon: "💰", image: rewardIcon300, link: "https://lin.ee/ZiOfAit" },
 ];
 
 // 命運獎項 (固定)
-const FATE_REWARD = { id: 1, name: "NT$ 100 餐飲折價券", icon: "🎫", image: rewardIcon100 };
+const FATE_REWARD = { id: 1, name: "NT$ 100 餐飲折價券", icon: "🎫", image: rewardIcon100, link: "https://lin.ee/wgC3hy1" };
 
 export interface LotteryResult {
   type: "chance" | "fate";
@@ -37,7 +37,7 @@ interface LotteryCardProps {
 
 const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
   const [phase, setPhase] = useState<"back" | "flipping" | "front">("back");
-  const [reward, setReward] = useState<{ id: number; name: string; icon: string; image?: string } | null>(null);
+  const [reward, setReward] = useState<{ id: number; name: string; icon: string; image?: string; link?: string } | null>(null);
 
   const bgImage = type === "chance" ? cardChanceBg : cardFateBg;
 
@@ -71,6 +71,9 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
   const handleClaim = () => {
     if (reward) {
       onRewardClaimed({ type, reward: { id: reward.id, name: reward.name, icon: reward.icon } });
+      if (reward.link) {
+        window.open(reward.link, "_blank", "noopener,noreferrer");
+      }
     }
     onClose();
   };
