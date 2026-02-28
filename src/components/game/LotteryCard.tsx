@@ -13,7 +13,7 @@ import rewardIcon100 from "@/assets/reward-icon-100.png";
 
 // 機會獎項 (6選1)
 const CHANCE_REWARDS = [
-  { id: 1, name: "指定 Deli 甜點免費兌換", icon: "🍰", image: rewardIconCake },
+  { id: 1, name: "指定 Delicatesse 甜點免費兌換", icon: "🍰", image: rewardIconCake },
   { id: 2, name: "指定飲品免費兌換", icon: "🥤", image: rewardIconDrink },
   { id: 3, name: "贈送氣泡茶乙瓶", icon: "🧋", image: rewardIconTea },
   { id: 4, name: "招牌前菜免費兌換", icon: "🥗", image: rewardIconCake },
