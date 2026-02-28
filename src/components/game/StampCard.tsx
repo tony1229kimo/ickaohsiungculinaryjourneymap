@@ -1,5 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import type { GameCharacterInfo } from "./CharacterSelect";
 
 // Tile image imports
@@ -57,9 +64,29 @@ const TILE_GRID: Record<number, { row: number; col: number }> = {
   15: { row: 2, col: 1 },  // End - near start
 };
 
+const TILE_DESCRIPTIONS: Record<number, string> = {
+  0: "遊戲起點，從這裡開始你的味蕾旅程！",
+  1: "抽取機會卡，看看會獲得什麼驚喜獎勵！",
+  2: "可免費兌換一份指定 Deli 甜點，含蛋糕、塔類、慕斯等精選品項。",
+  3: "抽取命運卡，命運女神會帶給你什麼呢？",
+  4: "抽取機會卡，看看會獲得什麼驚喜獎勵！",
+  5: "抽取命運卡，命運女神會帶給你什麼呢？",
+  6: "獲得 NT$500 折價券一張，可於下次消費時使用，不限餐期。",
+  7: "抽取機會卡，看看會獲得什麼驚喜獎勵！",
+  8: "獲得 NT$800 折價券一張，可於下次消費時使用，不限餐期。",
+  9: "抽取命運卡，命運女神會帶給你什麼呢？",
+  10: "抽取機會卡，看看會獲得什麼驚喜獎勵！",
+  11: "任選一款餐飲品項，享買一送一優惠（以價低者為贈品）。",
+  12: "抽取命運卡，命運女神會帶給你什麼呢？",
+  13: "抽取機會卡，看看會獲得什麼驚喜獎勵！",
+  14: "抽取命運卡，命運女神會帶給你什麼呢？",
+  15: "🏆 終極大獎！可免費兌換一份主廚招牌餐點，含前菜、主餐及甜點。",
+};
+
 const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) => {
   const [displayPosition, setDisplayPosition] = useState(totalPoints);
   const [animatingTile, setAnimatingTile] = useState<number | null>(null);
+  const [selectedTile, setSelectedTile] = useState<number | null>(null);
   const prevPointsRef = useRef(totalPoints);
 
   useEffect(() => {
@@ -137,6 +164,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
                     isJumping={animatingTile === i}
                     isStart={i === 0}
                     isEnd={i === 15}
+                    onTap={() => setSelectedTile(i)}
                   />
                 </div>
               );
@@ -213,7 +241,37 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
           <span className="text-accent">★</span>
           特殊獎勵
         </span>
+        <span className="text-[10px] opacity-60">點擊格子查看詳情</span>
       </div>
+
+      {/* Tile detail dialog */}
+      <Dialog open={selectedTile !== null} onOpenChange={(open) => !open && setSelectedTile(null)}>
+        <DialogContent className="max-w-xs rounded-2xl border-2" style={{ borderColor: selectedTile !== null && REWARDS[selectedTile]?.isSpecial ? "hsl(43 85% 55%)" : "hsl(var(--board-bg))" }}>
+          {selectedTile !== null && (
+            <>
+              <DialogHeader className="items-center text-center">
+                <div className="w-16 h-16 mx-auto mb-2 rounded-xl overflow-hidden" style={{ background: REWARDS[selectedTile].isSpecial ? "linear-gradient(135deg, hsl(43 85% 55% / 0.2), hsl(40 20% 72% / 0.3))" : "hsl(var(--tile-bg))" }}>
+                  <img src={REWARDS[selectedTile].tileImage} alt="" className="w-full h-full object-cover" />
+                </div>
+                <DialogTitle className="text-base">
+                  第 {selectedTile} 格 — {REWARDS[selectedTile].name}
+                </DialogTitle>
+                <DialogDescription className="text-sm leading-relaxed">
+                  {TILE_DESCRIPTIONS[selectedTile]}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
+                {selectedTile <= displayPosition ? (
+                  <span className="px-2 py-0.5 rounded-full bg-accent/15 text-accent-foreground font-medium">✓ 已通過</span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground">尚未抵達</span>
+                )}
+                {REWARDS[selectedTile].isSpecial && <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">⭐ 特殊獎勵</span>}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -263,11 +321,11 @@ interface BoardTileProps {
   isEnd?: boolean;
 }
 
-const BoardTile = ({ number, reward, isCurrentPosition, isPassed, character, isJumping, isStart, isEnd }: BoardTileProps) => {
+const BoardTile = ({ number, reward, isCurrentPosition, isPassed, character, isJumping, isStart, isEnd, onTap }: BoardTileProps & { onTap?: () => void }) => {
   return (
     <div className="relative">
       <motion.div
-        className="board-tile group"
+        className="board-tile cursor-pointer active:scale-95 transition-transform"
         data-special={reward.isSpecial || undefined}
         data-current={isCurrentPosition || undefined}
         data-start={isStart || undefined}
@@ -280,6 +338,7 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed, character, isJ
         }
         transition={{ duration: 1.5, repeat: Infinity }}
         whileHover={{ scale: 1.06 }}
+        onClick={onTap}
       >
         {/* Tile illustration */}
         <div className="board-tile-icon">
@@ -315,10 +374,6 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed, character, isJ
           </motion.div>
         )}
 
-        {/* Hover tooltip */}
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-popover text-popover-foreground text-[10px] font-medium rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-40 pointer-events-none border">
-          {reward.name}
-        </div>
       </motion.div>
 
       {/* Character token OUTSIDE overflow */}
