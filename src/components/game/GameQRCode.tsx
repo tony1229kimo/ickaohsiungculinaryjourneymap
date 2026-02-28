@@ -8,7 +8,7 @@ interface GameQRCodeProps {
 }
 
 const GameQRCode = ({
-  code = "INTERCONTINENTAL_2024",
+  code = "INTERCONTINENTAL_2026",
   size = 200,
   showDownload = true
 }: GameQRCodeProps) => {
