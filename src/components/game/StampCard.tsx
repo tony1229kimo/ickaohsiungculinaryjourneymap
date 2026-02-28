@@ -41,7 +41,7 @@ const REWARDS: Record<number, { name: string; shortName: string; isSpecial: bool
   12: { name: "機會/命運", shortName: "命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   13: { name: "機會/命運", shortName: "機會", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   14: { name: "機會/命運", shortName: "命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  15: { name: "招牌餐點免費兌換", shortName: "🏆 大獎", isSpecial: true, tileImage: tileRewardTrophy, type: "fixed" },
+  15: { name: "招牌餐點免費兌換", shortName: "大獎", isSpecial: true, tileImage: tileRewardTrophy, type: "fixed" },
 };
 
 // Grid positions for perimeter layout (row, col) - 1-indexed for CSS grid
