@@ -6,6 +6,7 @@ interface StampCardProps {
   totalPoints: number;
   maxPoints?: number;
   character?: GameCharacterInfo;
+  animatingPosition?: number | null;
 }
 
 // 獎項對照表
@@ -38,8 +39,9 @@ const TILE_W = 60;
 const TILE_H = 50;
 const TILE_DEPTH = 14;
 
-const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) => {
+const StampCard = ({ totalPoints, maxPoints = 15, character, animatingPosition }: StampCardProps) => {
   const [viewAngle, setViewAngle] = useState(0);
+  const displayPosition = animatingPosition != null ? animatingPosition : totalPoints;
   const currentPosition = totalPoints;
 
   const perspectives = [
@@ -100,8 +102,8 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
               sideColor="hsl(20 7% 14%)"
               textColor="#fff"
               isActive={currentPosition === 0}
-              isCurrent={currentPosition === 0}
-              character={currentPosition === 0 ? character : undefined}
+              isCurrent={displayPosition === 0}
+              character={displayPosition === 0 ? character : undefined}
               width={80}
             />
           </div>
@@ -112,8 +114,8 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
               <div key={rowIndex} className="flex gap-1 justify-center" style={{ transformStyle: "preserve-3d" }}>
                 {row.map((num, colIndex) => {
                   const reward = REWARDS[num];
-                  const isCurrent = currentPosition === num;
-                  const isPassed = currentPosition > num;
+                  const isCurrent = displayPosition === num;
+                  const isPassed = currentPosition > num || (animatingPosition != null && num < animatingPosition);
                   return (
                     <IsometricTile
                       key={num}
