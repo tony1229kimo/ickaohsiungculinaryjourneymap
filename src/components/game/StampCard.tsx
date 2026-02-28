@@ -140,7 +140,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
             style={{
               gridTemplateColumns: "repeat(6, 1fr)",
               gridTemplateRows: "repeat(4, 1fr)",
-              gap: "4px",
+              gap: "0px",
             }}
           >
             {/* Render all tiles */}
