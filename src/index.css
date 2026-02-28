@@ -266,26 +266,22 @@
 
   /* ===== Illustrated Board Game ===== */
   .board-illustrated {
-    @apply rounded-2xl p-2 relative;
+    @apply rounded-2xl p-1 relative;
     background: hsl(var(--board-bg));
-    border: 3px solid hsl(var(--board-border-outer));
+    border: 2px solid hsl(var(--board-border-outer));
     box-shadow:
-      inset 0 0 0 4px hsl(var(--board-bg)),
-      inset 0 0 0 6px hsl(var(--board-border) / 0.5),
       0 8px 30px -8px hsl(var(--dice-shadow) / 0.25);
   }
 
   .board-inner {
-    @apply rounded-xl p-2;
-    border: 2px dashed hsl(var(--board-border) / 0.5);
+    @apply rounded-lg p-0;
   }
 
   .board-tile {
     @apply relative flex flex-col items-center justify-between overflow-hidden cursor-default;
     aspect-ratio: 1;
     background: hsl(var(--tile-bg));
-    border: 1.5px solid hsl(var(--tile-border));
-    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.6);
+    border: 1px solid hsl(var(--tile-border) / 0.4);
     transition: transform 0.15s, box-shadow 0.15s;
   }
 
