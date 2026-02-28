@@ -246,7 +246,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
 
         {/* Board title ribbon */}
         <div className="board-ribbon">
-          <span>擲骰集點・完成旅途</span>
+          <span>擲骰集點・完成旅途兌換大獎</span>
         </div>
       </div>
 
