@@ -8,23 +8,23 @@ interface StampCardProps {
   character?: GameCharacterInfo;
 }
 
-// 獎項對照表 - 每格搭配洲際酒店特色餐點圖示
-const REWARDS: Record<number, { name: string; isSpecial: boolean; icon: string; dishIcon: string; dishLabel: string; type: "lottery" | "fixed" }> = {
-  1:  { name: "機會/命運", isSpecial: false, icon: "🎴", dishIcon: "🥐", dishLabel: "法式可頌", type: "lottery" },
-  2:  { name: "指定 Deli 甜點免費兌換", isSpecial: true, icon: "🍰", dishIcon: "🍰", dishLabel: "精選甜點", type: "fixed" },
-  3:  { name: "機會/命運", isSpecial: false, icon: "🎴", dishIcon: "🍣", dishLabel: "握壽司", type: "lottery" },
-  4:  { name: "機會/命運", isSpecial: false, icon: "🎴", dishIcon: "🦐", dishLabel: "鮮蝦料理", type: "lottery" },
-  5:  { name: "機會/命運", isSpecial: false, icon: "🎴", dishIcon: "🥩", dishLabel: "嫩煎牛排", type: "lottery" },
-  6:  { name: "NT$ 500 折價券", isSpecial: true, icon: "💎", dishIcon: "🍷", dishLabel: "精選紅酒", type: "fixed" },
-  7:  { name: "機會/命運", isSpecial: false, icon: "🎴", dishIcon: "🦞", dishLabel: "波士頓龍蝦", type: "lottery" },
-  8:  { name: "NT$ 800 折價券", isSpecial: true, icon: "💰", dishIcon: "🫕", dishLabel: "法式鵝肝", type: "fixed" },
-  9:  { name: "機會/命運", isSpecial: false, icon: "🎴", dishIcon: "🍝", dishLabel: "松露義大利麵", type: "lottery" },
-  10: { name: "機會/命運", isSpecial: false, icon: "🎴", dishIcon: "🥗", dishLabel: "主廚沙拉", type: "lottery" },
-  11: { name: "餐飲買一送一", isSpecial: true, icon: "🎁", dishIcon: "🍾", dishLabel: "香檳", type: "fixed" },
-  12: { name: "機會/命運", isSpecial: false, icon: "🎴", dishIcon: "🐟", dishLabel: "香煎鱸魚", type: "lottery" },
-  13: { name: "機會/命運", isSpecial: false, icon: "🎴", dishIcon: "🍮", dishLabel: "焦糖布丁", type: "lottery" },
-  14: { name: "機會/命運", isSpecial: false, icon: "🎴", dishIcon: "☕", dishLabel: "手沖咖啡", type: "lottery" },
-  15: { name: "招牌餐點免費兌換 (價值$3,880)", isSpecial: true, icon: "👑", dishIcon: "🥇", dishLabel: "招牌套餐", type: "fixed" },
+// 獎項對照表
+const REWARDS: Record<number, { name: string; isSpecial: boolean; icon: string; type: "lottery" | "fixed" }> = {
+  1: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  2: { name: "指定 Deli 甜點免費兌換", isSpecial: true, icon: "🍰", type: "fixed" },
+  3: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  4: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  5: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  6: { name: "NT$ 500 折價券", isSpecial: true, icon: "💵", type: "fixed" },
+  7: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  8: { name: "NT$ 800 折價券", isSpecial: true, icon: "💰", type: "fixed" },
+  9: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  10: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  11: { name: "餐飲買一送一", isSpecial: true, icon: "🎁", type: "fixed" },
+  12: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  13: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  14: { name: "機會/命運", isSpecial: false, icon: "❓", type: "lottery" },
+  15: { name: "招牌餐點免費兌換 (價值$3,880)", isSpecial: true, icon: "🏆", type: "fixed" },
 };
 
 // 蛇形排列：第一行左→右，第二行右→左，第三行左→右
@@ -216,7 +216,7 @@ const CharacterToken = ({ image }: { image: string }) => (
 // Board tile
 interface BoardTileProps {
   number: number;
-  reward: { name: string; isSpecial: boolean; icon: string; dishIcon: string; dishLabel: string; type: "lottery" | "fixed" };
+  reward: { name: string; isSpecial: boolean; icon: string; type: "lottery" | "fixed" };
   isCurrentPosition: boolean;
   isPassed: boolean;
   character?: GameCharacterInfo;
@@ -224,8 +224,8 @@ interface BoardTileProps {
 
 const BoardTile = ({ number, reward, isCurrentPosition, isPassed, character }: BoardTileProps) => {
   const isLottery = reward.type === "lottery";
-  const isGrandPrize = number === 15;
 
+  // Tile colors based on state, using the elegant palette
   const getTileStyle = () => {
     if (isCurrentPosition) {
       return {
@@ -238,12 +238,6 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed, character }: B
       return {
         background: "hsl(40 20% 72% / 0.8)",
         borderColor: "hsl(40 20% 60%)",
-      };
-    }
-    if (isGrandPrize) {
-      return {
-        background: "linear-gradient(135deg, hsl(43 85% 55% / 0.3), hsl(35 70% 50% / 0.2))",
-        borderColor: "hsl(43 85% 55% / 0.7)",
       };
     }
     if (reward.isSpecial) {
@@ -266,7 +260,7 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed, character }: B
 
   return (
     <motion.div
-      className="relative w-14 h-[4.5rem] rounded-lg flex flex-col items-center justify-between py-1 text-xs font-medium border-2 cursor-default group"
+      className="relative w-14 h-14 rounded-lg flex flex-col items-center justify-center text-xs font-medium border-2 cursor-default group"
       style={getTileStyle()}
       initial={false}
       animate={
@@ -280,46 +274,12 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed, character }: B
           : {}
       }
       transition={{ duration: 1.5, repeat: Infinity }}
-      whileHover={{ scale: isCurrentPosition ? 1.1 : 1.05, y: -2 }}
+      whileHover={{ scale: isCurrentPosition ? 1.1 : 1.05 }}
     >
-      {/* Dish illustration */}
-      <motion.span
-        className="text-xl leading-none"
-        animate={isCurrentPosition ? { rotateY: [0, 360] } : { scale: [1, 1.08, 1] }}
-        transition={isCurrentPosition ? { duration: 2, repeat: Infinity } : { duration: 3, repeat: Infinity, ease: "easeInOut" }}
-      >
-        {reward.dishIcon}
-      </motion.span>
-
-      {/* Dish label */}
-      <span className={`text-[7px] leading-tight text-center ${reward.isSpecial ? "text-accent font-bold" : "text-foreground/60"}`}>
-        {reward.dishLabel}
-      </span>
-
-      {/* Tile number badge */}
-      <span
-        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold shadow-sm"
-        style={{
-          background: isLottery ? "hsl(120 8% 48%)" : reward.isSpecial ? "hsl(43 85% 55%)" : "hsl(20 7% 22%)",
-          color: "hsl(0 0% 100%)",
-        }}
-      >
+      <span className="text-lg">{reward.icon}</span>
+      <span className={`text-[10px] ${reward.isSpecial ? "text-accent font-bold" : "text-foreground/70"}`}>
         {number}
       </span>
-
-      {/* Lottery/Special badge */}
-      {isLottery && (
-        <span className="absolute -top-1.5 -left-1.5 text-[10px]">🎴</span>
-      )}
-      {isGrandPrize && (
-        <motion.span
-          className="absolute -top-2 left-1/2 -translate-x-1/2 text-sm"
-          animate={{ rotate: [-5, 5, -5], y: [-1, 1, -1] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        >
-          👑
-        </motion.span>
-      )}
 
       {isCurrentPosition && character && <CharacterToken image={character.image} />}
 
@@ -336,7 +296,7 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed, character }: B
 
       {/* Hover tooltip */}
       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-popover text-popover-foreground text-[10px] rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none border">
-        {reward.dishIcon} {reward.name}
+        {reward.name}
       </div>
     </motion.div>
   );
