@@ -28,7 +28,7 @@ interface StampCardProps {
 const REWARDS: Record<number, { name: string; shortName: string; isSpecial: boolean; tileImage: string; type: "lottery" | "fixed" }> = {
   0:  { name: "起點", shortName: "起點", isSpecial: false, tileImage: tileStart, type: "fixed" },
   1:  { name: "機會/命運", shortName: "機會", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  2:  { name: "指定 Deli 甜點免費兌換", shortName: "甜點兌換", isSpecial: true, tileImage: tileRewardCake, type: "fixed" },
+  2:  { name: "指定 Delicatesse 甜點免費兌換", shortName: "甜點兌換", isSpecial: true, tileImage: tileRewardCake, type: "fixed" },
   3:  { name: "機會/命運", shortName: "命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   4:  { name: "機會/命運", shortName: "機會", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   5:  { name: "機會/命運", shortName: "命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
@@ -67,20 +67,20 @@ const TILE_GRID: Record<number, { row: number; col: number }> = {
 const TILE_DESCRIPTIONS: Record<number, string> = {
   0: "遊戲起點，從這裡開始你的味蕾旅程！",
   1: "抽取機會卡，看看會獲得什麼驚喜獎勵！",
-  2: "可免費兌換一份指定 Deli 甜點，含蛋糕、塔類、慕斯等精選品項。",
+  2: "可免費兌換一份指定 Delicatesse 甜點。",
   3: "抽取命運卡，命運女神會帶給你什麼呢？",
   4: "抽取機會卡，看看會獲得什麼驚喜獎勵！",
   5: "抽取命運卡，命運女神會帶給你什麼呢？",
-  6: "獲得 NT$500 折價券一張，可於下次消費時使用，不限餐期。",
+  6: "獲得 NT$500 折價券一張，可於下次消費時使用。",
   7: "抽取機會卡，看看會獲得什麼驚喜獎勵！",
-  8: "獲得 NT$800 折價券一張，可於下次消費時使用，不限餐期。",
+  8: "獲得 NT$800 折價券一張，可於下次消費時使用。",
   9: "抽取命運卡，命運女神會帶給你什麼呢？",
   10: "抽取機會卡，看看會獲得什麼驚喜獎勵！",
   11: "任選一款餐飲品項，享買一送一優惠（以價低者為贈品）。",
   12: "抽取命運卡，命運女神會帶給你什麼呢？",
   13: "抽取機會卡，看看會獲得什麼驚喜獎勵！",
   14: "抽取命運卡，命運女神會帶給你什麼呢？",
-  15: "🏆 終極大獎！可免費兌換一份主廚招牌餐點，含前菜、主餐及甜點。",
+  15: "🏆 終極大獎！可免費兌換主廚招牌主餐一份，最高價值 NT$3,880。",
 };
 
 const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) => {
