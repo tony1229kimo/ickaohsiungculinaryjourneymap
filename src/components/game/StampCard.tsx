@@ -139,8 +139,8 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
           id="game-board-grid"
           style={{
             gridTemplateColumns: "repeat(6, 1fr)",
-            gridTemplateRows: "repeat(4, 1fr)",
-            gap: "0px"
+            gridTemplateRows: "repeat(4, minmax(68px, 1fr))",
+            gap: "2px"
           }}>
 
             {/* Render all tiles */}
