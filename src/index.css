@@ -6,13 +6,15 @@
 
 @layer base {
   :root {
-    /* 洲際酒店品牌色系 */
-    --intercontinental-black: 20 7% 22%;
-    --intercontinental-pink: 18 26% 74%;
-    --intercontinental-lime: 59 60% 63%;
-    --intercontinental-white: 0 0% 100%;
+    /* 高雄洲際酒店高雅色系 */
+    /* #bfb592 → 40 28% 66% */
+    /* #d4c3b7 → 20 22% 78% */
+    /* #78786e → 60 5% 45% */
+    /* #e1e1e0 → 0 1% 88% */
+    /* #ffffff → 0 0% 100% */
+    /* #3d3935 → 20 7% 22% */
 
-    --background: 20 10% 96%;
+    --background: 0 1% 94%;
     --foreground: 20 7% 22%;
 
     --card: 0 0% 100%;
@@ -24,13 +26,13 @@
     --primary: 20 7% 22%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 18 26% 74%;
+    --secondary: 20 22% 78%;
     --secondary-foreground: 20 7% 22%;
 
-    --muted: 20 15% 88%;
-    --muted-foreground: 20 7% 40%;
+    --muted: 0 1% 88%;
+    --muted-foreground: 60 5% 45%;
 
-    --accent: 43 85% 55%;
+    --accent: 40 28% 66%;
     --accent-foreground: 20 7% 15%;
 
     --destructive: 0 84% 60%;
@@ -38,15 +40,15 @@
 
     --border: 20 15% 85%;
     --input: 20 15% 85%;
-    --ring: 43 85% 55%;
+    --ring: 40 28% 66%;
 
     --radius: 1rem;
 
     /* Custom game tokens */
-    --stamp-inactive: 20 15% 90%;
-    --stamp-active: 43 85% 55%;
-    --stamp-glow: 43 90% 60%;
-    --reward-gold: 43 96% 56%;
+    --stamp-inactive: 0 1% 88%;
+    --stamp-active: 40 28% 66%;
+    --stamp-glow: 40 35% 70%;
+    --reward-gold: 40 50% 60%;
     --dice-shadow: 20 7% 15%;
     
     /* 機會/命運卡片 */
@@ -55,11 +57,11 @@
     
     /* Gradients */
     --gradient-header: linear-gradient(135deg, hsl(20 7% 22%) 0%, hsl(20 10% 28%) 100%);
-    --gradient-stamp: linear-gradient(145deg, hsl(43 85% 60%) 0%, hsl(43 85% 50%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(43 96% 56%) 0%, hsl(35 100% 50%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(18 26% 94%) 100%);
-    --gradient-chance: linear-gradient(135deg, hsl(280 60% 50%) 0%, hsl(300 50% 45%) 100%);
-    --gradient-fate: linear-gradient(135deg, hsl(200 70% 45%) 0%, hsl(220 60% 50%) 100%);
+    --gradient-stamp: linear-gradient(145deg, hsl(40 28% 70%) 0%, hsl(40 28% 60%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(40 50% 60%) 0%, hsl(35 45% 55%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(20 22% 94%) 100%);
+    --gradient-chance: linear-gradient(135deg, hsl(20 22% 78%) 0%, hsl(40 28% 66%) 100%);
+    --gradient-fate: linear-gradient(135deg, hsl(60 5% 45%) 0%, hsl(20 7% 22%) 100%);
   }
 
   .dark {
