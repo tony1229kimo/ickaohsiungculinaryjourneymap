@@ -54,7 +54,10 @@ const GameHeader = ({ userName, isLoading }: GameHeaderProps) => {
       </motion.div>
 
       {/* Subtle decorative dots */}
-      {/* Decorative dots removed to prevent overflow */}
+      <div className="absolute top-6 left-6 w-1.5 h-1.5 rounded-full bg-white/20" />
+      <div className="absolute top-6 right-6 w-1.5 h-1.5 rounded-full bg-white/20" />
+      <div className="absolute bottom-10 left-10 w-1 h-1 rounded-full bg-white/10" />
+      <div className="absolute bottom-10 right-10 w-1 h-1 rounded-full bg-white/10" />
     </header>
   );
 };

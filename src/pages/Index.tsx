@@ -138,7 +138,7 @@ const Index = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="w-full max-w-lg px-3 -mt-4 space-y-8 overflow-hidden"
+        className="w-full max-w-lg px-3 -mt-4 space-y-6"
       >
         <div className="stamp-card">
           <div className="flex items-center justify-center gap-2 mb-1">
