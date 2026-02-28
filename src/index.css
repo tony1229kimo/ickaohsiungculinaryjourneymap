@@ -52,6 +52,15 @@
     --gold-shimmer: 43 85% 65%;
     --glass-bg: 0 0% 100%;
     --glass-border: 0 0% 100%;
+
+    /* Illustrated board tokens */
+    --board-bg: 8 42% 74%;
+    --board-border: 25 35% 50%;
+    --board-border-outer: 20 7% 22%;
+    --tile-bg: 38 55% 92%;
+    --tile-special-bg: 43 55% 85%;
+    --tile-border: 25 25% 70%;
+    --tile-text: 20 7% 22%;
     
     /* Gradients */
     --gradient-header: linear-gradient(135deg, hsl(20 7% 18%) 0%, hsl(20 12% 26%) 50%, hsl(25 15% 20%) 100%);
@@ -253,6 +262,95 @@
     content: '';
     @apply absolute inset-0 rounded-2xl opacity-50;
     background: radial-gradient(ellipse at 50% 40%, hsl(var(--accent) / 0.08) 0%, transparent 70%);
+  }
+
+  /* ===== Illustrated Board Game ===== */
+  .board-illustrated {
+    @apply rounded-2xl p-2 relative;
+    background: hsl(var(--board-bg));
+    border: 3px solid hsl(var(--board-border-outer));
+    box-shadow:
+      inset 0 0 0 4px hsl(var(--board-bg)),
+      inset 0 0 0 6px hsl(var(--board-border) / 0.5),
+      0 8px 30px -8px hsl(var(--dice-shadow) / 0.25);
+  }
+
+  .board-inner {
+    @apply rounded-xl p-2;
+    border: 2px dashed hsl(var(--board-border) / 0.5);
+  }
+
+  .board-tile {
+    @apply relative rounded-lg flex flex-col items-center justify-between overflow-hidden cursor-default;
+    aspect-ratio: 1;
+    background: hsl(var(--tile-bg));
+    border: 2px solid hsl(var(--tile-border));
+    box-shadow:
+      0 2px 4px hsl(0 0% 0% / 0.08),
+      inset 0 1px 0 hsl(0 0% 100% / 0.6);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .board-tile[data-special] {
+    background: hsl(var(--tile-special-bg));
+    border-color: hsl(var(--reward-gold) / 0.6);
+  }
+
+  .board-tile[data-current] {
+    border-color: hsl(43 85% 55%);
+    box-shadow:
+      0 0 12px hsl(43 85% 55% / 0.4),
+      inset 0 1px 0 hsl(0 0% 100% / 0.6);
+  }
+
+  .board-tile[data-start] {
+    background: hsl(var(--board-border-outer));
+  }
+
+  .board-tile[data-start] .board-tile-label {
+    color: hsl(0 0% 100%);
+  }
+
+  .board-tile[data-end] {
+    background: linear-gradient(135deg, hsl(43 60% 80%), hsl(40 70% 70%));
+    border-color: hsl(35 50% 50%);
+  }
+
+  .board-tile-icon {
+    @apply w-full flex-1 flex items-center justify-center overflow-hidden rounded-t-md;
+    min-height: 0;
+  }
+
+  .board-tile-icon img {
+    @apply w-full h-full object-cover;
+  }
+
+  .board-tile-label {
+    @apply w-full text-center py-0.5 px-0.5 leading-none;
+    font-size: 8px;
+    font-weight: 800;
+    color: hsl(var(--tile-text));
+    background: hsl(0 0% 100% / 0.5);
+    letter-spacing: 0.02em;
+  }
+
+  .board-tile-number {
+    @apply font-black;
+    font-size: 8px;
+  }
+
+  .board-tile-name {
+    font-size: 7px;
+    font-weight: 700;
+  }
+
+  .board-ribbon {
+    @apply text-center py-1.5 -mx-2 -mb-2 mt-2 rounded-b-lg;
+    background: hsl(var(--board-border-outer));
+    color: hsl(var(--tile-bg));
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
   }
 }
 
