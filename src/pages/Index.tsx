@@ -13,7 +13,7 @@ const MOCK_USER = {
   displayName: "洲際會員",
 };
 
-const EXPECTED_QR_CODE = "INTERCONTINENTAL_2024";
+const EXPECTED_QR_CODE = "INTERCONTINENTAL_2026";
 const LOTTERY_POSITIONS = [1, 3, 4, 5, 7, 9, 10, 12, 13, 14];
 
 const Index = () => {
