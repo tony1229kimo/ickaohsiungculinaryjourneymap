@@ -144,7 +144,7 @@ const Index = () => {
             {selectedCharacter && (
               <img src={selectedCharacter.image} alt="" className="w-8 h-8 object-contain" />
             )}
-            大富翁集點遊戲
+            洲際味蕾旅遊地圖集點遊戲
           </h2>
 
           {!isQRVerified ? (
