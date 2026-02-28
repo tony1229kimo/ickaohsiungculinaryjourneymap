@@ -15,7 +15,7 @@ const QRCodePage = () => {
 
           <span className="text-accent">♔</span>
           洲際大富翁
-          <span className="text-accent">♔</span>
+          
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           店家專用 QR Code
