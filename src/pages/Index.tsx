@@ -38,7 +38,13 @@ const Index = () => {
       try {
         await new Promise(resolve => setTimeout(resolve, 1500));
         setUserName(MOCK_USER.displayName);
-        setStatusMessage("請先掃描店家 QR Code 以開始遊戲");
+        const savedVerified = localStorage.getItem(`qr_verified_${MOCK_USER.userId}`);
+        if (savedVerified === "true") {
+          setIsQRVerified(true);
+          setStatusMessage("歡迎回來！請繼續擲骰前進");
+        } else {
+          setStatusMessage("請先掃描店家 QR Code 以開始遊戲");
+        }
         setStatusType("info");
 
         const savedPoints = localStorage.getItem(`points_${MOCK_USER.userId}`);
@@ -69,6 +75,7 @@ const Index = () => {
   const handleQRSuccess = () => {
     setIsQRVerified(true);
     setShowScanner(false);
+    localStorage.setItem(`qr_verified_${MOCK_USER.userId}`, "true");
     setStatusMessage("✅ 驗證成功！可以開始擲骰");
     setStatusType("success");
   };
@@ -100,11 +107,10 @@ const Index = () => {
   const finalizeDiceRoll = (newTotal: number, steps: number) => {
     setTotalPoints(newTotal);
     localStorage.setItem(`points_${MOCK_USER.userId}`, newTotal.toString());
-    setIsQRVerified(false);
     setStatusMessage(
       newTotal >= 15
         ? "🏆 恭喜抵達終點！獲得招牌餐點兌換券"
-        : `前進 ${steps} 步！下次需重新掃描 QR Code`
+        : `🎲 前進 ${steps} 步！繼續擲骰前進吧`
     );
     setStatusType("success");
     setIsProcessing(false);
@@ -156,7 +162,7 @@ const Index = () => {
                   className="text-6xl mb-4"
                 >📱</motion.div>
                 <p className="text-foreground font-medium mb-2">請先掃描店家 QR Code</p>
-                <p className="text-sm text-muted-foreground">消費滿 2,000 元後請向店員索取 QR Code</p>
+                <p className="text-sm text-muted-foreground">請向店員索取 QR Code 開始遊戲</p>
               </div>
               <button onClick={() => setShowScanner(true)} disabled={isLoading} className="dice-button">
                 <span className="flex items-center justify-center gap-2">
