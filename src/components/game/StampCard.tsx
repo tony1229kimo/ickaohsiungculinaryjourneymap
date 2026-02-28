@@ -54,6 +54,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-foreground flex items-center gap-2">♔ 洲際味蕾旅遊地圖
 
+
           <span className="text-accent">♔</span> 洲際大富翁
         </h3>
         <span className="text-sm font-medium text-muted-foreground">
@@ -80,8 +81,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
 
       {/* 3D Board */}
       <div className="flex justify-center" style={{ perspective: "800px" }}>
-        <motion.div className="relative w-full max-w-[340px]"
-        animate={{
+        <motion.div className="relative w-full max-w-[340px]" animate={{
           rotateX: currentPerspective.rotateX,
           rotateY: currentPerspective.rotateY
         }}
