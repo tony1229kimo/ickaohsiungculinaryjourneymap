@@ -318,11 +318,14 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
               {REWARDS[selectedTile].isSpecial && <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">⭐ 特殊獎勵</span>}
               </div>
               {REWARD_LINKS[selectedTile] && selectedTile <= displayPosition && (
-                <a
-                  href={REWARD_LINKS[selectedTile]}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 block w-full text-center py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.open(REWARD_LINKS[selectedTile!], "_blank", "noopener,noreferrer");
+                  }}
+                  className="mt-3 block w-full text-center py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer"
                   style={{
                     background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
                     color: "hsl(0 0% 100%)",
@@ -330,7 +333,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
                   }}
                 >
                   🎁 領取獎勵
-                </a>
+                </button>
               )}
             </>
           }
