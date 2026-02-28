@@ -37,7 +37,7 @@ const REWARDS: Record<number, { name: string; shortName: string; isSpecial: bool
   8:  { name: "NT$ 800 折價券", shortName: "$800", isSpecial: true, tileImage: tileRewardMoney, type: "fixed" },
   9:  { name: "機會/命運", shortName: "命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   10: { name: "機會/命運", shortName: "機會", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  11: { name: "指定餐點買一送一", shortName: "買1送1", isSpecial: true, tileImage: tileRewardGift, type: "fixed" },
+  11: { name: "餐飲買一送一", shortName: "買1送1", isSpecial: true, tileImage: tileRewardGift, type: "fixed" },
   12: { name: "機會/命運", shortName: "命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   13: { name: "機會/命運", shortName: "機會", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   14: { name: "機會/命運", shortName: "命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
@@ -76,7 +76,7 @@ const TILE_DESCRIPTIONS: Record<number, string> = {
   8: "獲得 NT$800 折價券一張，可於下次消費時使用。",
   9: "抽取命運卡，命運女神會帶給你什麼呢？",
   10: "抽取機會卡，看看會獲得什麼驚喜獎勵！",
-  11: "指定餐點品項，享買一送一優惠（以價低者為贈品）。",
+  11: "任選一款餐飲品項，享買一送一優惠（以價低者為贈品）。",
   12: "抽取命運卡，命運女神會帶給你什麼呢？",
   13: "抽取機會卡，看看會獲得什麼驚喜獎勵！",
   14: "抽取命運卡，命運女神會帶給你什麼呢？",
@@ -350,16 +350,12 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed, isJumping, isS
         onClick={onTap}
       >
         {/* Tile illustration */}
-        <div className="board-tile-icon relative">
+        <div className="board-tile-icon">
           <img
             src={reward.tileImage}
             alt={reward.name}
             className="w-full h-full object-cover"
-            style={reward.type === "lottery" ? { filter: "grayscale(100%)", opacity: 0.5 } : undefined}
           />
-          {reward.type === "lottery" && (
-            <span className="absolute inset-0 flex items-center justify-center text-lg font-black text-foreground/70" style={{ textShadow: "0 1px 2px rgba(255,255,255,0.5)" }}>!</span>
-          )}
         </div>
 
         {/* Label */}
