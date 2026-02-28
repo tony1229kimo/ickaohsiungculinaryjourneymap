@@ -185,12 +185,12 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
                 <motion.div
                   className="absolute -top-6"
                   animate={{
-                    y: animatingTile !== null ? [-8, -18, 0, -6, 0] : [0, -4, 0],
-                    scale: animatingTile !== null ? [1, 1.15, 0.95, 1.05, 1] : 1,
+                    y: animatingTile !== null ? [-4, -10, -2, -8, -2] : [0, -4, 0],
+                    scale: animatingTile !== null ? [1, 1.05, 1, 1.05, 1] : 1,
                   }}
                   transition={{
-                    y: { duration: animatingTile !== null ? 0.3 : 1.5, repeat: animatingTile !== null ? 0 : Infinity, ease: "easeInOut" },
-                    scale: { duration: 0.3 },
+                    y: { duration: animatingTile !== null ? 0.35 : 1.5, repeat: animatingTile !== null ? Infinity : Infinity, ease: "easeInOut" },
+                    scale: { duration: 0.35, repeat: animatingTile !== null ? Infinity : 0 },
                   }}
                 >
                   <motion.img
@@ -198,14 +198,22 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
                     alt="棋子"
                     className="w-12 h-12 object-contain"
                     style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.35))" }}
-                    animate={animatingTile !== null ? { rotate: [0, -15, 15, 0] } : { rotate: [-2, 2, -2] }}
-                    transition={{ duration: animatingTile !== null ? 0.3 : 2.5, repeat: animatingTile !== null ? 0 : Infinity, ease: "easeInOut" }}
+                    animate={
+                      animatingTile !== null
+                        ? { rotate: [0, -8, 0, 8, 0], skewY: [0, -2, 0, 2, 0] }
+                        : { rotate: [-2, 2, -2] }
+                    }
+                    transition={{
+                      duration: animatingTile !== null ? 0.3 : 2.5,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
                   />
                   <motion.div
                     className="absolute bottom-[-2px] left-1/2 -translate-x-1/2 w-7 h-1.5 rounded-full"
                     style={{ background: "radial-gradient(ellipse, hsl(0 0% 0% / 0.2), transparent)" }}
-                    animate={animatingTile !== null ? { scaleX: [1, 0.5, 1.2, 0.9, 1] } : { scaleX: [1, 0.85, 1] }}
-                    transition={{ duration: animatingTile !== null ? 0.3 : 1.5, repeat: animatingTile !== null ? 0 : Infinity }}
+                    animate={animatingTile !== null ? { scaleX: [1, 0.6, 1, 0.6, 1], scaleY: [1, 0.8, 1, 0.8, 1] } : { scaleX: [1, 0.85, 1] }}
+                    transition={{ duration: animatingTile !== null ? 0.3 : 1.5, repeat: Infinity }}
                   />
                 </motion.div>
               </motion.div>
