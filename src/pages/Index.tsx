@@ -29,6 +29,7 @@ const Index = () => {
   const [lotteryType, setLotteryType] = useState<"chance" | "fate">("chance");
   const [pendingPoints, setPendingPoints] = useState(0);
   const [earnedRewards, setEarnedRewards] = useState<LotteryResult[]>([]);
+  const [animatingPosition, setAnimatingPosition] = useState<number | null>(null);
 
   // Character selection
   const [selectedCharacter, setSelectedCharacter] = useState<GameCharacterInfo | null>(null);
@@ -73,14 +74,33 @@ const Index = () => {
     setStatusType("success");
   };
 
+  const animateSteps = (from: number, to: number): Promise<void> => {
+    return new Promise((resolve) => {
+      let step = from;
+      const interval = setInterval(() => {
+        step++;
+        setAnimatingPosition(step);
+        if (step >= to) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setAnimatingPosition(null);
+            resolve();
+          }, 300);
+        }
+      }, 400);
+    });
+  };
+
   const handleDiceRoll = async (points: number) => {
     setIsProcessing(true);
     setStatusMessage("正在移動棋子...");
     setStatusType("loading");
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
       const newTotal = Math.min(totalPoints + points, 15);
+
+      // Animate step by step
+      await animateSteps(totalPoints, newTotal);
 
       if (LOTTERY_POSITIONS.includes(newTotal) && newTotal > totalPoints) {
         setPendingPoints(newTotal);
@@ -173,7 +193,7 @@ const Index = () => {
           </div>
         </div>
 
-        <StampCard totalPoints={totalPoints} maxPoints={15} character={selectedCharacter ?? undefined} />
+        <StampCard totalPoints={totalPoints} maxPoints={15} character={selectedCharacter ?? undefined} animatingPosition={animatingPosition} />
 
         {/* Earned rewards */}
         {earnedRewards.length > 0 && (
