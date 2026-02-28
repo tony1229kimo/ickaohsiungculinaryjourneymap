@@ -10,7 +10,7 @@ import CharacterSelect, { GameCharacterInfo } from "@/components/game/CharacterS
 
 const MOCK_USER = {
   userId: "demo_user_123",
-  displayName: "洲際會員"
+  displayName: "洲際會員",
 };
 
 const EXPECTED_QR_CODE = "INTERCONTINENTAL_2024";
@@ -29,6 +29,7 @@ const Index = () => {
   const [lotteryType, setLotteryType] = useState<"chance" | "fate">("chance");
   const [pendingPoints, setPendingPoints] = useState(0);
   const [earnedRewards, setEarnedRewards] = useState<LotteryResult[]>([]);
+  const [animatingPosition, setAnimatingPosition] = useState<number | null>(null);
 
   // Character selection
   const [selectedCharacter, setSelectedCharacter] = useState<GameCharacterInfo | null>(null);
@@ -36,7 +37,7 @@ const Index = () => {
   useEffect(() => {
     const init = async () => {
       try {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 1500));
         setUserName(MOCK_USER.displayName);
         setStatusMessage("請先掃描店家 QR Code 以開始遊戲");
         setStatusType("info");
@@ -73,14 +74,33 @@ const Index = () => {
     setStatusType("success");
   };
 
+  const animateSteps = (from: number, to: number): Promise<void> => {
+    return new Promise((resolve) => {
+      let step = from;
+      const interval = setInterval(() => {
+        step++;
+        setAnimatingPosition(step);
+        if (step >= to) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setAnimatingPosition(null);
+            resolve();
+          }, 300);
+        }
+      }, 400);
+    });
+  };
+
   const handleDiceRoll = async (points: number) => {
     setIsProcessing(true);
     setStatusMessage("正在移動棋子...");
     setStatusType("loading");
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
       const newTotal = Math.min(totalPoints + points, 15);
+
+      // Animate step by step
+      await animateSteps(totalPoints, newTotal);
 
       if (LOTTERY_POSITIONS.includes(newTotal) && newTotal > totalPoints) {
         setPendingPoints(newTotal);
@@ -102,9 +122,9 @@ const Index = () => {
     localStorage.setItem(`points_${MOCK_USER.userId}`, newTotal.toString());
     setIsQRVerified(false);
     setStatusMessage(
-      newTotal >= 15 ?
-      "🏆 恭喜抵達終點！獲得招牌餐點兌換券" :
-      `前進 ${steps} 步！下次需重新掃描 QR Code`
+      newTotal >= 15
+        ? "🏆 恭喜抵達終點！獲得招牌餐點兌換券"
+        : `前進 ${steps} 步！下次需重新掃描 QR Code`
     );
     setStatusType("success");
     setIsProcessing(false);
@@ -137,100 +157,24 @@ const Index = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="w-full max-w-md px-4 -mt-4 space-y-6">
-
+        className="w-full max-w-md px-4 -mt-4 space-y-6"
+      >
         <div className="stamp-card">
           <h2 className="text-lg font-bold text-foreground mb-4 text-center flex items-center justify-center gap-2">
-            {selectedCharacter &&
-            <img src={selectedCharacter.image} alt="" className="w-8 h-8 object-contain" />
-            }
+            {selectedCharacter && (
+              <img src={selectedCharacter.image} alt="" className="w-8 h-8 object-contain" />
+            )}
             擲骰遊戲
           </h2>
 
-          {!isQRVerified ?
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-4">
+          {!isQRVerified ? (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-4">
               <div className="py-8">
                 <motion.div
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="text-6xl mb-4">
-                ♔
-洲際味蕾旅遊地圖
-InterContinental Kaohsiung
-
-👑
-洲際會員
-🎲🏆✨💫
-擲骰遊戲
-
-📱
-請先掃描店家 QR Code
-
-消費滿 2,000 元後請向店員索取 QR Code
-
-📷
-開始掃描 QR Code
-💬
-請先掃描店家 QR Code 以開始遊戲
-洲際味蕾旅遊地圖
-第 0 格
-
-🏨
-起點
-起點
-❓
-機會/命運
-11. 機會/命運
-🍰
-Deli 甜點
-2⭐2. Deli 甜點
-❓
-機會/命運
-33. 機會/命運
-❓
-機會/命運
-44. 機會/命運
-❓
-機會/命運
-55. 機會/命運
-❓
-機會/命運
-1010. 機會/命運
-❓
-機會/命運
-99. 機會/命運
-💰
-$800 折價
-8⭐8. $800 折價
-❓
-機會/命運
-77. 機會/命運
-💵
-$500 折價
-6⭐6. $500 折價
-🎁
-買一送一
-11⭐11. 買一送一
-❓
-機會/命運
-1212. 機會/命運
-❓
-機會/命運
-1313. 機會/命運
-❓
-機會/命運
-1414. 機會/命運
-🏆
-人氣餐點免費兌換
-15⭐15. 大獎 $3,880
-目前位置
-未達成
-已通過
-★
-特殊獎勵
-📱 查看店家 QR Code
-高雄洲際酒店 InterContinental Kaohsiung
-              </motion.div>
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="text-6xl mb-4"
+                >📱</motion.div>
                 <p className="text-foreground font-medium mb-2">請先掃描店家 QR Code</p>
                 <p className="text-sm text-muted-foreground">消費滿 2,000 元後請向店員索取 QR Code</p>
               </div>
@@ -239,20 +183,28 @@ $500 折價
                   <span className="text-xl">📷</span> 開始掃描 QR Code
                 </span>
               </button>
-            </motion.div> : <DiceRoller onRoll={handleDiceRoll} disabled={isLoading || isProcessing} />}
+            </motion.div>
+          ) : (
+            <DiceRoller onRoll={handleDiceRoll} disabled={isLoading || isProcessing} />
+          )}
 
           <div className="mt-4">
             <StatusMessage message={statusMessage} type={statusType} />
           </div>
         </div>
 
-        <StampCard totalPoints={totalPoints} maxPoints={15} character={selectedCharacter ?? undefined} />
+        <StampCard totalPoints={totalPoints} maxPoints={15} character={selectedCharacter ?? undefined} animatingPosition={animatingPosition} />
 
         {/* Earned rewards */}
-        {earnedRewards.length > 0 && <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="stamp-card">
+        {earnedRewards.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="stamp-card">
             <h3 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">🎁 已獲得獎項</h3>
             <div className="space-y-2">
-              {earnedRewards.map((reward, index) => <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border">
+              {earnedRewards.map((reward, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border"
+                >
                   <span className="text-2xl">{reward.reward.icon}</span>
                   <div className="flex-1">
                     <p className="font-medium text-foreground text-sm">{reward.reward.name}</p>
@@ -260,11 +212,18 @@ $500 折價
                       {reward.type === "chance" ? "機會卡" : "命運卡"}
                     </p>
                   </div>
-                </div>)}
+                </div>
+              ))}
             </div>
-          </motion.div>}
+          </motion.div>
+        )}
 
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="text-center text-xs text-muted-foreground pb-4 space-y-2">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-center text-xs text-muted-foreground pb-4 space-y-2"
+        >
           <p>
             <a href="/qrcode" className="inline-flex items-center gap-1 bg-accent/20 hover:bg-accent/30 px-3 py-1.5 rounded-full transition-colors text-foreground font-medium">
               📱 查看店家 QR Code
@@ -275,10 +234,18 @@ $500 折價
       </motion.main>
 
       <AnimatePresence>
-        {showScanner && <QRScanner expectedCode={EXPECTED_QR_CODE} onSuccess={handleQRSuccess} onClose={() => setShowScanner(false)} />}
+        {showScanner && (
+          <QRScanner expectedCode={EXPECTED_QR_CODE} onSuccess={handleQRSuccess} onClose={() => setShowScanner(false)} />
+        )}
       </AnimatePresence>
 
       <AnimatePresence>
-        {showLottery && <LotteryCard type={lotteryType} onClose={handleLotteryClose} onRewardClaimed={handleRewardClaimed} />}
+        {showLottery && (
+          <LotteryCard type={lotteryType} onClose={handleLotteryClose} onRewardClaimed={handleRewardClaimed} />
+        )}
       </AnimatePresence>
-    </div>);};export default Index;
+    </div>
+  );
+};
+
+export default Index;
