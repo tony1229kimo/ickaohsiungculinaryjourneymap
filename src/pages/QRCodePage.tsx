@@ -8,9 +8,11 @@ const QRCodePage = () => {
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full py-6 px-4 text-center"
-      >
-        <h1 className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">
+        className="w-full py-6 px-4 text-center">
+
+        <h1 className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">♔
+洲際味蕾旅遊地圖
+♔
           <span className="text-accent">♔</span>
           洲際大富翁
           <span className="text-accent">♔</span>
@@ -20,12 +22,10 @@ const QRCodePage = () => {
         </p>
       </motion.header>
 
-      <motion.main
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="w-full max-w-md px-4 space-y-6"
-      >
+      <motion.main initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="w-full max-w-md px-4 space-y-6">
+
         <div className="stamp-card">
           <h2 className="text-lg font-bold text-foreground mb-6 text-center">
             🎲 遊戲驗證 QR Code
@@ -44,10 +44,10 @@ const QRCodePage = () => {
           </div>
         </div>
 
-        <Link 
-          to="/" 
-          className="block text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
+        <Link
+          to="/"
+          className="block text-center text-sm text-muted-foreground hover:text-foreground transition-colors">
+
           ← 返回遊戲頁面
         </Link>
 
@@ -55,8 +55,8 @@ const QRCodePage = () => {
           <p>高雄洲際酒店 InterContinental Kaohsiung</p>
         </div>
       </motion.main>
-    </div>
-  );
+    </div>);
+
 };
 
 export default QRCodePage;

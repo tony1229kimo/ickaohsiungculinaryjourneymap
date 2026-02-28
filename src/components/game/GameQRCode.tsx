@@ -7,10 +7,10 @@ interface GameQRCodeProps {
   showDownload?: boolean;
 }
 
-const GameQRCode = ({ 
-  code = "INTERCONTINENTAL_2024", 
+const GameQRCode = ({
+  code = "INTERCONTINENTAL_2024",
   size = 200,
-  showDownload = true 
+  showDownload = true
 }: GameQRCodeProps) => {
   const handleDownload = () => {
     const svg = document.getElementById("game-qr-code");
@@ -28,7 +28,7 @@ const GameQRCode = ({
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
+
         const pngFile = canvas.toDataURL("image/png");
         const downloadLink = document.createElement("a");
         downloadLink.download = "intercontinental-game-qrcode.png";
@@ -44,8 +44,8 @@ const GameQRCode = ({
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col items-center gap-4"
-    >
+      className="flex flex-col items-center gap-4">
+
       <div className="bg-white p-4 rounded-xl shadow-lg border-4 border-accent">
         <QRCodeSVG
           id="game-qr-code"
@@ -54,8 +54,8 @@ const GameQRCode = ({
           level="H"
           includeMargin={true}
           bgColor="#FFFFFF"
-          fgColor="#3D3935"
-        />
+          fgColor="#3D3935" />
+
       </div>
       
       <div className="text-center space-y-1">
@@ -70,16 +70,16 @@ const GameQRCode = ({
         </code>
       </div>
 
-      {showDownload && (
-        <button
-          onClick={handleDownload}
-          className="dice-button text-sm py-2 px-4"
-        >
-          📥 下載 QR Code 圖片
-        </button>
-      )}
-    </motion.div>
-  );
+      {showDownload
+
+
+
+
+
+
+      }
+    </motion.div>);
+
 };
 
 export default GameQRCode;
