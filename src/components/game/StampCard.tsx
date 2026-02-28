@@ -264,12 +264,32 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="mt-4 p-3 rounded-xl text-center border border-accent/40"
+          className="mt-4 mx-4 p-4 rounded-xl text-center border border-accent/40"
           style={{ background: "linear-gradient(135deg, hsl(40 20% 72% / 0.5), hsl(43 85% 55% / 0.3))" }}>
 
-            <span className="text-base font-bold reward-text">
-              🎉 恭喜抵達終點！獲得招牌餐點兌換券
+            <span className="text-base font-bold reward-text block mb-2">
+              🎉 恭喜集滿 15 點！
             </span>
+            <p className="text-sm font-medium text-foreground mb-1">獲得「招牌餐點免費兌換」</p>
+            <p className="text-xs text-muted-foreground mb-3">最高價值 NT$3,880，點擊下方按鈕立即領取</p>
+            <a
+              href={REWARD_LINKS[15]}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                e.stopPropagation();
+                const url = REWARD_LINKS[15];
+                setTimeout(() => { window.open(url, "_blank", "noopener,noreferrer"); }, 0);
+              }}
+              className="inline-block w-full text-center py-3 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer no-underline"
+              style={{
+                background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
+                color: "hsl(0 0% 100%)",
+                boxShadow: "0 4px 12px hsl(43 85% 55% / 0.4)",
+              }}
+            >
+              🏆 領取終極大獎
+            </a>
           </motion.div>
         }
       </AnimatePresence>
