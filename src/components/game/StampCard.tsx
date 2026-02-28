@@ -64,6 +64,14 @@ const TILE_GRID: Record<number, {row: number;col: number;}> = {
   15: { row: 2, col: 1 } // End - near start
 };
 
+const REWARD_LINKS: Record<number, string> = {
+  2: "https://lin.ee/7s0cfjo",
+  6: "https://lin.ee/SEE7oY0",
+  8: "https://lin.ee/vSGWJwC",
+  11: "https://lin.ee/ufAu42p",
+  15: "https://lin.ee/CwCQVhj",
+};
+
 const TILE_DESCRIPTIONS: Record<number, string> = {
   0: "遊戲起點，從這裡開始你的味蕾旅程！",
   1: "抽取機會卡，看看會獲得什麼驚喜獎勵！",
@@ -307,8 +315,23 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
 
               <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground">尚未抵達</span>
               }
-                {REWARDS[selectedTile].isSpecial && <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">⭐ 特殊獎勵</span>}
+              {REWARDS[selectedTile].isSpecial && <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">⭐ 特殊獎勵</span>}
               </div>
+              {REWARD_LINKS[selectedTile] && selectedTile <= displayPosition && (
+                <a
+                  href={REWARD_LINKS[selectedTile]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 block w-full text-center py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
+                    color: "hsl(0 0% 100%)",
+                    boxShadow: "0 4px 12px hsl(43 85% 55% / 0.4)",
+                  }}
+                >
+                  🎁 領取獎勵
+                </a>
+              )}
             </>
           }
         </DialogContent>
