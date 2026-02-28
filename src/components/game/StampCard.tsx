@@ -49,17 +49,17 @@ const TILE_GRID: Record<number, {row: number;col: number;}> = {
   0: { row: 1, col: 1 }, // Start - top-left
   1: { row: 1, col: 2 },
   2: { row: 1, col: 3 },
-  3: { row: 1, col: 4 },
-  4: { row: 1, col: 5 },
-  5: { row: 1, col: 6 }, // top-right corner
-  6: { row: 2, col: 6 },
-  7: { row: 3, col: 6 },
-  8: { row: 4, col: 6 }, // bottom-right corner
-  9: { row: 4, col: 5 },
-  10: { row: 4, col: 4 },
-  11: { row: 4, col: 3 },
-  12: { row: 4, col: 2 },
-  13: { row: 4, col: 1 }, // bottom-left corner
+  3: { row: 1, col: 4 }, // top-right corner
+  4: { row: 2, col: 4 },
+  5: { row: 3, col: 4 },
+  6: { row: 4, col: 4 },
+  7: { row: 5, col: 4 },
+  8: { row: 6, col: 4 }, // bottom-right corner
+  9: { row: 6, col: 3 },
+  10: { row: 6, col: 2 },
+  11: { row: 6, col: 1 }, // bottom-left corner
+  12: { row: 5, col: 1 },
+  13: { row: 4, col: 1 },
   14: { row: 3, col: 1 },
   15: { row: 2, col: 1 } // End - near start
 };
@@ -138,8 +138,8 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
           <div className="grid relative"
           id="game-board-grid"
           style={{
-            gridTemplateColumns: "repeat(6, 1fr)",
-            gridTemplateRows: "repeat(4, minmax(68px, 1fr))",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gridTemplateRows: "repeat(6, minmax(68px, 1fr))",
             gap: "2px"
           }}>
 
@@ -222,8 +222,8 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
             <div
               className="flex flex-col items-center justify-center p-3 rounded-xl"
               style={{
-                gridRow: "2 / 4",
-                gridColumn: "2 / 6",
+                gridRow: "2 / 6",
+                gridColumn: "2 / 4",
                 background: "hsl(var(--tile-bg) / 0.6)"
               }}>
 
