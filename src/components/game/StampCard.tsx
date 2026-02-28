@@ -350,12 +350,16 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed, isJumping, isS
         onClick={onTap}
       >
         {/* Tile illustration */}
-        <div className="board-tile-icon">
+        <div className="board-tile-icon relative">
           <img
             src={reward.tileImage}
             alt={reward.name}
             className="w-full h-full object-cover"
+            style={reward.type === "lottery" ? { filter: "grayscale(100%)", opacity: 0.5 } : undefined}
           />
+          {reward.type === "lottery" && (
+            <span className="absolute inset-0 flex items-center justify-center text-lg font-black text-foreground/70" style={{ textShadow: "0 1px 2px rgba(255,255,255,0.5)" }}>!</span>
+          )}
         </div>
 
         {/* Label */}
