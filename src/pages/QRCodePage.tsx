@@ -10,13 +10,13 @@ const QRCodePage = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full py-6 px-4 text-center">
 
-        <h1 className="text-2xl font-bold text-foreground flex items-center justify-center gap-2">♔ 洲際味蕾旅遊地圖 ♔
+        
 
 
-          <span className="text-accent">♔</span>
-          洲際大富翁
-          
-        </h1>
+
+
+
+
         <p className="text-sm text-muted-foreground mt-1">
           店家專用 QR Code
         </p>
