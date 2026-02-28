@@ -180,7 +180,7 @@ const Index = () => {
           </div>
         </div>
 
-        <StampCard totalPoints={totalPoints} maxPoints={15} character={selectedCharacter ?? undefined} />
+        <StampCard totalPoints={totalPoints} maxPoints={15} character={selectedCharacter ?? undefined} isMoving={isProcessing} />
 
         {/* Earned rewards */}
         {earnedRewards.length > 0 && (
