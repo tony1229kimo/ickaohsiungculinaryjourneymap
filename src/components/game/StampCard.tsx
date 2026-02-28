@@ -119,13 +119,13 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
   const currentPosition = displayPosition;
 
   return (
-    <div className="stamp-card overflow-visible">
+    <div className="stamp-card overflow-visible p-0">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+      <div className="flex items-center justify-between mb-3 px-4 pt-4">
+        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
           <span className="shimmer-text">♔</span> 遊戲地圖
         </h3>
-        <span className="text-xs font-medium px-3 py-1 rounded-full bg-accent/15 text-accent-foreground">
+        <span className="text-sm font-medium px-3 py-1 rounded-full bg-accent/15 text-accent-foreground">
           第 {totalPoints} / 15 格
         </span>
       </div>
@@ -137,6 +137,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
           {/* Grid of tiles */}
           <div
             className="grid relative"
+            id="game-board-grid"
             style={{
               gridTemplateColumns: "repeat(6, 1fr)",
               gridTemplateRows: "repeat(4, 1fr)",
@@ -160,7 +161,6 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
                     reward={reward}
                     isCurrentPosition={currentPosition === i}
                     isPassed={currentPosition > i}
-                    character={character}
                     isJumping={animatingTile === i}
                     isStart={i === 0}
                     isEnd={i === 15}
@@ -170,9 +170,50 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
               );
             })}
 
+            {/* Floating character token overlay */}
+            {character && (
+              <motion.div
+                className="pointer-events-none z-30 flex items-center justify-center"
+                style={{
+                  gridRow: TILE_GRID[currentPosition].row,
+                  gridColumn: TILE_GRID[currentPosition].col,
+                  position: "relative",
+                }}
+                layout
+                transition={{ type: "spring", stiffness: 200, damping: 20, mass: 0.8 }}
+              >
+                <motion.div
+                  className="absolute -top-6"
+                  animate={{
+                    y: animatingTile !== null ? [-8, -18, 0, -6, 0] : [0, -4, 0],
+                    scale: animatingTile !== null ? [1, 1.15, 0.95, 1.05, 1] : 1,
+                  }}
+                  transition={{
+                    y: { duration: animatingTile !== null ? 0.3 : 1.5, repeat: animatingTile !== null ? 0 : Infinity, ease: "easeInOut" },
+                    scale: { duration: 0.3 },
+                  }}
+                >
+                  <motion.img
+                    src={character.image}
+                    alt="棋子"
+                    className="w-12 h-12 object-contain"
+                    style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.35))" }}
+                    animate={animatingTile !== null ? { rotate: [0, -15, 15, 0] } : { rotate: [-2, 2, -2] }}
+                    transition={{ duration: animatingTile !== null ? 0.3 : 2.5, repeat: animatingTile !== null ? 0 : Infinity, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    className="absolute bottom-[-2px] left-1/2 -translate-x-1/2 w-7 h-1.5 rounded-full"
+                    style={{ background: "radial-gradient(ellipse, hsl(0 0% 0% / 0.2), transparent)" }}
+                    animate={animatingTile !== null ? { scaleX: [1, 0.5, 1.2, 0.9, 1] } : { scaleX: [1, 0.85, 1] }}
+                    transition={{ duration: animatingTile !== null ? 0.3 : 1.5, repeat: animatingTile !== null ? 0 : Infinity }}
+                  />
+                </motion.div>
+              </motion.div>
+            )}
+
             {/* Center decorative area */}
             <div
-              className="flex flex-col items-center justify-center p-2 rounded-xl"
+              className="flex flex-col items-center justify-center p-3 rounded-xl"
               style={{
                 gridRow: "2 / 4",
                 gridColumn: "2 / 6",
@@ -182,23 +223,16 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
               <img
                 src={boardCenterDeco}
                 alt=""
-                className="w-20 h-20 object-contain mb-1 opacity-80"
+                className="w-24 h-24 object-contain mb-1 opacity-80"
               />
               <p
-                className="text-[10px] font-black tracking-widest text-center leading-tight"
+                className="text-sm font-black tracking-widest text-center leading-tight"
                 style={{ color: "hsl(var(--board-border-outer))", fontFamily: "'Playfair Display', serif" }}
               >
                 洲際味蕾
                 <br />
                 旅遊地圖
               </p>
-              {character && (
-                <img
-                  src={character.image}
-                  alt={character.name}
-                  className="w-10 h-10 object-contain mt-1 drop-shadow-md"
-                />
-              )}
             </div>
           </div>
         </div>
@@ -226,22 +260,22 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
       </AnimatePresence>
 
       {/* Legend */}
-      <div className="mt-5 flex flex-wrap gap-3 justify-center text-xs text-muted-foreground">
+      <div className="mt-4 flex flex-wrap gap-3 justify-center text-sm text-muted-foreground px-4 pb-4">
         {character && (
           <span className="flex items-center gap-1">
-            <img src={character.image} alt="角色" className="w-5 h-5 object-contain" />
+            <img src={character.image} alt="角色" className="w-6 h-6 object-contain" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.2))" }} />
             目前位置
           </span>
         )}
         <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded" style={{ background: "hsl(var(--board-bg))" }} />
+          <span className="w-3.5 h-3.5 rounded" style={{ background: "hsl(var(--board-bg))" }} />
           機會/命運
         </span>
         <span className="flex items-center gap-1">
           <span className="text-accent">★</span>
           特殊獎勵
         </span>
-        <span className="text-[10px] opacity-60">點擊格子查看詳情</span>
+        <span className="text-xs opacity-60">點擊格子查看詳情</span>
       </div>
 
       {/* Tile detail dialog */}
@@ -276,38 +310,6 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
   );
 };
 
-// Character token
-const CharacterToken = ({ image, isJumping }: { image: string; isJumping?: boolean }) => (
-  <motion.div
-    className="absolute -top-8 left-1/2 -translate-x-1/2 z-30 pointer-events-none"
-    initial={{ y: -20, opacity: 0 }}
-    animate={{
-      y: isJumping ? [-20, -28, 0, -6, 0] : [0, -5, 0],
-      opacity: 1,
-      scale: isJumping ? [1, 1.2, 0.9, 1.1, 1] : 1,
-    }}
-    transition={{
-      y: { duration: isJumping ? 0.35 : 1.2, repeat: isJumping ? 0 : Infinity, ease: "easeInOut" },
-      scale: { duration: 0.35 },
-      opacity: { duration: 0.2 },
-    }}
-  >
-    <motion.img
-      src={image}
-      alt="棋子"
-      className="w-10 h-10 object-contain"
-      style={{ filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.3))" }}
-      animate={isJumping ? { rotate: [0, -12, 12, 0] } : { rotate: [-2, 2, -2] }}
-      transition={{ duration: isJumping ? 0.35 : 2, repeat: isJumping ? 0 : Infinity, ease: "easeInOut" }}
-    />
-    <motion.div
-      className="absolute bottom-[-3px] left-1/2 -translate-x-1/2 w-6 h-1.5 rounded-full"
-      style={{ background: "radial-gradient(ellipse, hsl(0 0% 0% / 0.25), transparent)" }}
-      animate={isJumping ? { scaleX: [1, 0.5, 1.3, 0.8, 1] } : { scaleX: [1, 0.85, 1] }}
-      transition={{ duration: isJumping ? 0.35 : 1.2, repeat: isJumping ? 0 : Infinity }}
-    />
-  </motion.div>
-);
 
 // Board tile
 interface BoardTileProps {
@@ -315,13 +317,12 @@ interface BoardTileProps {
   reward: { name: string; shortName: string; isSpecial: boolean; tileImage: string; type: "lottery" | "fixed" };
   isCurrentPosition: boolean;
   isPassed: boolean;
-  character?: GameCharacterInfo;
   isJumping?: boolean;
   isStart?: boolean;
   isEnd?: boolean;
 }
 
-const BoardTile = ({ number, reward, isCurrentPosition, isPassed, character, isJumping, isStart, isEnd, onTap }: BoardTileProps & { onTap?: () => void }) => {
+const BoardTile = ({ number, reward, isCurrentPosition, isPassed, isJumping, isStart, isEnd, onTap }: BoardTileProps & { onTap?: () => void }) => {
   return (
     <div className="relative">
       <motion.div
@@ -375,9 +376,6 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed, character, isJ
         )}
 
       </motion.div>
-
-      {/* Character token OUTSIDE overflow */}
-      {isCurrentPosition && character && <CharacterToken image={character.image} isJumping={isJumping} />}
     </div>
   );
 };
