@@ -317,24 +317,33 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
               }
               {REWARDS[selectedTile].isSpecial && <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">⭐ 特殊獎勵</span>}
               </div>
-              {REWARD_LINKS[selectedTile] && selectedTile <= displayPosition && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    window.open(REWARD_LINKS[selectedTile!], "_blank", "noopener,noreferrer");
-                  }}
-                  className="mt-3 block w-full text-center py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer"
-                  style={{
-                    background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
-                    color: "hsl(0 0% 100%)",
-                    boxShadow: "0 4px 12px hsl(43 85% 55% / 0.4)",
-                  }}
-                >
-                  🎁 領取獎勵
-                </button>
-              )}
+              {(() => {
+                const link = REWARD_LINKS[selectedTile];
+                if (!link || selectedTile > displayPosition) return null;
+                return (
+                  <a
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Force open in case dialog intercepts
+                      const url = link;
+                      setTimeout(() => {
+                        window.open(url, "_blank", "noopener,noreferrer");
+                      }, 0);
+                    }}
+                    className="mt-3 block w-full text-center py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer no-underline"
+                    style={{
+                      background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
+                      color: "hsl(0 0% 100%)",
+                      boxShadow: "0 4px 12px hsl(43 85% 55% / 0.4)",
+                    }}
+                  >
+                    🎁 領取獎勵
+                  </a>
+                );
+              })()}
             </>
           }
         </DialogContent>
