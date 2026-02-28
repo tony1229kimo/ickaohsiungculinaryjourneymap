@@ -38,15 +38,15 @@ const QRCodePage = () => {
             <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
               <li>顧客消費滿 NT$2,000 後可參與遊戲</li>
               <li>請將此 QR Code 列印或展示給顧客掃描</li>
-              <li>顧客掃描後即可擲骰前進</li>
+              <li>顧客掃描後即可擲骰前進 1-3格
+
+              </li>
               <li>每次消費滿額可掃描一次</li>
             </ol>
           </div>
         </div>
 
-        <Link
-          to="/"
-          className="block text-center text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link to="/" className="block text-center text-sm text-muted-foreground hover:text-foreground transition-colors">
 
           ← 返回遊戲頁面
         </Link>
