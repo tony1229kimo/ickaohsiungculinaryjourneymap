@@ -38,13 +38,7 @@ const Index = () => {
       try {
         await new Promise(resolve => setTimeout(resolve, 1500));
         setUserName(MOCK_USER.displayName);
-        const savedVerified = localStorage.getItem(`qr_verified_${MOCK_USER.userId}`);
-        if (savedVerified === "true") {
-          setIsQRVerified(true);
-          setStatusMessage("歡迎回來！請繼續擲骰前進");
-        } else {
-          setStatusMessage("請先掃描店家 QR Code 以開始遊戲");
-        }
+        setStatusMessage("請掃描店家 QR Code 以擲骰一次");
         setStatusType("info");
 
         const savedPoints = localStorage.getItem(`points_${MOCK_USER.userId}`);
@@ -75,8 +69,7 @@ const Index = () => {
   const handleQRSuccess = () => {
     setIsQRVerified(true);
     setShowScanner(false);
-    localStorage.setItem(`qr_verified_${MOCK_USER.userId}`, "true");
-    setStatusMessage("✅ 驗證成功！可以開始擲骰");
+    setStatusMessage("✅ 驗證成功！請擲骰一次");
     setStatusType("success");
   };
 
@@ -107,10 +100,11 @@ const Index = () => {
   const finalizeDiceRoll = (newTotal: number, steps: number) => {
     setTotalPoints(newTotal);
     localStorage.setItem(`points_${MOCK_USER.userId}`, newTotal.toString());
+    setIsQRVerified(false);
     setStatusMessage(
       newTotal >= 15
         ? "🏆 恭喜抵達終點！獲得招牌餐點兌換券"
-        : `🎲 前進 ${steps} 步！繼續擲骰前進吧`
+        : `🎲 前進 ${steps} 步！請再次掃描 QR Code 進行下一次遊戲`
     );
     setStatusType("success");
     setIsProcessing(false);
@@ -161,8 +155,8 @@ const Index = () => {
                   transition={{ duration: 2, repeat: Infinity }}
                   className="text-6xl mb-4"
                 >📱</motion.div>
-                <p className="text-foreground font-medium mb-2">請先掃描店家 QR Code</p>
-                <p className="text-sm text-muted-foreground">請向店員索取 QR Code 開始遊戲</p>
+                <p className="text-foreground font-medium mb-2">請掃描店家 QR Code</p>
+                <p className="text-sm text-muted-foreground">每次掃描可擲骰一次，完成集點</p>
               </div>
               <button onClick={() => setShowScanner(true)} disabled={isLoading} className="dice-button">
                 <span className="flex items-center justify-center gap-2">
