@@ -24,7 +24,7 @@ const GameHeader = ({ userName, isLoading }: GameHeaderProps) => {
           transition={{ delay: 0.1, type: "spring", damping: 15 }}
         />
 
-        <h1 className="text-2xl font-black mb-1 tracking-widest" style={{ fontFamily: "'Playfair Display', 'Noto Sans TC', serif" }}>
+        <h1 className="text-2xl font-black mb-1 tracking-widest">
           洲際味蕾旅遊地圖
         </h1>
         <div className="gold-divider mx-auto max-w-[200px] my-2" style={{ background: "linear-gradient(90deg, transparent, hsl(43 85% 65% / 0.6), transparent)" }} />
