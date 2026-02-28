@@ -320,29 +320,29 @@
   }
 
   .board-tile-label {
-    @apply w-full text-center py-0.5 px-0.5 leading-none;
-    font-size: 8px;
+    @apply w-full text-center py-1 px-1 leading-tight;
+    font-size: 11px;
     font-weight: 800;
     color: hsl(var(--tile-text));
-    background: hsl(0 0% 100% / 0.5);
+    background: hsl(0 0% 100% / 0.6);
     letter-spacing: 0.02em;
   }
 
   .board-tile-number {
     @apply font-black;
-    font-size: 8px;
+    font-size: 11px;
   }
 
   .board-tile-name {
-    font-size: 7px;
+    font-size: 10px;
     font-weight: 700;
   }
 
   .board-ribbon {
-    @apply text-center py-1.5 -mx-2 -mb-2 mt-2 rounded-b-lg;
+    @apply text-center py-2 -mx-1 -mb-1 mt-2 rounded-b-xl;
     background: hsl(var(--board-border-outer));
     color: hsl(var(--tile-bg));
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.15em;
   }
