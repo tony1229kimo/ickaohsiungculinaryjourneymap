@@ -432,4 +432,49 @@
     background-clip: text;
     animation: gold-shimmer 3s ease-in-out infinite;
   }
+
+  /* Board tile current position glow - CSS only */
+  .board-tile-current-glow {
+    animation: tile-glow 1.5s ease-in-out infinite;
+  }
+
+  @keyframes tile-glow {
+    0%, 100% { box-shadow: 0 2px 8px hsl(43 85% 55% / 0.4); }
+    50% { box-shadow: 0 2px 16px hsl(43 85% 55% / 0.7); }
+  }
+
+  /* Character animations - CSS only for performance */
+  @keyframes char-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  @keyframes char-bounce-fast {
+    0%, 100% { transform: translateY(-2px) scale(1); }
+    25% { transform: translateY(-10px) scale(1.05); }
+    50% { transform: translateY(-4px) scale(1); }
+    75% { transform: translateY(-8px) scale(1.05); }
+  }
+
+  @keyframes char-sway {
+    0%, 100% { transform: rotate(-2deg); }
+    50% { transform: rotate(2deg); }
+  }
+
+  @keyframes char-wobble {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-8deg); }
+    50% { transform: rotate(0deg); }
+    75% { transform: rotate(8deg); }
+  }
+
+  @keyframes shadow-pulse {
+    0%, 100% { transform: translateX(-50%) scaleX(1); }
+    50% { transform: translateX(-50%) scaleX(0.85); }
+  }
+
+  @keyframes shadow-pulse-fast {
+    0%, 100% { transform: translateX(-50%) scaleX(1) scaleY(1); }
+    50% { transform: translateX(-50%) scaleX(0.6) scaleY(0.8); }
+  }
 }

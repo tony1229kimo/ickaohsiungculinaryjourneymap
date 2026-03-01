@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
@@ -179,51 +179,42 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
 
             {/* Floating character token overlay */}
             {character &&
-            <motion.div
+            <div
               className="pointer-events-none z-30 flex items-center justify-center"
               style={{
                 gridRow: TILE_GRID[currentPosition].row,
                 gridColumn: TILE_GRID[currentPosition].col,
-                position: "relative"
-              }}
-              layout
-              transition={{ type: "spring", stiffness: 200, damping: 20, mass: 0.8 }}>
-
-                <motion.div
-                className="absolute -top-6"
-                animate={{
-                  y: animatingTile !== null ? [-4, -10, -2, -8, -2] : [0, -4, 0],
-                  scale: animatingTile !== null ? [1, 1.05, 1, 1.05, 1] : 1
-                }}
-                transition={{
-                  y: { duration: animatingTile !== null ? 0.35 : 1.5, repeat: animatingTile !== null ? Infinity : Infinity, ease: "easeInOut" },
-                  scale: { duration: 0.35, repeat: animatingTile !== null ? Infinity : 0 }
-                }}>
-
-                  <motion.img
-                  src={character.image}
-                  alt="棋子"
-                  className="w-12 h-12 object-contain"
-                  style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.35))" }}
-                  animate={
-                  animatingTile !== null ?
-                  { rotate: [0, -8, 0, 8, 0], skewY: [0, -2, 0, 2, 0] } :
-                  { rotate: [-2, 2, -2] }
-                  }
-                  transition={{
-                    duration: animatingTile !== null ? 0.3 : 2.5,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }} />
-
-                  <motion.div
-                  className="absolute bottom-[-2px] left-1/2 -translate-x-1/2 w-7 h-1.5 rounded-full"
-                  style={{ background: "radial-gradient(ellipse, hsl(0 0% 0% / 0.2), transparent)" }}
-                  animate={animatingTile !== null ? { scaleX: [1, 0.6, 1, 0.6, 1], scaleY: [1, 0.8, 1, 0.8, 1] } : { scaleX: [1, 0.85, 1] }}
-                  transition={{ duration: animatingTile !== null ? 0.3 : 1.5, repeat: Infinity }} />
-
-                </motion.div>
-              </motion.div>
+                position: "relative",
+              }}>
+                <div
+                  className="absolute -top-6"
+                  style={{
+                    animation: animatingTile !== null
+                      ? "char-bounce-fast 0.35s ease-in-out infinite"
+                      : "char-float 2s ease-in-out infinite",
+                  }}>
+                  <img
+                    src={character.image}
+                    alt="棋子"
+                    className="w-12 h-12 object-contain"
+                    style={{
+                      filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.35))",
+                      animation: animatingTile !== null
+                        ? "char-wobble 0.3s ease-in-out infinite"
+                        : "char-sway 2.5s ease-in-out infinite",
+                    }}
+                  />
+                  <div
+                    className="absolute bottom-[-2px] left-1/2 -translate-x-1/2 w-7 h-1.5 rounded-full"
+                    style={{
+                      background: "radial-gradient(ellipse, hsl(0 0% 0% / 0.2), transparent)",
+                      animation: animatingTile !== null
+                        ? "shadow-pulse-fast 0.3s ease-in-out infinite"
+                        : "shadow-pulse 1.5s ease-in-out infinite",
+                    }}
+                  />
+                </div>
+              </div>
             }
 
             {/* Center decorative area */}
@@ -389,32 +380,23 @@ interface BoardTileProps {
   isEnd?: boolean;
 }
 
-const BoardTile = ({ number, reward, isCurrentPosition, isPassed, isJumping, isStart, isEnd, onTap }: BoardTileProps & {onTap?: () => void;}) => {
+const BoardTile = React.memo(({ number, reward, isCurrentPosition, isPassed, isJumping, isStart, isEnd, onTap }: BoardTileProps & {onTap?: () => void;}) => {
   return (
     <div className="relative">
-      <motion.div
-        className="board-tile cursor-pointer active:scale-95 transition-transform"
+      <div
+        className={`board-tile cursor-pointer active:scale-95 transition-transform ${isCurrentPosition ? "board-tile-current-glow" : ""}`}
         data-special={reward.isSpecial || undefined}
         data-current={isCurrentPosition || undefined}
         data-start={isStart || undefined}
         data-end={isEnd || undefined}
-        initial={false}
-        animate={
-        isCurrentPosition ?
-        { boxShadow: ["0 2px 8px hsl(43 85% 55% / 0.4)", "0 2px 16px hsl(43 85% 55% / 0.7)", "0 2px 8px hsl(43 85% 55% / 0.4)"] } :
-        {}
-        }
-        transition={{ duration: 1.5, repeat: Infinity }}
-        whileHover={{ scale: 1.06 }}
-        onClick={onTap}>
-
+        onClick={onTap}
+      >
         {/* Tile illustration */}
         <div className="board-tile-icon">
           <img
             src={reward.tileImage}
             alt={reward.name}
             className="w-full h-full object-cover" />
-
         </div>
 
         {/* Label */}
@@ -432,19 +414,14 @@ const BoardTile = ({ number, reward, isCurrentPosition, isPassed, isJumping, isS
 
         {/* Passed overlay */}
         {isPassed && !isCurrentPosition &&
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="absolute inset-0 flex items-center justify-center rounded-lg z-10"
+        <div
+          className="absolute inset-0 flex items-center justify-center rounded-lg z-10 animate-scale-in"
           style={{ background: "hsl(var(--board-bg) / 0.55)" }}>
-
             <span className="text-white text-sm font-bold" style={{ textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>✓</span>
-          </motion.div>
+          </div>
         }
-
-      </motion.div>
+      </div>
     </div>);
-
-};
+});
 
 export default StampCard;
