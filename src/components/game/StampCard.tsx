@@ -198,7 +198,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
                   <img
                     src={character.image}
                     alt="棋子"
-                    className="w-12 h-12 object-contain"
+                    className="w-20 h-20 object-contain"
                     style={{
                       filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.35))",
                       animation: animatingTile !== null

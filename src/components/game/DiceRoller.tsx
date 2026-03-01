@@ -46,7 +46,7 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
           <motion.div
             className="absolute -inset-6 rounded-full"
             style={{
-              background: "radial-gradient(circle, hsl(43 85% 55% / 0.12), transparent 70%)",
+              background: "radial-gradient(circle, hsl(0 0% 70% / 0.12), transparent 70%)",
             }}
             animate={isRolling ? { scale: [1, 1.4, 1], opacity: [0.3, 0.7, 0.3] } : { scale: 1, opacity: 0.3 }}
             transition={isRolling ? { duration: 0.4, repeat: Infinity } : {}}
@@ -59,7 +59,7 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
               width: "140px",
               height: "140px",
               borderRadius: "24px",
-              background: "linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(40 8% 95%) 50%, hsl(30 6% 90%) 100%)",
+              background: "linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(0 0% 96%) 50%, hsl(0 0% 92%) 100%)",
               border: "2.5px solid hsl(var(--border))",
               boxShadow: isRolling
                 ? "0 4px 12px hsl(var(--dice-shadow) / 0.2)"
