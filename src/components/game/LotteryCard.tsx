@@ -68,11 +68,20 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
     }
   }, [phase]);
 
-  const handleClaim = () => {
+  const handleClaim = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
     if (reward) {
       onRewardClaimed({ type, reward: { id: reward.id, name: reward.name, icon: reward.icon } });
       if (reward.link) {
-        window.open(reward.link, "_blank", "noopener,noreferrer");
+        // 使用 <a> 模擬點擊，避免被瀏覽器攔截
+        const a = document.createElement("a");
+        a.href = reward.link;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       }
     }
     onClose();
