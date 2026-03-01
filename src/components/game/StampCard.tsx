@@ -189,23 +189,22 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
                 position: "relative",
               }}>
                 <div
-                  className="absolute -top-6"
+                  className="absolute -top-4"
                   style={{
                     animation: animatingTile !== null
                       ? "char-bounce-fast 0.35s ease-in-out infinite"
                       : "char-float 2s ease-in-out infinite",
                   }}>
-                  <img
-                    src={character.image}
-                    alt="棋子"
-                    className="w-20 h-20 object-contain"
-                    style={{
-                      filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.35))",
-                      animation: animatingTile !== null
-                        ? "char-wobble 0.3s ease-in-out infinite"
-                        : "char-sway 2.5s ease-in-out infinite",
-                    }}
-                  />
+                  <div className="w-10 h-10 overflow-hidden rounded-full border-2 border-white shadow-md bg-white/80">
+                    <img
+                      src={character.image}
+                      alt="棋子"
+                      className="w-full h-full object-cover object-top scale-[1.3]"
+                      style={{
+                        filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.25))",
+                      }}
+                    />
+                  </div>
                   <div
                     className="absolute bottom-[-2px] left-1/2 -translate-x-1/2 w-7 h-1.5 rounded-full"
                     style={{
