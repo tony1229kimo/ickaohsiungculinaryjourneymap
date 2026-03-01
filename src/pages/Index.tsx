@@ -5,7 +5,8 @@ import DiceRoller from "@/components/game/DiceRoller";
 import StampCard from "@/components/game/StampCard";
 import StatusMessage from "@/components/game/StatusMessage";
 import QRScanner from "@/components/game/QRScanner";
-import LotteryCard, { isLotteryTile, getRandomLotteryType, LotteryResult } from "@/components/game/LotteryCard";
+import LotteryCard, { isLotteryTile, LotteryResult } from "@/components/game/LotteryCard";
+import CardPicker from "@/components/game/CardPicker";
 import CharacterSelect, { GameCharacterInfo } from "@/components/game/CharacterSelect";
 import iconScan from "@/assets/icon-scan.png";
 
@@ -26,6 +27,7 @@ const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isQRVerified, setIsQRVerified] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [showCardPicker, setShowCardPicker] = useState(false);
   const [showLottery, setShowLottery] = useState(false);
   const [lotteryType, setLotteryType] = useState<"chance" | "fate">("chance");
   const [pendingPoints, setPendingPoints] = useState(0);
@@ -85,8 +87,7 @@ const Index = () => {
 
       if (LOTTERY_POSITIONS.includes(newTotal) && newTotal > totalPoints) {
         setPendingPoints(newTotal);
-        setLotteryType(getRandomLotteryType());
-        setShowLottery(true);
+        setShowCardPicker(true);
         setIsProcessing(false);
         return;
       }
@@ -109,6 +110,12 @@ const Index = () => {
     );
     setStatusType("success");
     setIsProcessing(false);
+  };
+
+  const handleCardPick = (type: "chance" | "fate") => {
+    setShowCardPicker(false);
+    setLotteryType(type);
+    setShowLottery(true);
   };
 
   const handleLotteryClose = () => {
@@ -230,6 +237,12 @@ const Index = () => {
       <AnimatePresence>
         {showScanner && (
           <QRScanner expectedCode={EXPECTED_QR_CODE} onSuccess={handleQRSuccess} onClose={() => setShowScanner(false)} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showCardPicker && (
+          <CardPicker onPick={handleCardPick} />
         )}
       </AnimatePresence>
 
