@@ -27,20 +27,20 @@ interface StampCardProps {
 
 const REWARDS: Record<number, {name: string;shortName: string;isSpecial: boolean;tileImage: string;type: "lottery" | "fixed";}> = {
   0: { name: "起點", shortName: "起點", isSpecial: false, tileImage: tileStart, type: "fixed" },
-  1: { name: "機會/命運", shortName: "機會", isSpecial: false, tileImage: tileLottery, type: "lottery" },
+  1: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   2: { name: "指定 Delicatesse 甜點免費兌換", shortName: "甜點兌換", isSpecial: true, tileImage: tileRewardCake, type: "fixed" },
-  3: { name: "機會/命運", shortName: "命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  4: { name: "機會/命運", shortName: "機會", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  5: { name: "機會/命運", shortName: "命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
+  3: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
+  4: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
+  5: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   6: { name: "NT$ 500 折價券", shortName: "$500", isSpecial: true, tileImage: tileRewardMoney, type: "fixed" },
-  7: { name: "機會/命運", shortName: "機會", isSpecial: false, tileImage: tileLottery, type: "lottery" },
+  7: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   8: { name: "NT$ 800 折價券", shortName: "$800", isSpecial: true, tileImage: tileRewardMoney, type: "fixed" },
-  9: { name: "機會/命運", shortName: "命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  10: { name: "機會/命運", shortName: "機會", isSpecial: false, tileImage: tileLottery, type: "lottery" },
+  9: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
+  10: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   11: { name: "指定品項買一送一", shortName: "買1送1", isSpecial: true, tileImage: tileRewardGift, type: "fixed" },
-  12: { name: "機會/命運", shortName: "命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  13: { name: "機會/命運", shortName: "機會", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  14: { name: "機會/命運", shortName: "命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
+  12: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
+  13: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
+  14: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   15: { name: "招牌餐點免費兌換", shortName: "大獎", isSpecial: true, tileImage: tileRewardTrophy, type: "fixed" }
 };
 
