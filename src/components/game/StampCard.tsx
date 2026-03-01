@@ -272,16 +272,20 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
             </span>
             <p className="text-sm font-medium text-foreground mb-1">獲得「招牌餐點免費兌換」</p>
             <p className="text-xs text-muted-foreground mb-3">最高價值 NT$3,880，點擊下方按鈕立即領取</p>
-            <a
-              href={REWARD_LINKS[15]}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                const url = REWARD_LINKS[15];
-                setTimeout(() => { window.open(url, "_blank", "noopener,noreferrer"); }, 0);
+                e.preventDefault();
+                const a = document.createElement("a");
+                a.href = REWARD_LINKS[15];
+                a.target = "_blank";
+                a.rel = "noopener noreferrer";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
               }}
-              className="inline-block w-full text-center py-3 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer no-underline"
+              className="inline-block w-full text-center py-3 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer"
               style={{
                 background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
                 color: "hsl(0 0% 100%)",
@@ -289,7 +293,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
               }}
             >
               🏆 領取終極大獎
-            </a>
+            </button>
           </motion.div>
         }
       </AnimatePresence>
@@ -341,19 +345,20 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
                 const link = REWARD_LINKS[selectedTile];
                 if (!link || selectedTile > displayPosition) return null;
                 return (
-                  <a
-                    href={link}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      // Force open in case dialog intercepts
-                      const url = link;
-                      setTimeout(() => {
-                        window.open(url, "_blank", "noopener,noreferrer");
-                      }, 0);
+                      e.preventDefault();
+                      const a = document.createElement("a");
+                      a.href = link;
+                      a.target = "_blank";
+                      a.rel = "noopener noreferrer";
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
                     }}
-                    className="mt-3 block w-full text-center py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer no-underline"
+                    className="mt-3 block w-full text-center py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer"
                     style={{
                       background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
                       color: "hsl(0 0% 100%)",
@@ -361,7 +366,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
                     }}
                   >
                     🎁 領取獎勵
-                  </a>
+                  </button>
                 );
               })()}
             </>
