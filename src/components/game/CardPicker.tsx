@@ -83,7 +83,7 @@ const CardPicker = ({ onPick }: CardPickerProps) => {
                   transition={{ duration: 2.5, repeat: Infinity, delay: idx * 0.3 }}
                   style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.4))" }}
                 >
-                  {isChance ? "🎲" : "🔮"}
+                  {isChance ? "🎲" : "❗"}
                 </motion.div>
                 <p
                   className="text-base font-black tracking-widest"
