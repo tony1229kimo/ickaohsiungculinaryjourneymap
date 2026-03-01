@@ -288,7 +288,6 @@ const Index = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-6"
-            onClick={(e) => e.target === e.currentTarget && setFixedRewardPopup(null)}
           >
             <div
               className="absolute inset-0"
@@ -345,13 +344,6 @@ const Index = () => {
                 }}
               >
                 🎁 領取獎勵
-              </button>
-              <button
-                type="button"
-                onClick={() => setFixedRewardPopup(null)}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                稍後再領取
               </button>
             </motion.div>
           </motion.div>
