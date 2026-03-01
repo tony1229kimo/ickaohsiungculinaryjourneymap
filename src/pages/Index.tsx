@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import GameHeader from "@/components/game/GameHeader";
 import DiceRoller from "@/components/game/DiceRoller";
-import StampCard from "@/components/game/StampCard";
+import StampCard, { REWARD_LINKS, FIXED_REWARD_TILES } from "@/components/game/StampCard";
 import StatusMessage from "@/components/game/StatusMessage";
 import QRScanner from "@/components/game/QRScanner";
 import LotteryCard, { isLotteryTile, LotteryResult } from "@/components/game/LotteryCard";
@@ -32,6 +32,7 @@ const Index = () => {
   const [lotteryType, setLotteryType] = useState<"chance" | "fate">("chance");
   const [pendingPoints, setPendingPoints] = useState(0);
   const [earnedRewards, setEarnedRewards] = useState<LotteryResult[]>([]);
+  const [fixedRewardPopup, setFixedRewardPopup] = useState<{ tile: number; name: string; link: string } | null>(null);
 
   // Character selection
   const [selectedCharacter, setSelectedCharacter] = useState<GameCharacterInfo | null>(null);
@@ -99,10 +100,28 @@ const Index = () => {
     }
   };
 
+  const FIXED_REWARD_NAMES: Record<number, string> = {
+    2: "指定 Delicatesse 甜點免費兌換",
+    6: "NT$ 500 折價券",
+    8: "NT$ 800 折價券",
+    11: "指定品項買一送一",
+    15: "招牌餐點免費兌換",
+  };
+
   const finalizeDiceRoll = (newTotal: number, steps: number) => {
     setTotalPoints(newTotal);
     localStorage.setItem(`points_${MOCK_USER.userId}`, newTotal.toString());
     setIsQRVerified(false);
+
+    // Check if landed on a fixed reward tile
+    if (FIXED_REWARD_TILES.includes(newTotal) && REWARD_LINKS[newTotal]) {
+      setFixedRewardPopup({
+        tile: newTotal,
+        name: FIXED_REWARD_NAMES[newTotal] || `第 ${newTotal} 格獎勵`,
+        link: REWARD_LINKS[newTotal],
+      });
+    }
+
     setStatusMessage(
       newTotal >= 15
         ? "🏆 恭喜抵達終點！獲得招牌餐點兌換券"
@@ -249,6 +268,84 @@ const Index = () => {
       <AnimatePresence>
         {showLottery && (
           <LotteryCard type={lotteryType} onClose={handleLotteryClose} onRewardClaimed={handleRewardClaimed} />
+        )}
+      </AnimatePresence>
+
+      {/* Fixed reward popup */}
+      <AnimatePresence>
+        {fixedRewardPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-6"
+            onClick={(e) => e.target === e.currentTarget && setFixedRewardPopup(null)}
+          >
+            <div
+              className="absolute inset-0"
+              style={{ background: "radial-gradient(ellipse at center, hsl(0 0% 0% / 0.5), hsl(0 0% 0% / 0.75))" }}
+            />
+            <motion.div
+              initial={{ scale: 0.7, y: 30 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", damping: 15, stiffness: 200 }}
+              className="relative z-10 w-full max-w-xs rounded-3xl p-6 text-center border-2"
+              style={{
+                background: "linear-gradient(160deg, hsl(40 30% 95%), hsl(40 20% 88%))",
+                borderColor: "hsl(43 85% 55%)",
+                boxShadow: "0 20px 60px -10px hsl(0 0% 0% / 0.4)",
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.15, type: "spring", damping: 10 }}
+                className="text-6xl mb-3"
+              >
+                🎉
+              </motion.div>
+              <h3 className="text-lg font-black text-foreground mb-1">
+                恭喜獲得獎勵！
+              </h3>
+              <p className="text-base font-bold mb-1" style={{ color: "hsl(30 40% 30%)" }}>
+                {fixedRewardPopup.name}
+              </p>
+              <p className="text-xs text-muted-foreground mb-5">
+                第 {fixedRewardPopup.tile} 格固定獎勵
+              </p>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  const a = document.createElement("a");
+                  a.href = fixedRewardPopup.link;
+                  a.target = "_blank";
+                  a.rel = "noopener noreferrer";
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  setFixedRewardPopup(null);
+                }}
+                className="w-full py-3 rounded-2xl font-bold text-sm transition-all active:scale-95 cursor-pointer mb-3"
+                style={{
+                  background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
+                  color: "hsl(0 0% 100%)",
+                  boxShadow: "0 4px 12px hsl(43 85% 55% / 0.4)",
+                }}
+              >
+                🎁 領取獎勵
+              </button>
+              <button
+                type="button"
+                onClick={() => setFixedRewardPopup(null)}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                稍後再領取
+              </button>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
