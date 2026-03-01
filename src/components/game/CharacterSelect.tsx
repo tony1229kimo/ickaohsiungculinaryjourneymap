@@ -14,13 +14,13 @@ export const CHARACTERS: GameCharacterInfo[] = [
   {
     id: "celebration",
     name: "洲賀熊",
-    image: bearCelebration,
+    image: bearWish,
     description: "熱情好客的洲際吉祥物，給你洲賀（祝福），陪你暢遊大富翁！",
   },
   {
     id: "wish",
     name: "白金星願熊",
-    image: bearWish,
+    image: bearCelebration,
     description: "帶著滿滿祝福的聖誕限定角色！",
   },
 ];
