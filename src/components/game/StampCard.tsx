@@ -64,13 +64,15 @@ const TILE_GRID: Record<number, {row: number;col: number;}> = {
   15: { row: 2, col: 1 } // End - near start
 };
 
-const REWARD_LINKS: Record<number, string> = {
+export const REWARD_LINKS: Record<number, string> = {
   2: "https://lin.ee/7s0cfjo",
   6: "https://lin.ee/SEE7oY0",
   8: "https://lin.ee/vSGWJwC",
   11: "https://lin.ee/ufAu42p",
   15: "https://lin.ee/CwCQVhj",
 };
+
+export const FIXED_REWARD_TILES = [2, 6, 8, 11, 15];
 
 const TILE_DESCRIPTIONS: Record<number, string> = {
   0: "遊戲起點，從這裡開始你的味蕾旅程！",
