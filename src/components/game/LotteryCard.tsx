@@ -172,7 +172,7 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
                 transition={{ duration: 2, repeat: Infinity }}
                 style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.4))" }}
               >
-                {type === "chance" ? "🎲" : "❗"}
+                {type === "chance" ? "❗" : "🔮"}
               </motion.div>
               <p className="text-white text-lg font-black tracking-wider" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
                 {type === "chance" ? "機 會 卡" : "命 運 卡"}
@@ -241,7 +241,7 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
                         border: "1px solid hsl(0 0% 100% / 0.3)",
                       }}
                     >
-                      {type === "chance" ? "🎯 機會" : "❗ 命運"}
+                      {type === "chance" ? "❗ 機會" : "🔮 命運"}
                     </span>
                   </motion.div>
 
