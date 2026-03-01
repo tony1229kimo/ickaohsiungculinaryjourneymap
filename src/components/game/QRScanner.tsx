@@ -113,9 +113,42 @@ const QRScanner = ({ expectedCode, onSuccess, onClose }: QRScannerProps) => {
           )}
         </AnimatePresence>
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-sm text-muted-foreground mb-3">
           {isScanning ? "📷 請將相機對準店家提供的 QR Code" : "正在啟動相機..."}
         </p>
+
+        {/* Manual code input fallback */}
+        {error && (
+          <div className="mt-2">
+            <p className="text-xs text-muted-foreground text-center mb-2">或手動輸入驗證碼</p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const input = (e.currentTarget.elements.namedItem("code") as HTMLInputElement)?.value;
+                if (input === expectedCode) {
+                  stopScanner();
+                  onSuccess();
+                } else {
+                  setError("驗證碼不正確，請確認後重試");
+                }
+              }}
+              className="flex gap-2"
+            >
+              <input
+                name="code"
+                type="text"
+                placeholder="輸入驗證碼"
+                className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm"
+              />
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
+              >
+                驗證
+              </button>
+            </form>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );
