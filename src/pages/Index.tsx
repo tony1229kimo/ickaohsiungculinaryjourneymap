@@ -215,6 +215,7 @@ const Index = () => {
               🎁 <span>已獲得獎項</span>
               <span className="ml-auto text-xs font-normal text-muted-foreground">{earnedRewards.length} 項</span>
             </h3>
+            <p className="text-xs text-muted-foreground mb-3">（請從個人 LINE 帳號查看）</p>
             <div className="space-y-2.5">
               {earnedRewards.map((reward, index) => (
                 <motion.div
@@ -222,8 +223,15 @@ const Index = () => {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="flex items-center gap-3 p-3 rounded-2xl border border-border/60"
+                  className="flex items-center gap-3 p-3 rounded-2xl border border-border/60 cursor-pointer hover:bg-accent/30 transition-colors"
                   style={{ background: "hsl(0 0% 100% / 0.5)" }}
+                  onClick={() => {
+                    const a = document.createElement("a");
+                    a.href = "https://line.me/R/nv/coupon";
+                    a.target = "_blank";
+                    a.rel = "noopener noreferrer";
+                    a.click();
+                  }}
                 >
                   <span className="text-2xl">{reward.reward.icon}</span>
                   <div className="flex-1 min-w-0">
@@ -232,6 +240,7 @@ const Index = () => {
                       {reward.type === "chance" ? "機會卡" : "命運卡"}
                     </p>
                   </div>
+                  <span className="text-xs text-primary font-medium shrink-0">查看 →</span>
                 </motion.div>
               ))}
             </div>
