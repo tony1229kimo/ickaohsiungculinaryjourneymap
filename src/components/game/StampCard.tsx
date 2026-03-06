@@ -69,7 +69,7 @@ export const REWARD_LINKS: Record<number, string> = {
   6: "https://lin.ee/SEE7oY0",
   8: "https://lin.ee/vSGWJwC",
   11: "https://lin.ee/ufAu42p",
-  15: "https://lin.ee/CwCQVhj",
+  15: "https://lin.ee/CwCQVhj"
 };
 
 export const FIXED_REWARD_TILES = [2, 6, 8, 11, 15];
@@ -132,8 +132,8 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
     <div className="stamp-card overflow-visible p-0">
       {/* Header */}
       <div className="flex items-center justify-between mb-3 px-4 pt-4">
-        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-          <span className="shimmer-text">♔</span> 洲際味蕾旅遊地圖
+        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">♔
+洲遊味蕾旅遊地圖<span className="shimmer-text">♔</span> 洲際味蕾旅遊地圖
         </h3>
         <span className="text-sm font-medium px-3 py-1 rounded-full bg-accent/15 text-accent-foreground">
           第 {totalPoints} / 15 格
@@ -186,34 +186,34 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
               style={{
                 gridRow: TILE_GRID[currentPosition].row,
                 gridColumn: TILE_GRID[currentPosition].col,
-                position: "relative",
+                position: "relative"
               }}>
                 <div
-                  className="absolute -top-4"
-                  style={{
-                    animation: animatingTile !== null
-                      ? "char-bounce-fast 0.35s ease-in-out infinite"
-                      : "char-float 2s ease-in-out infinite",
-                  }}>
+                className="absolute -top-4"
+                style={{
+                  animation: animatingTile !== null ?
+                  "char-bounce-fast 0.35s ease-in-out infinite" :
+                  "char-float 2s ease-in-out infinite"
+                }}>
                   <div className="w-10 h-10 overflow-hidden rounded-full border-2 border-white shadow-md bg-white/80">
                     <img
-                      src={character.image}
-                      alt="棋子"
-                      className="w-full h-full object-cover object-top scale-[1.3]"
-                      style={{
-                        filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.25))",
-                      }}
-                    />
+                    src={character.image}
+                    alt="棋子"
+                    className="w-full h-full object-cover object-top scale-[1.3]"
+                    style={{
+                      filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.25))"
+                    }} />
+                  
                   </div>
                   <div
-                    className="absolute bottom-[-2px] left-1/2 -translate-x-1/2 w-7 h-1.5 rounded-full"
-                    style={{
-                      background: "radial-gradient(ellipse, hsl(0 0% 0% / 0.2), transparent)",
-                      animation: animatingTile !== null
-                        ? "shadow-pulse-fast 0.3s ease-in-out infinite"
-                        : "shadow-pulse 1.5s ease-in-out infinite",
-                    }}
-                  />
+                  className="absolute bottom-[-2px] left-1/2 -translate-x-1/2 w-7 h-1.5 rounded-full"
+                  style={{
+                    background: "radial-gradient(ellipse, hsl(0 0% 0% / 0.2), transparent)",
+                    animation: animatingTile !== null ?
+                    "shadow-pulse-fast 0.3s ease-in-out infinite" :
+                    "shadow-pulse 1.5s ease-in-out infinite"
+                  }} />
+                
                 </div>
               </div>
             }
@@ -265,25 +265,25 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
             <p className="text-sm font-medium text-foreground mb-1">獲得「招牌餐點免費兌換」</p>
             <p className="text-xs text-muted-foreground mb-3">最高價值 NT$3,880，點擊下方按鈕立即領取</p>
             <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                const a = document.createElement("a");
-                a.href = REWARD_LINKS[15];
-                a.target = "_blank";
-                a.rel = "noopener noreferrer";
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-              }}
-              className="inline-block w-full text-center py-3 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer"
-              style={{
-                background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
-                color: "hsl(0 0% 100%)",
-                boxShadow: "0 4px 12px hsl(43 85% 55% / 0.4)",
-              }}
-            >
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              const a = document.createElement("a");
+              a.href = REWARD_LINKS[15];
+              a.target = "_blank";
+              a.rel = "noopener noreferrer";
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+            }}
+            className="inline-block w-full text-center py-3 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer"
+            style={{
+              background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
+              color: "hsl(0 0% 100%)",
+              boxShadow: "0 4px 12px hsl(43 85% 55% / 0.4)"
+            }}>
+            
               🏆 領取終極大獎
             </button>
           </motion.div>
@@ -334,33 +334,33 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
               {REWARDS[selectedTile].isSpecial && <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">⭐ 特殊獎勵</span>}
               </div>
               {(() => {
-                const link = REWARD_LINKS[selectedTile];
-                if (!link || selectedTile > displayPosition) return null;
-                return (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      const a = document.createElement("a");
-                      a.href = link;
-                      a.target = "_blank";
-                      a.rel = "noopener noreferrer";
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                    }}
-                    className="mt-3 block w-full text-center py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer"
-                    style={{
-                      background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
-                      color: "hsl(0 0% 100%)",
-                      boxShadow: "0 4px 12px hsl(43 85% 55% / 0.4)",
-                    }}
-                  >
+              const link = REWARD_LINKS[selectedTile];
+              if (!link || selectedTile > displayPosition) return null;
+              return (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const a = document.createElement("a");
+                    a.href = link;
+                    a.target = "_blank";
+                    a.rel = "noopener noreferrer";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  }}
+                  className="mt-3 block w-full text-center py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
+                    color: "hsl(0 0% 100%)",
+                    boxShadow: "0 4px 12px hsl(43 85% 55% / 0.4)"
+                  }}>
+                  
                     🎁 領取獎勵
-                  </button>
-                );
-              })()}
+                  </button>);
+
+            })()}
             </>
           }
         </DialogContent>
@@ -390,8 +390,8 @@ const BoardTile = React.memo(({ number, reward, isCurrentPosition, isPassed, isJ
         data-current={isCurrentPosition || undefined}
         data-start={isStart || undefined}
         data-end={isEnd || undefined}
-        onClick={onTap}
-      >
+        onClick={onTap}>
+        
         {/* Tile illustration */}
         <div className="board-tile-icon">
           <img
