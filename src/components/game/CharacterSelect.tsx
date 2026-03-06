@@ -15,7 +15,7 @@ export const CHARACTERS: GameCharacterInfo[] = [
     id: "celebration",
     name: "洲賀熊",
     image: bearWish,
-    description: "熱情好客的洲際吉祥物，給你洲賀（祝福），陪你暢遊大富翁！",
+    description: "熱情好客的洲賀熊，陪你暢遊大富翁！",
   },
   {
     id: "wish",
