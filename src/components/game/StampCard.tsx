@@ -234,7 +234,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
 
               <p
                 className="text-sm font-black tracking-widest text-center leading-tight"
-                style={{ color: "hsl(var(--board-border-outer))", fontFamily: "'Playfair Display', serif" }}>洲遊味蕾
+                style={{ color: "hsl(var(--board-border-outer))", fontFamily: "'Playfair Display', serif" }}>洲遊味蕾旅遊地圖
 旅遊地圖
 
                 <br />
