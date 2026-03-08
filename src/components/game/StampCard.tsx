@@ -147,11 +147,11 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
         <div className="board-inner">
           {/* Grid of tiles */}
           <div className="grid relative" id="game-board-grid"
-            style={{
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gridTemplateRows: "repeat(6, minmax(68px, 1fr))",
-              gap: "2px"
-            }}>
+          style={{
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gridTemplateRows: "repeat(6, minmax(68px, 1fr))",
+            gap: "2px"
+          }}>
 
             {/* Render all tiles */}
             {Array.from({ length: 16 }, (_, i) => {
@@ -234,9 +234,9 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
 
               <p
                 className="text-sm font-black tracking-widest text-center leading-tight"
-                style={{ color: "hsl(var(--board-border-outer))", fontFamily: "'Playfair Display', serif" }}>
+                style={{ color: "hsl(var(--board-border-outer))", fontFamily: "'Playfair Display', serif" }}>洲遊味蕾
+旅遊地圖
 
-                洲際味蕾
                 <br />
                 旅遊地圖
               </p>
