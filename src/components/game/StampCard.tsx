@@ -132,8 +132,9 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
     <div className="stamp-card overflow-visible p-0">
       {/* Header */}
       <div className="flex items-center justify-between mb-3 px-4 pt-4">
-        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">♔
-洲遊味蕾旅遊地圖<span className="shimmer-text">♔</span> 洲際味蕾旅遊地圖
+        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+♔
+洲際味蕾旅遊地圖<span className="shimmer-text">♔</span> 洲際味蕾旅遊地圖
         </h3>
         <span className="text-sm font-medium px-3 py-1 rounded-full bg-accent/15 text-accent-foreground">
           第 {totalPoints} / 15 格
@@ -145,13 +146,12 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
         {/* Decorative border frame */}
         <div className="board-inner">
           {/* Grid of tiles */}
-          <div className="grid relative"
-          id="game-board-grid"
-          style={{
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gridTemplateRows: "repeat(6, minmax(68px, 1fr))",
-            gap: "2px"
-          }}>
+          <div className="grid relative" id="game-board-grid"
+            style={{
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gridTemplateRows: "repeat(6, minmax(68px, 1fr))",
+              gap: "2px"
+            }}>
 
             {/* Render all tiles */}
             {Array.from({ length: 16 }, (_, i) => {
