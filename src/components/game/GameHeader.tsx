@@ -8,7 +8,7 @@ interface GameHeaderProps {
 
 const GameHeader = ({ userName, isLoading }: GameHeaderProps) => {
   return (
-    <header className="game-header relative overflow-hidden">
+    <header className="relative overflow-hidden">
       <motion.img
         src={headerBanner}
         alt="洲遊味蕾旅遊地圖"
