@@ -133,8 +133,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
       {/* Header */}
       <div className="flex items-center justify-between mb-3 px-4 pt-4">
         <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-♔
-洲際味蕾旅遊地圖<span className="shimmer-text">♔</span> 洲際味蕾旅遊地圖
+洲際味蕾旅遊地圖
         </h3>
         <span className="text-sm font-medium px-3 py-1 rounded-full bg-accent/15 text-accent-foreground">
           第 {totalPoints} / 15 格
