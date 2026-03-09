@@ -12,7 +12,7 @@ const GameHeader = ({ userName, isLoading }: GameHeaderProps) => {
       <motion.img
         src={headerBanner}
         alt="洲遊味蕾旅遊地圖"
-        className="w-full h-auto object-cover"
+        className="w-full h-[180px] sm:h-[220px] md:h-[260px] object-cover object-center"
         initial={{ opacity: 0, scale: 1.05 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6 }}
