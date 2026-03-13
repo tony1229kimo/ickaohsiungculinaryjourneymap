@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import headerLogo from "@/assets/header-logo.png";
+import headerTitle from "@/assets/header-title.png";
 
 interface GameHeaderProps {
   userName?: string;
@@ -14,23 +14,13 @@ const GameHeader = ({ userName, isLoading }: GameHeaderProps) => {
         animate={{ opacity: 1, y: 0 }}
         className="relative z-10">
         
-        {/* Hotel logo */}
         <motion.img
-          src={headerLogo}
-          alt="InterContinental Kaohsiung"
-          className="w-16 h-16 mx-auto mb-3 object-contain drop-shadow-lg"
-          initial={{ scale: 0.8, opacity: 0 }}
+          src={headerTitle}
+          alt="洲遊味蕾旅遊地圖"
+          className="w-full max-w-[320px] mx-auto mb-4 object-contain drop-shadow-lg"
+          initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.1, type: "spring", damping: 15 }} />
-        
-
-        <h1 className="text-2xl font-black mb-1 tracking-widest">洲遊味蕾旅遊地圖
-
-        </h1>
-        <div className="gold-divider mx-auto max-w-[200px] my-2" style={{ background: "linear-gradient(90deg, transparent, hsl(43 85% 65% / 0.6), transparent)" }} />
-        <p className="text-xs tracking-[0.3em] uppercase opacity-70 mb-4">
-          InterContinental Kaohsiung
-        </p>
 
         {isLoading ?
         <motion.div
