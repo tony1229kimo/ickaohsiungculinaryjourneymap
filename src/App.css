@@ -37,6 +37,11 @@
   padding: 2em;
 }
 
+.gray-forscancolor {
+  background-color: #dad9d6;
+  color: #4a4a4a;
+}
+
 .read-the-docs {
   color: #888;
 }
