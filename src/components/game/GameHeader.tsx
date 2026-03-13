@@ -8,7 +8,7 @@ interface GameHeaderProps {
 
 const GameHeader = ({ userName, isLoading }: GameHeaderProps) => {
   return (
-    <header className="game-header bg-[#962222]">
+    <header className="game-header">
       
 
 
