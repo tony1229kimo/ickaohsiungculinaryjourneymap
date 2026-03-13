@@ -12,7 +12,7 @@ const GameHeader = ({ userName, isLoading }: GameHeaderProps) => {
       <img
         src={headerBg}
         alt="洲遊味蕾 Culinary Journey Map"
-        className="w-full max-w-lg h-auto object-cover px-3"
+        className="w-full max-w-lg h-auto object-cover px-3 sm:px-3 max-sm:max-w-full max-sm:px-0"
       />
     </header>
   );
