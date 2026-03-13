@@ -8,11 +8,11 @@ interface GameHeaderProps {
 
 const GameHeader = ({ userName, isLoading }: GameHeaderProps) => {
   return (
-    <header className="game-header relative overflow-hidden">
+    <header className="game-header relative overflow-hidden w-full flex justify-center">
       <img
         src={headerBg}
         alt="洲遊味蕾 Culinary Journey Map"
-        className="w-full h-auto object-cover"
+        className="w-full max-w-lg h-auto object-cover px-3"
       />
     </header>
   );
