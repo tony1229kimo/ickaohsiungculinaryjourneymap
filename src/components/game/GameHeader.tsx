@@ -8,7 +8,7 @@ interface GameHeaderProps {
 
 const GameHeader = ({ userName, isLoading }: GameHeaderProps) => {
   return (
-    <header className="game-header bg-[#962222]">
+    <header className="game-header">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
