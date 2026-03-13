@@ -234,10 +234,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
               <p
                 className="text-sm font-black tracking-widest text-center leading-tight"
                 style={{ color: "hsl(var(--board-border-outer))", fontFamily: "'Playfair Display', serif" }}>
-                擲骰集點
-完成旅途兌換大獎
-
-
+                消費滿
               </p>
             </div>
           </div>
@@ -251,7 +248,10 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
 
       {/* Grand prize notice */}
       <AnimatePresence>
-        {totalPoints >= maxPoints && <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+        {totalPoints >= maxPoints &&
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
           className="mt-4 mx-4 p-4 rounded-xl text-center border border-accent/40"
           style={{ background: "linear-gradient(135deg, hsl(40 20% 72% / 0.5), hsl(43 85% 55% / 0.3))" }}>
 
