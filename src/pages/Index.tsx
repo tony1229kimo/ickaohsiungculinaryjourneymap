@@ -174,7 +174,7 @@ const Index = () => {
             }
             <h2 className="text-lg font-black text-foreground tracking-wide">{"\n"}</h2>
           </div>
-          <p className="text-xs text-muted-foreground text-center mb-4">集點遊戲</p>
+          <p className="text-xs text-muted-foreground text-center mb-4">{userName ? `歡迎，${userName}` : '集點遊戲'}</p>
           <div className="gold-divider mb-5 rounded-none bg-primary-foreground text-destructive" />
 
           {!isQRVerified ?
