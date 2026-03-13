@@ -132,7 +132,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
     <div className="stamp-card overflow-visible p-0 rounded">
       {/* Header */}
       <div className="items-center justify-between mb-3 px-4 pt-4 flex flex-col">
-        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+        <h3 className="text-lg font-bold text-foreground flex items-center gap-2 my-[15px]">
 洲際味蕾旅遊地圖
         </h3>
         <span className="text-sm font-medium px-3 py-1 rounded-full bg-accent/15 text-accent-foreground">
