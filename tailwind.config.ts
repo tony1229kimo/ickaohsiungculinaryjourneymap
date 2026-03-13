@@ -58,6 +58,7 @@ export default {
         reward: {
           gold: "hsl(var(--reward-gold))",
         },
+        "light-gray": "hsl(var(--light-gray))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

@@ -37,6 +37,8 @@
 
     --radius: 1rem;
 
+    --light-gray: 45 4% 85%;
+
     /* Custom game tokens */
     --stamp-inactive: 0 1% 88%;
     --stamp-active: 40 28% 66%;
