@@ -196,7 +196,7 @@ const Index = () => {
               disabled={isLoading}
               className="dice-button rounded bg-gray-300 text-white">
               
-                <span className="flex items-center justify-center gap-2">📷 開始掃描 QR Code</span>
+                <span className="flex items-center justify-center gap-2"> 開始掃描 QR Code</span>
               </button>
             </motion.div> :
 
