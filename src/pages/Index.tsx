@@ -166,30 +166,30 @@ const Index = () => {
         transition={{ delay: 0.2 }}
         className="w-full max-w-lg px-3 -mt-4 space-y-6">
         
-        <div className="stamp-card rounded mx-0 py-[15px] my-[20px] mb-0 mt-[30px]">
-          <div className="items-center justify-center gap-2 mb-1 flex flex-col">
+        <div className="stamp-card rounded mx-0 py-[15px] my-[20px] mb-0 mt-[30px] space-y-[5px] text-xs [&_*]:text-xs">
+          <div className="items-center justify-center gap-[5px] flex flex-col">
             {selectedCharacter &&
             <img src={selectedCharacter.image} alt="" className="w-9 h-9 object-contain drop-shadow-md" />
             }
-            <h2 className="text-lg font-black text-foreground tracking-wide">
+            <h2 className="font-black text-foreground tracking-wide">
               ​
             </h2>
           </div>
-          <p className="text-xs text-muted-foreground text-center mb-4">集點遊戲</p>
-          <div className="gold-divider mb-5 rounded-none bg-primary-foreground text-destructive" />
+          <p className="text-muted-foreground text-center">集點遊戲</p>
+          <div className="gold-divider rounded-none bg-primary-foreground text-destructive" />
 
           {!isQRVerified ?
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-5">
-              <div className="scan-prompt">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-[5px]">
+              <div className="scan-prompt space-y-[5px]">
                 <motion.img
                 src={iconScan}
                 alt="掃描"
-                className="w-16 h-16 mx-auto mb-4 opacity-80"
+                className="w-16 h-16 mx-auto opacity-80"
                 animate={{ scale: [1, 1.06, 1] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }} />
               
-                <p className="text-foreground font-bold mb-1.5">請掃描店家 QR Code</p>
-                <p className="text-xs text-muted-foreground">每次掃描可擲骰一次，完成集點</p>
+                <p className="text-foreground font-bold">請掃描店家 QR Code</p>
+                <p className="text-muted-foreground">每次掃描可擲骰一次，完成集點</p>
               </div>
               <button onClick={() => setShowScanner(true)} disabled={isLoading} className="dice-button bg-primary-foreground">
                 <span className="flex items-center justify-center gap-2">
@@ -201,7 +201,7 @@ const Index = () => {
           <DiceRoller onRoll={handleDiceRoll} disabled={isLoading || isProcessing} />
           }
 
-          <div className="mt-5">
+          <div>
             <StatusMessage message={statusMessage} type={statusType} />
           </div>
         </div>
