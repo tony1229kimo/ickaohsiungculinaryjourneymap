@@ -9,6 +9,7 @@ import LotteryCard, { isLotteryTile, LotteryResult } from "@/components/game/Lot
 import CardPicker from "@/components/game/CardPicker";
 import CharacterSelect, { GameCharacterInfo } from "@/components/game/CharacterSelect";
 import iconScan from "@/assets/icon-scan.png";
+import uiBg from "@/assets/ui-background.png";
 
 const MOCK_USER = {
   userId: "demo_user_123",
@@ -155,7 +156,7 @@ const Index = () => {
   }
 
   return (
-    <div className="game-container">
+    <div className="game-container" style={{ backgroundImage: `url(${uiBg})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundAttachment: 'fixed' }}>
       <GameHeader userName={userName} isLoading={isLoading} />
 
       <motion.main
