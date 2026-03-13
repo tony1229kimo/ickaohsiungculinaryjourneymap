@@ -172,7 +172,7 @@ const Index = () => {
             <img src={selectedCharacter.image} alt="" className="w-9 h-9 object-contain drop-shadow-md" />
             }
             <h2 className="text-lg font-black text-foreground tracking-wide">
-              ​
+              {"\n"}
             </h2>
           </div>
           <p className="text-xs text-muted-foreground text-center mb-4">集點遊戲</p>
