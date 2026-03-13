@@ -142,7 +142,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
       </div>
 
       {/* Illustrated Board */}
-      <div className="board-illustrated border-0 rounded py-[20px] px-[20px] bg-transparent">
+      <div className="board-illustrated border-0 rounded py-[20px] px-[20px] bg-muted">
         {/* Decorative border frame */}
         <div className="board-inner">
           {/* Grid of tiles */}
@@ -288,7 +288,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
       </AnimatePresence>
 
       {/* Legend */}
-      <div className="mt-1 flex flex-wrap gap-3 justify-center text-sm text-muted-foreground px-4 pb-4">
+      <div className="mt-4 flex flex-wrap gap-3 justify-center text-sm text-muted-foreground px-4 pb-4">
         {character &&
         <span className="flex items-center gap-1">
             <img src={character.image} alt="角色" className="w-6 h-6 object-contain" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.2))" }} />
