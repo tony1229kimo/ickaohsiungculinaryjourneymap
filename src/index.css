@@ -128,7 +128,8 @@
 
 
   .stamp-card {
-    @apply rounded-3xl p-6 relative overflow-hidden;
+    @apply rounded-3xl relative overflow-hidden;
+    padding: 15px;
     background: hsl(var(--glass-bg) / 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
