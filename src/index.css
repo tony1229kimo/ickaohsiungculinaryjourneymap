@@ -129,14 +129,9 @@
   .stamp-card {
     @apply rounded-3xl relative overflow-hidden;
     padding: 15px;
-    background: hsl(var(--glass-bg) / 0.85);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid hsl(var(--glass-border) / 0.5);
-    box-shadow:
-      0 4px 24px -4px hsl(var(--dice-shadow) / 0.08),
-      0 12px 48px -12px hsl(var(--dice-shadow) / 0.12),
-      inset 0 1px 0 hsl(var(--glass-border) / 0.4);
+    background: transparent;
+    border: none;
+    box-shadow: none;
   }
 
   .stamp-slot {
@@ -253,9 +248,9 @@
   /* ===== Illustrated Board Game ===== */
   .board-illustrated {
     @apply rounded-2xl p-2 relative overflow-visible;
-    background: hsl(var(--board-bg));
-    border: 2px solid hsl(var(--board-border-outer));
-    box-shadow: 0 8px 30px -8px hsl(var(--dice-shadow) / 0.25);
+    background: transparent;
+    border: none;
+    box-shadow: none;
   }
 
   .board-inner {
