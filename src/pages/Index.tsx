@@ -156,7 +156,16 @@ const Index = () => {
   }
 
   return (
-    <div className="game-container" style={{ backgroundImage: `url(${uiBg})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundAttachment: 'fixed' }}>
+    <div
+      className="game-container"
+      style={{
+        backgroundImage: `url(${uiBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed"
+      }}>
+      
       <GameHeader userName={userName} isLoading={isLoading} />
 
       <motion.main
@@ -170,11 +179,17 @@ const Index = () => {
         <div className="stamp-card rounded mx-0 mb-0 mt-[30px] py-0 my-[35px] overflow-visible">
           <div className="relative gap-2 mb-1 flex-col flex items-center justify-center my-[5px]">
             {selectedCharacter &&
-            <img src={selectedCharacter.image} alt="" className="w-[96px] h-[96px] object-contain drop-shadow-md -mt-[24px]" />
+            <img
+              src={selectedCharacter.image}
+              alt=""
+              className="w-[96px] h-[96px] object-contain drop-shadow-md -mt-[24px] my-0" />
+
             }
             <h2 className="text-lg font-black text-foreground tracking-wide">{"\n"}</h2>
           </div>
-          <p className="text-xs text-muted-foreground text-center mb-4">{userName ? `歡迎，${userName}` : '集點遊戲'}</p>
+          <p className="text-xs text-muted-foreground text-center mb-4">
+            {userName ? `歡迎，${userName}` : "集點遊戲"}
+          </p>
           <div className="gold-divider mb-5 rounded-none bg-primary-foreground text-destructive" />
 
           {!isQRVerified ?
@@ -183,7 +198,7 @@ const Index = () => {
                 <motion.img
                 src={iconScan}
                 alt="掃描"
-                className="w-16 h-16 mx-auto mb-4 opacity-80"
+                className="w-16 h-16 mx-auto mb-1 opacity-80"
                 animate={{ scale: [1, 1.06, 1] }}
                 transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }} />
               
@@ -194,7 +209,7 @@ const Index = () => {
               <button
               onClick={() => setShowScanner(true)}
               disabled={isLoading}
-              className="dice-button rounded bg-gray-300 text-white">
+              className="dice-button rounded --secondary text-black bg-primary-foreground">
               
                 <span className="flex items-center justify-center gap-2">📷 開始掃描 QR Code</span>
               </button>
