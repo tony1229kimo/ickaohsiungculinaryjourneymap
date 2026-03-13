@@ -170,7 +170,7 @@ const Index = () => {
         <div className="stamp-card rounded mx-0 mb-0 mt-[30px] py-0 my-[35px]">
           <div className="relative gap-2 mb-1 flex-col flex items-center justify-center my-[5px]">
             {selectedCharacter &&
-            <img src={selectedCharacter.image} alt="" className="w-[72px] h-[72px] object-contain drop-shadow-md -mt-[18px]" />
+            <img src={selectedCharacter.image} alt="" className="w-[96px] h-[96px] object-contain drop-shadow-md -mt-[24px]" />
             }
             <h2 className="text-lg font-black text-foreground tracking-wide">{"\n"}</h2>
           </div>
