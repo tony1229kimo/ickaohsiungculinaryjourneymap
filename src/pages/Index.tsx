@@ -167,12 +167,12 @@ const Index = () => {
         className="w-full max-w-lg px-3 -mt-4 space-y-6">
         
         <div className="stamp-card rounded mx-0 py-[15px] my-[20px] mb-0 mt-[30px]">
-          <div className="flex items-center justify-center gap-2 mb-1">
+          <div className="items-center justify-center gap-2 mb-1 flex flex-col">
             {selectedCharacter &&
             <img src={selectedCharacter.image} alt="" className="w-9 h-9 object-contain drop-shadow-md" />
             }
             <h2 className="text-lg font-black text-foreground tracking-wide">
-              洲遊味蕾旅遊地圖
+              ​
             </h2>
           </div>
           <p className="text-xs text-muted-foreground text-center mb-4">集點遊戲</p>
