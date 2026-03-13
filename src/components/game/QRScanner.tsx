@@ -40,7 +40,7 @@ const QRScanner = ({ expectedCode, onSuccess, onClose }: QRScannerProps) => {
           },
           () => {
             // Ignore scan failures (no QR in frame)
-          }
+          },
         );
       } catch (err) {
         console.error("Camera error:", err);
@@ -87,6 +87,7 @@ const QRScanner = ({ expectedCode, onSuccess, onClose }: QRScannerProps) => {
         className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-2xl"
       >
         <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-foreground">掃描店家 QR Code</h3>
           <h3 className="text-lg font-bold text-foreground">掃描店家 QR Code</h3>
           <button
             onClick={handleClose}
