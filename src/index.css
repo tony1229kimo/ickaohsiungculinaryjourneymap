@@ -156,6 +156,7 @@
 
   .dice-button {
     @apply w-full py-2 px-4 rounded-2xl font-bold text-lg transition-all duration-300 relative overflow-hidden;
+    margin: 5px;
     background: var(--gradient-header);
     color: hsl(var(--primary-foreground));
     box-shadow:
