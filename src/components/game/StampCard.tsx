@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import stampCardBg from "@/assets/stamp-card-bg.png";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
