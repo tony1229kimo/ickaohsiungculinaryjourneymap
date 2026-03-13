@@ -166,7 +166,7 @@ const Index = () => {
         transition={{ delay: 0.2 }}
         className="w-full max-w-lg px-3 -mt-4 space-y-6">
         
-        <div className="stamp-card my-[15px] rounded">
+        <div className="stamp-card rounded mx-0 py-[15px] my-[20px] mb-0 mt-[30px]">
           <div className="flex items-center justify-center gap-2 mb-1">
             {selectedCharacter &&
             <img src={selectedCharacter.image} alt="" className="w-9 h-9 object-contain drop-shadow-md" />
