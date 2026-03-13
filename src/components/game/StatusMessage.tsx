@@ -30,7 +30,7 @@ const StatusMessage = ({ message, type = "info" }: StatusMessageProps) => {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 8 }}
         transition={{ duration: 0.25 }}
-        className={`flex items-center justify-center gap-2 py-2.5 px-4 text-sm rounded-xl ${color} ${bg}`}
+        className={`flex items-center justify-center gap-2 py-2.5 px-4 text-sm ${color}`}
       >
         <motion.span
           animate={type === "loading" ? { rotate: [0, 360] } : {}}

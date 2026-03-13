@@ -167,15 +167,11 @@ const Index = () => {
         className="w-full max-w-lg px-3 -mt-4 space-y-6">
         
         <div className="stamp-card rounded mx-0 py-[15px] my-[20px] mb-0 mt-[30px]">
-          <div className="items-center justify-center gap-2 mb-1 flex flex-col">
+          <div className="items-center justify-center gap-2 mb-1 flex flex-row">
             {selectedCharacter &&
             <img src={selectedCharacter.image} alt="" className="w-9 h-9 object-contain drop-shadow-md" />
             }
-            <h2 className="text-lg font-black text-foreground tracking-wide">
-              ​
-            </h2>
           </div>
-          <p className="text-xs text-muted-foreground text-center mb-4">集點遊戲</p>
           <div className="gold-divider mb-5" />
 
           {!isQRVerified ?
@@ -191,7 +187,7 @@ const Index = () => {
                 <p className="text-foreground font-bold mb-1.5">請掃描店家 QR Code</p>
                 <p className="text-xs text-muted-foreground">每次掃描可擲骰一次，完成集點</p>
               </div>
-              <button onClick={() => setShowScanner(true)} disabled={isLoading} className="dice-button bg-primary-foreground">
+              <button onClick={() => setShowScanner(true)} disabled={isLoading} className="dice-button bg-muted text-foreground text-[0.7rem]">
                 <span className="flex items-center justify-center gap-2">
                   📷 開始掃描 QR Code
                 </span>
