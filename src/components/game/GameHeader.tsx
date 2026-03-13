@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import headerLogo from "@/assets/header-logo.png";
+import headerBg from "@/assets/header-bg.png";
 
 interface GameHeaderProps {
   userName?: string;
@@ -8,58 +8,14 @@ interface GameHeaderProps {
 
 const GameHeader = ({ userName, isLoading }: GameHeaderProps) => {
   return (
-    <header className="game-header">
-      
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      
-
-      {/* Subtle decorative dots */}
-      <div className="absolute top-6 left-6 w-1.5 h-1.5 rounded-full bg-white/20" />
-      <div className="absolute top-6 right-6 w-1.5 h-1.5 rounded-full bg-white/20" />
-      <div className="absolute bottom-10 left-10 w-1 h-1 rounded-full bg-white/10" />
-      <div className="absolute bottom-10 right-10 w-1 h-1 rounded-full bg-white/10" />
-    </header>);
-
+    <header className="game-header relative overflow-hidden">
+      <img
+        src={headerBg}
+        alt="洲遊味蕾 Culinary Journey Map"
+        className="w-full h-auto object-cover"
+      />
+    </header>
+  );
 };
 
 export default GameHeader;
