@@ -168,9 +168,9 @@ const Index = () => {
         {/* ＯＯＯＯＯＯＯＯＯ掃描qrcode StartＯＯＯＯＯＯＯＯＯ*/}
 
         <div className="stamp-card rounded mx-0 mb-0 mt-[30px] py-0 my-[35px]">
-          <div className="gap-2 mb-1 flex-col flex items-center justify-center my-[5px]">
+          <div className="relative gap-2 mb-1 flex-col flex items-center justify-center my-[5px]">
             {selectedCharacter &&
-            <img src={selectedCharacter.image} alt="" className="w-9 h-9 object-contain drop-shadow-md" />
+            <img src={selectedCharacter.image} alt="" className="w-[72px] h-[72px] object-contain drop-shadow-md -mt-[53px]" />
             }
             <h2 className="text-lg font-black text-foreground tracking-wide">{"\n"}</h2>
           </div>
