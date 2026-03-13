@@ -141,7 +141,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
       </div>
 
       {/* Illustrated Board */}
-      <div className="board-illustrated">
+      <div className="board-illustrated border-0">
         {/* Decorative border frame */}
         <div className="board-inner">
           {/* Grid of tiles */}
