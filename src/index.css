@@ -248,9 +248,9 @@
   /* ===== Illustrated Board Game ===== */
   .board-illustrated {
     @apply rounded-2xl p-2 relative overflow-visible;
-    background: hsl(var(--board-bg));
-    border: 2px solid hsl(var(--board-border-outer));
-    box-shadow: 0 8px 30px -8px hsl(var(--dice-shadow) / 0.25);
+    background: transparent;
+    border: none;
+    box-shadow: none;
   }
 
   .board-inner {
