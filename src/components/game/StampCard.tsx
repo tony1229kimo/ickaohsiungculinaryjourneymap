@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import stampCardBg from "@/assets/stamp-card-bg.png";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
@@ -129,7 +130,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
   const currentPosition = displayPosition;
 
   return (
-    <div className="stamp-card overflow-visible p-0 rounded">
+    <div className="stamp-card overflow-visible p-0 rounded bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${stampCardBg})` }}>
       {/* Header */}
       <div className="items-center justify-between mb-3 px-4 pt-4 flex flex-col">
         <h3 className="text-lg font-bold text-foreground flex items-center gap-2 my-[15px]">
