@@ -164,7 +164,7 @@ const Index = () => {
         transition={{ delay: 0.2 }}
         className="w-full max-w-lg px-3 -mt-4 space-y-6"
       >
-        {/* ＯＯＯＯＯＯＯＯＯ掃描qrcdoe StartＯＯＯＯＯＯＯＯＯ*/}
+        {/* ＯＯＯＯＯＯＯＯＯ掃描qrcode StartＯＯＯＯＯＯＯＯＯ*/}
 
         <div className="stamp-card rounded mx-0 mb-0 mt-[30px] py-0 my-[35px]">
           <div className="gap-2 mb-1 flex-col flex items-center justify-center my-[5px]">
@@ -206,7 +206,7 @@ const Index = () => {
             <StatusMessage message={statusMessage} type={statusType} />
           </div>
         </div>
-        {/* 掃描ＯＯＯＯＯＯＯＯＯ qrcdoe EndＯＯＯＯＯＯＯＯＯ*/}
+        {/* 掃描ＯＯＯＯＯＯＯＯＯ qrcode EndＯＯＯＯＯＯＯＯＯ*/}
 
         <StampCard
           totalPoints={totalPoints}
