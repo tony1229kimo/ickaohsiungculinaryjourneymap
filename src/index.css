@@ -123,17 +123,7 @@
   }
 
   .game-header {
-    @apply w-full py-10 px-6 text-center text-primary-foreground relative overflow-hidden z-0;
-    background: var(--gradient-header);
-  }
-
-  .game-header::before {
-    content: '';
-    @apply absolute inset-0;
-    background: 
-      radial-gradient(ellipse at 50% 0%, hsl(43 85% 55% / 0.12) 0%, transparent 60%),
-      radial-gradient(circle at 20% 80%, hsl(43 85% 55% / 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, hsl(43 85% 55% / 0.06) 0%, transparent 40%);
+    @apply w-full relative overflow-hidden z-0;
   }
 
 
