@@ -209,7 +209,8 @@ const Index = () => {
               <button
               onClick={() => setShowScanner(true)}
               disabled={isLoading}
-              className="dice-button rounded text-foreground bg-light-gray">
+              style={{ backgroundColor: '#DAD9D6' }}
+              className="dice-button rounded text-foreground">
               
                 <span className="flex items-center justify-center gap-2">📷 開始掃描 QR Code</span>
               </button>
