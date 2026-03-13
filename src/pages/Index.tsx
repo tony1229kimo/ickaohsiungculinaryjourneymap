@@ -156,7 +156,7 @@ const Index = () => {
   }
 
   return (
-    <div className="game-container">
+    <div className="game-container" style={{ backgroundImage: `url(${uiBg})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', backgroundAttachment: 'fixed' }}>
       <GameHeader userName={userName} isLoading={isLoading} />
 
       <motion.main
