@@ -136,11 +136,6 @@
       radial-gradient(circle at 80% 20%, hsl(43 85% 55% / 0.06) 0%, transparent 40%);
   }
 
-  .game-header::after {
-    content: '';
-    @apply absolute bottom-0 left-0 right-0 h-8;
-    background: linear-gradient(to bottom, transparent, hsl(var(--background)));
-  }
 
   .stamp-card {
     @apply rounded-3xl p-6 relative overflow-hidden;
