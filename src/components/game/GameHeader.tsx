@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import headerLogo from "@/assets/header-logo.png";
+import headerTitle from "@/assets/header-title.png";
 
 interface GameHeaderProps {
   userName?: string;
