@@ -123,7 +123,7 @@
   }
 
   .game-header {
-    @apply w-full py-10 px-6 text-center text-primary-foreground relative overflow-hidden;
+    @apply w-full py-10 px-6 text-center text-primary-foreground relative overflow-hidden z-0;
     background: var(--gradient-header);
   }
 
