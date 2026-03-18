@@ -38,7 +38,7 @@ const REWARDS: Record<number, {name: string;shortName: string;isSpecial: boolean
   8: { name: "NT$ 800 折價券", shortName: "$800", isSpecial: true, tileImage: tileRewardMoney, type: "fixed" },
   9: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   10: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  11: { name: "指定品項買一送一", shortName: "買1送1", isSpecial: true, tileImage: tileRewardGift, type: "fixed" },
+  11: { name: "指定主餐「買一送一」優惠券", shortName: "買1送1", isSpecial: true, tileImage: tileRewardGift, type: "fixed" },
   12: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   13: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   14: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
