@@ -32,13 +32,14 @@ const StatusMessage = ({ message, type = "info" }: StatusMessageProps) => {
         transition={{ duration: 0.25 }} className="">
 
         
-        <motion.span
-          animate={type === "loading" ? { rotate: [0, 360] } : {}}
-          transition={{ duration: 1.5, repeat: type === "loading" ? Infinity : 0, ease: "linear" }}
-          className="text-base">
-          
-          {icons[type]}
-        </motion.span>
+        {type !== "info" && (
+          <motion.span
+            animate={type === "loading" ? { rotate: [0, 360] } : {}}
+            transition={{ duration: 1.5, repeat: type === "loading" ? Infinity : 0, ease: "linear" }}
+            className="text-base">
+            {icons[type]}
+          </motion.span>
+        )}
         <span className="font-medium">{message}</span>
       </motion.div>
     </AnimatePresence>);
