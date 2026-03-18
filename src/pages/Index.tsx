@@ -277,14 +277,6 @@ const Index = () => {
           transition={{ delay: 0.5 }}
           className="text-center text-xs text-muted-foreground pb-4 space-y-2">
           
-          <p>
-            <a
-              href="/qrcode"
-              className="inline-flex items-center gap-1 bg-accent/20 hover:bg-accent/30 px-3 py-1.5 rounded-full transition-colors text-foreground font-medium">
-              
-              📱 查看店家 QR Code
-            </a>
-          </p>
           <p>高雄洲際酒店 InterContinental Kaohsiung</p>
         </motion.div>
       </motion.main>
