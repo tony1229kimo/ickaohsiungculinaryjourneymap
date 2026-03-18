@@ -29,7 +29,7 @@ interface StampCardProps {
 const REWARDS: Record<number, {name: string;shortName: string;isSpecial: boolean;tileImage: string;type: "lottery" | "fixed";}> = {
   0: { name: "起點", shortName: "起點", isSpecial: false, tileImage: tileStart, type: "fixed" },
   1: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  2: { name: "指定 Delicatesse 甜點免費兌換", shortName: "甜點兌換", isSpecial: true, tileImage: tileRewardCake, type: "fixed" },
+  2: { name: "Delicatesse 烘焙坊「指定點心」免費兌換券", shortName: "點心兌換", isSpecial: true, tileImage: tileRewardCake, type: "fixed" },
   3: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   4: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   5: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
