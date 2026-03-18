@@ -8,21 +8,20 @@ import rewardIconCake from "@/assets/reward-icon-appetizer.png";
 import rewardIconDrink from "@/assets/reward-icon-drink.png";
 import rewardIconTea from "@/assets/reward-icon-tea.png";
 import rewardIcon200 from "@/assets/reward-icon-200.png";
-import rewardIcon300 from "@/assets/reward-icon-300.png";
+
 import rewardIcon100 from "@/assets/reward-icon-100.png";
 
-// 機會獎項 (6選1)
+// 機會獎項 (5選1)
 const CHANCE_REWARDS = [
-  { id: 1, name: "指定 Delicatesse 甜點免費兌換", icon: "🍰", image: rewardIconCake, link: "https://lin.ee/7s0cfjo" },
-  { id: 2, name: "指定飲品免費兌換", icon: "🥤", image: rewardIconDrink, link: "https://lin.ee/egEUGpY" },
-  { id: 3, name: "贈送氣泡茶乙瓶", icon: "🧋", image: rewardIconTea, link: "https://lin.ee/n9T9GuT" },
-  { id: 4, name: "招牌前菜免費兌換", icon: "🥗", image: rewardIconCake, link: "https://lin.ee/tNl7D4g" },
-  { id: 5, name: "NT$ 200 餐飲折價券", icon: "💵", image: rewardIcon200, link: "https://lin.ee/lbCp13p" },
-  { id: 6, name: "NT$ 300 餐飲折價券", icon: "💰", image: rewardIcon300, link: "https://lin.ee/ZiOfAit" },
+  { id: 1, name: "NT$ 200 餐飲優惠券", icon: "💵", image: rewardIcon200, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba3373e9a32d659304b5ac?platform=line&channelId=1656533412" },
+  { id: 2, name: "「招牌飲品」免費兌換券", icon: "🥤", image: rewardIconDrink, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba30fde9a32d659304932b?platform=line&channelId=1656533412" },
+  { id: 3, name: "「招牌前菜」免費兌換券", icon: "🥗", image: rewardIconCake, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba36038e2fbe3c064de78a?platform=line&channelId=1656533412" },
+  { id: 4, name: "Delicatesse 烘焙坊「指定點心」免費兌換券", icon: "🍰", image: rewardIconCake, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba2f6eb38a592f937df5ef?platform=line&channelId=1656533412" },
+  { id: 5, name: "玫果沁釀覆盆莓煎茶氣泡飲 免費兌換券", icon: "🧋", image: rewardIconTea, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba2f6eb38a592f937df5ef?platform=line&channelId=1656533412" },
 ];
 
 // 命運獎項 (固定)
-const FATE_REWARD = { id: 1, name: "NT$ 100 餐飲折價券", icon: "🎫", image: rewardIcon100, link: "https://lin.ee/wgC3hy1" };
+const FATE_REWARD = { id: 1, name: "NT$ 100 餐飲優惠券", icon: "🎫", image: rewardIcon100, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba33cd7fa27915d2d94316?platform=line&channelId=1656533412" };
 
 export interface LotteryResult {
   type: "chance" | "fate";

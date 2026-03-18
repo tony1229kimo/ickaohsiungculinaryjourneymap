@@ -29,20 +29,20 @@ interface StampCardProps {
 const REWARDS: Record<number, {name: string;shortName: string;isSpecial: boolean;tileImage: string;type: "lottery" | "fixed";}> = {
   0: { name: "起點", shortName: "起點", isSpecial: false, tileImage: tileStart, type: "fixed" },
   1: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  2: { name: "指定 Delicatesse 甜點免費兌換", shortName: "甜點兌換", isSpecial: true, tileImage: tileRewardCake, type: "fixed" },
+  2: { name: "Delicatesse 烘焙坊「指定點心」免費兌換券", shortName: "點心兌換", isSpecial: true, tileImage: tileRewardCake, type: "fixed" },
   3: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   4: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   5: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  6: { name: "NT$ 500 折價券", shortName: "$500", isSpecial: true, tileImage: tileRewardMoney, type: "fixed" },
+  6: { name: "NT$500 餐飲優惠券", shortName: "$500", isSpecial: true, tileImage: tileRewardMoney, type: "fixed" },
   7: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  8: { name: "NT$ 800 折價券", shortName: "$800", isSpecial: true, tileImage: tileRewardMoney, type: "fixed" },
+  8: { name: "NT$800 餐飲優惠券", shortName: "$800", isSpecial: true, tileImage: tileRewardMoney, type: "fixed" },
   9: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   10: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  11: { name: "指定品項買一送一", shortName: "買1送1", isSpecial: true, tileImage: tileRewardGift, type: "fixed" },
+  11: { name: "指定主餐「買一送一」優惠券", shortName: "買1送1", isSpecial: true, tileImage: tileRewardGift, type: "fixed" },
   12: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   13: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
   14: { name: "機會/命運", shortName: "機會/命運", isSpecial: false, tileImage: tileLottery, type: "lottery" },
-  15: { name: "招牌餐點免費兌換", shortName: "大獎", isSpecial: true, tileImage: tileRewardTrophy, type: "fixed" }
+  15: { name: "「招牌主餐」免費兌換券", shortName: "大獎", isSpecial: true, tileImage: tileRewardTrophy, type: "fixed" }
 };
 
 // Grid positions for perimeter layout (row, col) - 1-indexed for CSS grid
@@ -66,11 +66,11 @@ const TILE_GRID: Record<number, {row: number;col: number;}> = {
 };
 
 export const REWARD_LINKS: Record<number, string> = {
-  2: "https://lin.ee/7s0cfjo",
-  6: "https://lin.ee/SEE7oY0",
-  8: "https://lin.ee/vSGWJwC",
-  11: "https://lin.ee/ufAu42p",
-  15: "https://lin.ee/CwCQVhj"
+  2: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba2f6eb38a592f937df5ef?platform=line&channelId=1656533412",
+  6: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba35bec3025130d0f4eddb?platform=line&channelId=1656533412",
+  8: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba34b9c3025130d0f4e4f2?platform=line&channelId=1656533412",
+  11: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba379adb1d024b62b8b784?platform=line&channelId=1656533412",
+  15: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba34788fdc65656117bb93?platform=line&channelId=1656533412"
 };
 
 export const FIXED_REWARD_TILES = [2, 6, 8, 11, 15];
@@ -78,20 +78,20 @@ export const FIXED_REWARD_TILES = [2, 6, 8, 11, 15];
 const TILE_DESCRIPTIONS: Record<number, string> = {
   0: "遊戲起點，從這裡開始你的味蕾旅程！",
   1: "擲骰子至此格，可自選「機會」或「命運」卡片翻牌領獎！",
-  2: "可免費兌換一份指定 Delicatesse 甜點。",
+  2: "可免費兌換 Delicatesse 烘焙坊指定點心一份。",
   3: "擲骰子至此格，可自選「機會」或「命運」卡片翻牌領獎！",
   4: "擲骰子至此格，可自選「機會」或「命運」卡片翻牌領獎！",
   5: "擲骰子至此格，可自選「機會」或「命運」卡片翻牌領獎！",
-  6: "獲得 NT$500 折價券一張，可於下次消費時使用。",
+  6: "獲得 NT$500 餐飲優惠券一張，可於下次消費時使用。",
   7: "擲骰子至此格，可自選「機會」或「命運」卡片翻牌領獎！",
-  8: "獲得 NT$800 折價券一張，可於下次消費時使用。",
+  8: "獲得 NT$800 餐飲優惠券一張，可於下次消費時使用。",
   9: "擲骰子至此格，可自選「機會」或「命運」卡片翻牌領獎！",
   10: "擲骰子至此格，可自選「機會」或「命運」卡片翻牌領獎！",
-  11: "指定餐飲品項，享買一送一優惠（以價低者為贈品）。",
+  11: "指定主餐，享買一送一優惠（以價低者為贈品）。",
   12: "擲骰子至此格，可自選「機會」或「命運」卡片翻牌領獎！",
   13: "擲骰子至此格，可自選「機會」或「命運」卡片翻牌領獎！",
   14: "擲骰子至此格，可自選「機會」或「命運」卡片翻牌領獎！",
-  15: "🏆 終極大獎！可免費兌換主廚招牌主餐一份，最高價值 NT$3,880。"
+  15: "🏆 終極大獎！可免費兌換招牌主餐一份，最高價值 NT$3,880。"
 };
 
 const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) => {
