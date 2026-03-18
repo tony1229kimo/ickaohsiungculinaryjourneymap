@@ -102,11 +102,11 @@ const Index = () => {
   };
 
   const FIXED_REWARD_NAMES: Record<number, string> = {
-    2: "指定 Delicatesse 甜點免費兌換",
-    6: "NT$ 500 折價券",
-    8: "NT$ 800 折價券",
-    11: "指定品項買一送一",
-    15: "招牌餐點免費兌換"
+    2: "Delicatesse 烘焙坊「指定點心」免費兌換券",
+    6: "NT$500 餐飲優惠券",
+    8: "NT$800 餐飲優惠券",
+    11: "指定主餐「買一送一」優惠券",
+    15: "「招牌主餐」免費兌換券"
   };
 
   const finalizeDiceRoll = (newTotal: number, steps: number) => {
