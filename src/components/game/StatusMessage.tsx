@@ -10,14 +10,14 @@ const StatusMessage = ({ message, type = "info" }: StatusMessageProps) => {
     info: { color: "text-muted-foreground", bg: "bg-muted/30" },
     success: { color: "text-primary", bg: "bg-accent/10" },
     error: { color: "text-destructive", bg: "bg-destructive/5" },
-    loading: { color: "text-muted-foreground", bg: "bg-muted/20" },
+    loading: { color: "text-muted-foreground", bg: "bg-muted/20" }
   };
 
   const icons = {
     info: "💬",
     success: "✅",
     error: "❌",
-    loading: "⏳",
+    loading: "⏳"
   };
 
   const { color, bg } = styles[type];
@@ -30,19 +30,19 @@ const StatusMessage = ({ message, type = "info" }: StatusMessageProps) => {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 8 }}
         transition={{ duration: 0.25 }}
-        className={`flex items-center justify-center gap-2 py-2.5 px-4 text-sm ${color}`}
-      >
+        className={`flex items-center justify-center gap-2 py-2.5 px-4 text-sm ${color}`}>
+        
         <motion.span
           animate={type === "loading" ? { rotate: [0, 360] } : {}}
           transition={{ duration: 1.5, repeat: type === "loading" ? Infinity : 0, ease: "linear" }}
-          className="text-base"
-        >
+          className="text-base">
+          
           {icons[type]}
         </motion.span>
-        <span className="font-medium">{message}</span>
+        <span className="font-medium text-left">{message}</span>
       </motion.div>
-    </AnimatePresence>
-  );
+    </AnimatePresence>);
+
 };
 
 export default StatusMessage;
