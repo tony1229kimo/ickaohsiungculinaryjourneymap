@@ -29,8 +29,8 @@ const StatusMessage = ({ message, type = "info" }: StatusMessageProps) => {
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 8 }}
-        transition={{ duration: 0.25 }}
-        className={`flex items-center justify-center gap-2 py-2.5 px-4 text-sm ${color}`}>
+        transition={{ duration: 0.25 }} className="">
+
         
         <motion.span
           animate={type === "loading" ? { rotate: [0, 360] } : {}}
@@ -39,7 +39,7 @@ const StatusMessage = ({ message, type = "info" }: StatusMessageProps) => {
           
           {icons[type]}
         </motion.span>
-        <span className="text-center font-bold">{message}</span>
+        <span className="font-medium">{message}</span>
       </motion.div>
     </AnimatePresence>);
 
