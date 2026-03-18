@@ -8,7 +8,7 @@ import rewardIconCake from "@/assets/reward-icon-appetizer.png";
 import rewardIconDrink from "@/assets/reward-icon-drink.png";
 import rewardIconTea from "@/assets/reward-icon-tea.png";
 import rewardIcon200 from "@/assets/reward-icon-200.png";
-import rewardIcon300 from "@/assets/reward-icon-300.png";
+
 import rewardIcon100 from "@/assets/reward-icon-100.png";
 
 // 機會獎項 (5選1)
