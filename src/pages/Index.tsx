@@ -21,6 +21,7 @@ const EXPECTED_QR_CODE = "INTERCONTINENTAL_2026";
 const LOTTERY_POSITIONS = [1, 3, 4, 5, 7, 9, 10, 12, 13, 14];
 
 const Index = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState<string | undefined>();
   const [totalPoints, setTotalPoints] = useState(0);
