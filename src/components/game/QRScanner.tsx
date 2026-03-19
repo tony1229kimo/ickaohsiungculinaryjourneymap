@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface QRScannerProps {
   expectedCode: string;
+  externalDomain?: string;
   onSuccess: () => void;
   onClose: () => void;
 }
