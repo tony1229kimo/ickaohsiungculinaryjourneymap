@@ -4,11 +4,12 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface QRScannerProps {
   expectedCode: string;
+  externalDomain?: string;
   onSuccess: () => void;
   onClose: () => void;
 }
 
-const QRScanner = ({ expectedCode, onSuccess, onClose }: QRScannerProps) => {
+const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-map.zeabur.app", onSuccess, onClose }: QRScannerProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -29,8 +30,10 @@ const QRScanner = ({ expectedCode, onSuccess, onClose }: QRScannerProps) => {
             qrbox: { width: 250, height: 250 },
           },
           (decodedText) => {
-            // Check if scanned code matches expected
-            if (decodedText === expectedCode) {
+            // Check if scanned code matches expected text or is from external domain
+            const isValid = decodedText === expectedCode || 
+              (externalDomain && decodedText.includes(externalDomain));
+            if (isValid) {
               stopScanner();
               onSuccess();
             } else {
@@ -87,7 +90,6 @@ const QRScanner = ({ expectedCode, onSuccess, onClose }: QRScannerProps) => {
         className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-2xl"
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-foreground">掃描店家 QR Code</h3>
           <h3 className="text-lg font-bold text-foreground">掃描店家 QR Code</h3>
           <button
             onClick={handleClose}

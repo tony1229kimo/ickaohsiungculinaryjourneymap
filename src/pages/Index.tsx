@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "react-router-dom";
 import GameHeader from "@/components/game/GameHeader";
 import DiceRoller from "@/components/game/DiceRoller";
 import StampCard, { REWARD_LINKS, FIXED_REWARD_TILES } from "@/components/game/StampCard";
@@ -20,6 +21,7 @@ const EXPECTED_QR_CODE = "INTERCONTINENTAL_2026";
 const LOTTERY_POSITIONS = [1, 3, 4, 5, 7, 9, 10, 12, 13, 14];
 
 const Index = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState<string | undefined>();
   const [totalPoints, setTotalPoints] = useState(0);
@@ -65,6 +67,19 @@ const Index = () => {
     };
     init();
   }, []);
+
+  // Auto-verify if coming from external QR code system
+  useEffect(() => {
+    const ticket = searchParams.get("ticket");
+    if (ticket && !isLoading && !isQRVerified && selectedCharacter) {
+      setIsQRVerified(true);
+      setStatusMessage("✅ QR Code 驗證成功！請擲骰一次");
+      setStatusType("success");
+      // Remove ticket param from URL
+      searchParams.delete("ticket");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, isLoading, isQRVerified, selectedCharacter, setSearchParams]);
 
   const handleCharacterSelect = (char: GameCharacterInfo) => {
     setSelectedCharacter(char);
