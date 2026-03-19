@@ -68,6 +68,19 @@ const Index = () => {
     init();
   }, []);
 
+  // Auto-verify if coming from external QR code system
+  useEffect(() => {
+    const ticket = searchParams.get("ticket");
+    if (ticket && !isLoading && !isQRVerified && selectedCharacter) {
+      setIsQRVerified(true);
+      setStatusMessage("✅ QR Code 驗證成功！請擲骰一次");
+      setStatusType("success");
+      // Remove ticket param from URL
+      searchParams.delete("ticket");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, isLoading, isQRVerified, selectedCharacter, setSearchParams]);
+
   const handleCharacterSelect = (char: GameCharacterInfo) => {
     setSelectedCharacter(char);
     localStorage.setItem(`character_${MOCK_USER.userId}`, JSON.stringify(char));
