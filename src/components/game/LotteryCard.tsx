@@ -21,7 +21,7 @@ const CHANCE_REWARDS = [
 ];
 
 // 命運獎項 (固定)
-const FATE_REWARD = { id: 1, name: "NT$ 100 餐飲優惠券", icon: "🎫", image: rewardIcon100, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba33cd7fa27915d2d94316?platform=line&channelId=1656533412" };
+const FATE_REWARD = { id: 1, name: "NT$ 100 餐飲優惠券", icon: "🎫", image: rewardIcon100, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba342bc3025130d0f4e01a?platform=line&channelId=1656533412" };
 
 export interface LotteryResult {
   type: "chance" | "fate";
