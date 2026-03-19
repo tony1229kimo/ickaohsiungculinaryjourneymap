@@ -30,8 +30,10 @@ const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-map.zeabur.a
             qrbox: { width: 250, height: 250 },
           },
           (decodedText) => {
-            // Check if scanned code matches expected
-            if (decodedText === expectedCode) {
+            // Check if scanned code matches expected text or is from external domain
+            const isValid = decodedText === expectedCode || 
+              (externalDomain && decodedText.includes(externalDomain));
+            if (isValid) {
               stopScanner();
               onSuccess();
             } else {
