@@ -91,7 +91,6 @@ const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-map.zeabur.a
       >
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-bold text-foreground">掃描店家 QR Code</h3>
-          <h3 className="text-lg font-bold text-foreground">掃描店家 QR Code</h3>
           <button
             onClick={handleClose}
             className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted"
