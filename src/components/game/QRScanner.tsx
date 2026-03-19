@@ -9,7 +9,7 @@ interface QRScannerProps {
   onClose: () => void;
 }
 
-const QRScanner = ({ expectedCode, onSuccess, onClose }: QRScannerProps) => {
+const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-map.zeabur.app", onSuccess, onClose }: QRScannerProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
