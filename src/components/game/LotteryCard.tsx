@@ -239,7 +239,11 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
                       border: "1px solid hsl(0 0% 100% / 0.3)"
                     }}>
                     
-                      {type === "chance" ? "❗ 機會" : "🔮 命運"}
+                      {type === "chance" ? (
+                        <>❗<br />機會</>
+                      ) : (
+                        <>🔮<br />命運</>
+                      )}
                     </span>
                   </motion.div>
 
