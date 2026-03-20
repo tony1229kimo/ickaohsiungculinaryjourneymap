@@ -17,7 +17,7 @@ import tileRewardCake from "@/assets/tile-reward-cake.png";
 import tileRewardMoney from "@/assets/tile-reward-money.png";
 import tileRewardGift from "@/assets/tile-reward-gift.png";
 import tileRewardTrophy from "@/assets/tile-reward-trophy.png";
-import boardCenterDeco from "@/assets/board-center-deco.png";
+import stampCardCenter from "@/assets/stamp-card-center.png";
 
 interface StampCardProps {
   totalPoints: number;
