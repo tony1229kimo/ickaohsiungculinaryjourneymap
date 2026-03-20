@@ -189,31 +189,8 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
               boxShadow: "0 20px 60px -10px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.2)"
             }}>
             
-            {/* Background */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background: type === "chance" ?
-                "linear-gradient(160deg, hsl(35 40% 85%) 0%, hsl(40 50% 75%) 40%, hsl(30 35% 70%) 100%)" :
-                "linear-gradient(160deg, hsl(220 25% 75%) 0%, hsl(230 30% 55%) 40%, hsl(240 25% 40%) 100%)"
-              }} />
-            
 
-            {/* Decorative pattern */}
-            <div
-              className="absolute inset-0 opacity-10"
-              style={{
-                backgroundImage: `radial-gradient(circle at 25% 25%, hsl(0 0% 100%) 1px, transparent 1px),
-                                  radial-gradient(circle at 75% 75%, hsl(0 0% 100%) 1px, transparent 1px)`,
-                backgroundSize: "30px 30px"
-              }} />
-            
 
-            {/* Top light reflection */}
-            <div
-              className="absolute inset-x-0 top-0 h-1/3"
-              style={{ background: "linear-gradient(180deg, hsl(0 0% 100% / 0.2) 0%, transparent 100%)" }} />
-            
 
             {/* Front content */}
             <AnimatePresence>
