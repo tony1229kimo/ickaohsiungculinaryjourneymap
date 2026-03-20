@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import cardChanceBg from "@/assets/card-chance-bg.png";
 import cardFateBg from "@/assets/card-fate-bg.png";
+import bonusBg from "@/assets/bonus_BG.png";
 
 // Reward icon imports
 import rewardIconCake from "@/assets/reward-icon-appetizer.png";
