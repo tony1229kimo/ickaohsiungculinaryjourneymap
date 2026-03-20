@@ -17,7 +17,7 @@ import tileRewardCake from "@/assets/tile-reward-cake.png";
 import tileRewardMoney from "@/assets/tile-reward-money.png";
 import tileRewardGift from "@/assets/tile-reward-gift.png";
 import tileRewardTrophy from "@/assets/tile-reward-trophy.png";
-import boardCenterDeco from "@/assets/board-center-deco.png";
+import stampCardCenter from "@/assets/stamp-card-center.png";
 
 interface StampCardProps {
   totalPoints: number;
@@ -220,23 +220,15 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
 
             {/* Center decorative area */}
             <div
-              className="flex flex-col items-center justify-center p-3 rounded-xl"
+              className="rounded-xl"
               style={{
                 gridRow: "2 / 6",
                 gridColumn: "2 / 4",
-                background: "hsl(var(--tile-bg) / 0.6)"
+                backgroundImage: `url(${stampCardCenter})`,
+                backgroundSize: "contain",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
               }}>
-
-              <img
-                src={boardCenterDeco}
-                alt=""
-                className="w-24 h-24 object-contain mb-1 opacity-80" />
-
-              <p
-                className="text-sm font-black tracking-widest text-center leading-tight"
-                style={{ color: "hsl(var(--board-border-outer))", fontFamily: "'Playfair Display', serif" }}>
-                消費滿
-              </p>
             </div>
           </div>
         </div>
