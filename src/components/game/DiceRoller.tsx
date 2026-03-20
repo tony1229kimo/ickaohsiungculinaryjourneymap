@@ -25,7 +25,7 @@ const DiceDots = ({ value }: { value: number }) => (
         <div key={i} className="flex items-center justify-center">
           {hasDot && (
             <div
-              className="rounded-full"
+              className="rounded-full transition-all duration-300 ease-in-out"
               style={{
                 width: "18px",
                 height: "18px",
