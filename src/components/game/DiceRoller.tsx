@@ -1,16 +1,68 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import iconDice from "@/assets/icon-dice.png";
 
 interface DiceRollerProps {
   onRoll: (points: number) => void;
   disabled?: boolean;
 }
 
+const DICE_FACES: Record<number, number[][]> = {
+  1: [[1, 1]],
+  2: [[0, 2], [2, 0]],
+  3: [[0, 2], [1, 1], [2, 0]],
+  4: [[0, 0], [0, 2], [2, 0], [2, 2]],
+  5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]],
+  6: [[0, 0], [0, 2], [1, 0], [1, 2], [2, 0], [2, 2]],
+};
+
+const DiceDots = ({ value }: { value: number }) => (
+  <div className="grid grid-cols-3 grid-rows-3 gap-1.5 w-20 h-20">
+    {Array.from({ length: 9 }).map((_, i) => {
+      const row = Math.floor(i / 3);
+      const col = i % 3;
+      const hasDot = DICE_FACES[value]?.some(([r, c]) => r === row && c === col);
+      return (
+        <div key={i} className="flex items-center justify-center">
+          {hasDot && (
+            <div
+              className="rounded-full"
+              style={{
+                width: "18px",
+                height: "18px",
+                background: "radial-gradient(circle at 35% 35%, hsl(20 7% 32%), hsl(20 7% 18%))",
+                boxShadow: "inset 0 2px 3px hsl(0 0% 0% / 0.35), 0 1px 2px hsl(0 0% 100% / 0.25)",
+              }}
+            />
+          )}
+        </div>
+      );
+    })}
+  </div>
+);
+
 const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
   const [isRolling, setIsRolling] = useState(false);
   const [rollResult, setRollResult] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [previewFace, setPreviewFace] = useState(1);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Continuously randomize dice face when idle or rolling
+  useEffect(() => {
+    if (showResult && rollResult !== null) {
+      // Stop when result is shown
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      return;
+    }
+
+    intervalRef.current = setInterval(() => {
+      setPreviewFace(Math.floor(Math.random() * 6) + 1);
+    }, isRolling ? 80 : 300);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [isRolling, showResult, rollResult]);
 
   const handleRoll = async () => {
     setIsRolling(true);
@@ -27,11 +79,7 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
     onRoll(points);
   };
 
-  const diceFaces: Record<number, number[][]> = {
-    1: [[1, 1]],
-    2: [[0, 2], [2, 0]],
-    3: [[0, 2], [1, 1], [2, 0]],
-  };
+  const displayFace = showResult && rollResult !== null ? rollResult : previewFace;
 
   return (
     <div className="space-y-5">
@@ -92,15 +140,13 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
               }}
             />
 
-            {/* Dice dots */}
+            {/* Dice dots - always shown with animated or result face */}
             {showResult && rollResult !== null ? (
               <div className="grid grid-cols-3 grid-rows-3 gap-1.5 w-20 h-20">
                 {Array.from({ length: 9 }).map((_, i) => {
                   const row = Math.floor(i / 3);
                   const col = i % 3;
-                  const hasDot = diceFaces[rollResult]?.some(
-                    ([r, c]) => r === row && c === col
-                  );
+                  const hasDot = DICE_FACES[rollResult]?.some(([r, c]) => r === row && c === col);
                   return (
                     <div key={i} className="flex items-center justify-center">
                       {hasDot && (
@@ -127,17 +173,7 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
                 })}
               </div>
             ) : (
-              <motion.img
-                src={iconDice}
-                alt="骰子"
-                className="w-16 h-16 object-contain"
-                animate={
-                  isRolling
-                    ? { opacity: [1, 0.5, 1, 0.5, 1], rotate: [0, 180, 360] }
-                    : { opacity: 0.4 }
-                }
-                transition={isRolling ? { duration: 1.4 } : {}}
-              />
+              <DiceDots value={previewFace} />
             )}
           </motion.div>
 
@@ -166,13 +202,7 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
         className="dice-button"
       >
         <span className="flex items-center justify-center gap-3">
-          <motion.img
-            src={iconDice}
-            alt="骰子"
-            className="w-7 h-7 object-contain"
-            animate={isRolling ? { rotate: 360 } : {}}
-            transition={{ duration: 0.4, repeat: isRolling ? Infinity : 0 }}
-          />
+          <span className="text-xl">🎲</span>
           <span>{isRolling ? "擲骰中..." : "擲骰累積點數"}</span>
         </span>
       </button>
