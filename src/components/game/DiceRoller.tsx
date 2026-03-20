@@ -32,7 +32,7 @@ const DiceDots = ({ value }: { value: number }) => (
               boxShadow: "inset 0 2px 3px hsl(0 0% 0% / 0.35), 0 1px 2px hsl(0 0% 100% / 0.25)",
               opacity: hasDot ? 1 : 0,
               transform: hasDot ? "scale(1)" : "scale(0)",
-              transition: "opacity 0.3s ease, transform 0.3s ease",
+              transition: "opacity 0.1s ease, transform 0.1s ease",
             }}
           />
         </div>
