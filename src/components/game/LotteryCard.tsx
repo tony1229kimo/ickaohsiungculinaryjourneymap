@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import cardChanceBg from "@/assets/card-chance-bg.png";
 import cardFateBg from "@/assets/card-fate-bg.png";
+import bonusBg from "@/assets/bonus_BG.png";
 
 // Reward icon imports
 import rewardIconCake from "@/assets/reward-icon-appetizer.png";
@@ -221,7 +222,8 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.1 }}
-                className="relative z-10 flex flex-col items-center justify-center h-full px-6 py-8 bg-muted text-secondary-foreground">
+                className="relative z-10 flex flex-col items-center justify-center h-full px-6 py-8 text-secondary-foreground"
+                style={{ backgroundImage: `url(${bonusBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
                 
                   {/* Type badge */}
                   <motion.div
