@@ -181,12 +181,10 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
 
           {/* Card Front */}
           <div
-            className="absolute inset-0 rounded-3xl overflow-hidden border-2"
+            className="absolute inset-0 rounded-3xl overflow-hidden"
             style={{
               backfaceVisibility: "hidden",
               transform: "rotateY(180deg)",
-              borderColor: type === "chance" ? "hsl(40 50% 65%)" : "hsl(220 40% 55%)",
-              boxShadow: "0 20px 60px -10px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.2)"
             }}>
 
 
