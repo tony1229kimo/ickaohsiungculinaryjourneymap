@@ -13,19 +13,19 @@ import rewardIcon100 from "@/assets/reward-icon-100.png";
 
 // 機會獎項 (5選1)
 const CHANCE_REWARDS = [
-  { id: 1, name: "NT$ 200 餐飲優惠券", icon: "💵", image: rewardIcon200, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba3373e9a32d659304b5ac?platform=line&channelId=1656533412" },
-  { id: 2, name: "「招牌飲品」免費兌換券", icon: "🥤", image: rewardIconDrink, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba30fde9a32d659304932b?platform=line&channelId=1656533412" },
-  { id: 3, name: "「招牌前菜」免費兌換券", icon: "🥗", image: rewardIconCake, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba36038e2fbe3c064de78a?platform=line&channelId=1656533412" },
-  { id: 4, name: "Delicatesse 烘焙坊「指定點心」免費兌換券", icon: "🍰", image: rewardIconCake, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba2f6eb38a592f937df5ef?platform=line&channelId=1656533412" },
-  { id: 5, name: "玫果沁釀覆盆莓煎茶氣泡飲 免費兌換券", icon: "🧋", image: rewardIconTea, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba2f6eb38a592f937df5ef?platform=line&channelId=1656533412" },
-];
+{ id: 1, name: "NT$ 200 餐飲優惠券", icon: "💵", image: rewardIcon200, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba3373e9a32d659304b5ac?platform=line&channelId=1656533412" },
+{ id: 2, name: "「招牌飲品」免費兌換券", icon: "🥤", image: rewardIconDrink, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba30fde9a32d659304932b?platform=line&channelId=1656533412" },
+{ id: 3, name: "「招牌前菜」免費兌換券", icon: "🥗", image: rewardIconCake, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba36038e2fbe3c064de78a?platform=line&channelId=1656533412" },
+{ id: 4, name: "Delicatesse 烘焙坊「指定點心」免費兌換券", icon: "🍰", image: rewardIconCake, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba2f6eb38a592f937df5ef?platform=line&channelId=1656533412" },
+{ id: 5, name: "玫果沁釀覆盆莓煎茶氣泡飲 免費兌換券", icon: "🧋", image: rewardIconTea, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba2f6eb38a592f937df5ef?platform=line&channelId=1656533412" }];
+
 
 // 命運獎項 (固定)
 const FATE_REWARD = { id: 1, name: "NT$ 100 餐飲優惠券", icon: "🎫", image: rewardIcon100, link: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba342bc3025130d0f4e01a?platform=line&channelId=1656533412" };
 
 export interface LotteryResult {
   type: "chance" | "fate";
-  reward: { id: number; name: string; icon: string };
+  reward: {id: number;name: string;icon: string;};
 }
 
 interface LotteryCardProps {
@@ -36,7 +36,7 @@ interface LotteryCardProps {
 
 const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
   const [phase, setPhase] = useState<"back" | "flipping" | "front">("back");
-  const [reward, setReward] = useState<{ id: number; name: string; icon: string; image?: string; link?: string } | null>(null);
+  const [reward, setReward] = useState<{id: number;name: string;icon: string;image?: string;link?: string;} | null>(null);
 
   const bgImage = type === "chance" ? cardChanceBg : cardFateBg;
 
@@ -91,41 +91,41 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-    >
+      className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      
       {/* Backdrop */}
       <motion.div
         className="absolute inset-0"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        style={{ background: "radial-gradient(ellipse at center, hsl(0 0% 0% / 0.5), hsl(0 0% 0% / 0.75))" }}
-      />
+        style={{ background: "radial-gradient(ellipse at center, hsl(0 0% 0% / 0.5), hsl(0 0% 0% / 0.75))" }} />
+      
 
       {/* Sparkles */}
-      {phase === "front" && (
-        <>
-          {[...Array(8)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-2 h-2 rounded-full"
-              style={{
-                background: type === "chance"
-                  ? "hsl(40 80% 65%)"
-                  : "hsl(220 70% 70%)",
-                left: `${20 + Math.random() * 60}%`,
-                top: `${15 + Math.random() * 70}%`,
-              }}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{
-                opacity: [0, 1, 0],
-                scale: [0, 1.5, 0],
-                y: [0, -40 - Math.random() * 60],
-              }}
-              transition={{ delay: 0.3 + i * 0.1, duration: 1.2, ease: "easeOut" }}
-            />
-          ))}
+      {phase === "front" &&
+      <>
+          {[...Array(8)].map((_, i) =>
+        <motion.div
+          key={i}
+          className="absolute w-2 h-2 rounded-full"
+          style={{
+            background: type === "chance" ?
+            "hsl(40 80% 65%)" :
+            "hsl(220 70% 70%)",
+            left: `${20 + Math.random() * 60}%`,
+            top: `${15 + Math.random() * 70}%`
+          }}
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{
+            opacity: [0, 1, 0],
+            scale: [0, 1.5, 0],
+            y: [0, -40 - Math.random() * 60]
+          }}
+          transition={{ delay: 0.3 + i * 0.1, duration: 1.2, ease: "easeOut" }} />
+
+        )}
         </>
-      )}
+      }
 
       {/* 3D Card Container */}
       <div className="relative z-10" style={{ perspective: "1200px" }}>
@@ -135,41 +135,41 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
           initial={{ scale: 0.3, rotateY: 0 }}
           animate={{
             scale: 1,
-            rotateY: phase === "back" ? 0 : phase === "flipping" ? 180 : 180,
+            rotateY: phase === "back" ? 0 : phase === "flipping" ? 180 : 180
           }}
           transition={{
             scale: { duration: 0.4, ease: "easeOut" },
-            rotateY: { duration: 0.8, ease: [0.4, 0, 0.2, 1] },
-          }}
-        >
+            rotateY: { duration: 0.8, ease: [0.4, 0, 0.2, 1] }
+          }}>
+          
           {/* Card Back */}
           <div
             className="absolute inset-0 rounded-3xl overflow-hidden border-2"
             style={{
               backfaceVisibility: "hidden",
               borderColor: type === "chance" ? "hsl(40 50% 60%)" : "hsl(220 30% 50%)",
-              boxShadow: "0 20px 60px -10px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.2)",
-            }}
-          >
+              boxShadow: "0 20px 60px -10px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.2)"
+            }}>
+            
             <img src={bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
             {/* Shimmer effect on back */}
             <motion.div
               className="absolute inset-0"
               style={{
                 background: "linear-gradient(105deg, transparent 40%, hsl(0 0% 100% / 0.25) 45%, hsl(0 0% 100% / 0.35) 50%, hsl(0 0% 100% / 0.25) 55%, transparent 60%)",
-                backgroundSize: "200% 100%",
+                backgroundSize: "200% 100%"
               }}
               animate={{ backgroundPosition: ["-100% 0", "200% 0"] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            />
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} />
+            
             {/* Center icon */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <motion.div
                 className="text-6xl mb-3"
                 animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.4))" }}
-              >
+                style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.4))" }}>
+                
                 {type === "chance" ? "❗" : "🔮"}
               </motion.div>
               <p className="text-white text-lg font-black tracking-wider" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
@@ -185,18 +185,18 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
               backfaceVisibility: "hidden",
               transform: "rotateY(180deg)",
               borderColor: type === "chance" ? "hsl(40 50% 65%)" : "hsl(220 40% 55%)",
-              boxShadow: "0 20px 60px -10px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.2)",
-            }}
-          >
+              boxShadow: "0 20px 60px -10px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.2)"
+            }}>
+            
             {/* Background */}
             <div
               className="absolute inset-0"
               style={{
-                background: type === "chance"
-                  ? "linear-gradient(160deg, hsl(35 40% 85%) 0%, hsl(40 50% 75%) 40%, hsl(30 35% 70%) 100%)"
-                  : "linear-gradient(160deg, hsl(220 25% 75%) 0%, hsl(230 30% 55%) 40%, hsl(240 25% 40%) 100%)",
-              }}
-            />
+                background: type === "chance" ?
+                "linear-gradient(160deg, hsl(35 40% 85%) 0%, hsl(40 50% 75%) 40%, hsl(30 35% 70%) 100%)" :
+                "linear-gradient(160deg, hsl(220 25% 75%) 0%, hsl(230 30% 55%) 40%, hsl(240 25% 40%) 100%)"
+              }} />
+            
 
             {/* Decorative pattern */}
             <div
@@ -204,121 +204,121 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
               style={{
                 backgroundImage: `radial-gradient(circle at 25% 25%, hsl(0 0% 100%) 1px, transparent 1px),
                                   radial-gradient(circle at 75% 75%, hsl(0 0% 100%) 1px, transparent 1px)`,
-                backgroundSize: "30px 30px",
-              }}
-            />
+                backgroundSize: "30px 30px"
+              }} />
+            
 
             {/* Top light reflection */}
             <div
               className="absolute inset-x-0 top-0 h-1/3"
-              style={{ background: "linear-gradient(180deg, hsl(0 0% 100% / 0.2) 0%, transparent 100%)" }}
-            />
+              style={{ background: "linear-gradient(180deg, hsl(0 0% 100% / 0.2) 0%, transparent 100%)" }} />
+            
 
             {/* Front content */}
             <AnimatePresence>
-              {phase === "front" && reward && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="relative z-10 flex flex-col items-center justify-center h-full px-6 py-8"
-                >
+              {phase === "front" && reward &&
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="relative z-10 flex flex-col items-center justify-center h-full px-6 py-8 bg-muted text-secondary-foreground">
+                
                   {/* Type badge */}
                   <motion.div
-                    initial={{ y: -20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.15 }}
-                  >
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.15 }}>
+                  
                     <span
-                      className="inline-block px-4 py-1.5 rounded-full text-sm font-bold mb-4"
-                      style={{
-                        background: "hsl(0 0% 100% / 0.25)",
-                        backdropFilter: "blur(8px)",
-                        color: "white",
-                        textShadow: "0 1px 3px rgba(0,0,0,0.3)",
-                        border: "1px solid hsl(0 0% 100% / 0.3)",
-                      }}
-                    >
+                    className="inline-block px-4 py-1.5 rounded-full font-bold mb-4 text-primary border-primary text-xl text-center"
+                    style={{
+                      background: "hsl(0 0% 100% / 0.25)",
+                      backdropFilter: "blur(8px)",
+                      color: "white",
+                      textShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                      border: "1px solid hsl(0 0% 100% / 0.3)"
+                    }}>
+                    
                       {type === "chance" ? "❗ 機會" : "🔮 命運"}
                     </span>
                   </motion.div>
 
                   {/* Reward icon */}
                   <motion.div
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ delay: 0.25, type: "spring", damping: 12, stiffness: 150 }}
-                    className="relative mb-4"
-                  >
-                    {reward.image ? (
-                      <img
-                        src={reward.image}
-                        alt={reward.name}
-                        className="w-24 h-24 object-contain"
-                        style={{ filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.3))" }}
-                      />
-                    ) : (
-                      <span className="text-7xl" style={{ filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.3))" }}>
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.25, type: "spring", damping: 12, stiffness: 150 }}
+                  className="relative mb-4">
+                  
+                    {reward.image ?
+                  <img
+                    src={reward.image}
+                    alt={reward.name}
+                    className="w-24 h-24 object-contain"
+                    style={{ filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.3))" }} /> :
+
+
+                  <span className="text-7xl" style={{ filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.3))" }}>
                         {reward.icon}
                       </span>
-                    )}
+                  }
                     {/* Glow ring */}
                     <motion.div
-                      className="absolute inset-0 -m-3 rounded-full"
-                      style={{
-                        background: `radial-gradient(circle, ${type === "chance" ? "hsl(40 80% 65% / 0.3)" : "hsl(220 60% 65% / 0.3)"}, transparent 70%)`,
-                      }}
-                      animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0.8, 0.5] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    />
+                    className="absolute inset-0 -m-3 rounded-full"
+                    style={{
+                      background: `radial-gradient(circle, ${type === "chance" ? "hsl(40 80% 65% / 0.3)" : "hsl(220 60% 65% / 0.3)"}, transparent 70%)`
+                    }}
+                    animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0.8, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity }} />
+                  
                   </motion.div>
 
                   {/* Reward name */}
                   <motion.p
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="text-xl font-black text-center mb-6 px-2 text-white leading-snug"
-                    style={{ textShadow: "0 2px 8px rgba(0,0,0,0.35)" }}
-                  >
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-xl font-black text-center mb-6 px-2 leading-snug text-primary"
+                  style={{ textShadow: "0 2px 8px rgba(0,0,0,0.35)" }}>
+                  
                     {reward.name}
                   </motion.p>
 
                   {/* Claim button */}
                   <motion.button
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.55 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={handleClaim}
-                    className="px-8 py-3 rounded-2xl font-bold text-lg transition-colors"
-                    style={{
-                      background: "hsl(0 0% 100% / 0.92)",
-                      color: type === "chance" ? "hsl(30 40% 30%)" : "hsl(230 30% 25%)",
-                      boxShadow: "0 4px 20px hsl(0 0% 0% / 0.2), inset 0 1px 0 hsl(0 0% 100%)",
-                    }}
-                  >
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.55 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleClaim}
+                  className="px-8 py-3 rounded-2xl font-bold text-lg transition-colors"
+                  style={{
+                    background: "hsl(0 0% 100% / 0.92)",
+                    color: type === "chance" ? "hsl(30 40% 30%)" : "hsl(230 30% 25%)",
+                    boxShadow: "0 4px 20px hsl(0 0% 0% / 0.2), inset 0 1px 0 hsl(0 0% 100%)"
+                  }}>
+                  
                     領取獎勵 🎉
                   </motion.button>
 
                   {/* Note */}
                   <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.7 }}
-                    transition={{ delay: 0.7 }}
-                    className="text-xs mt-4 text-white/80"
-                  >
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.7 }}
+                  transition={{ delay: 0.7 }}
+                  className="text-xs mt-4 text-primary">
+                  
                     獎券將發送至您的帳戶
                   </motion.p>
                 </motion.div>
-              )}
+              }
             </AnimatePresence>
           </div>
         </motion.div>
       </div>
-    </motion.div>
-  );
+    </motion.div>);
+
 };
 
 export default LotteryCard;
