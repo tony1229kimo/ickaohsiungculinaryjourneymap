@@ -23,17 +23,18 @@ const DiceDots = ({ value }: { value: number }) => (
       const hasDot = DICE_FACES[value]?.some(([r, c]) => r === row && c === col);
       return (
         <div key={i} className="flex items-center justify-center">
-          {hasDot && (
-            <div
-              className="rounded-full"
-              style={{
-                width: "18px",
-                height: "18px",
-                background: "radial-gradient(circle at 35% 35%, hsl(20 7% 32%), hsl(20 7% 18%))",
-                boxShadow: "inset 0 2px 3px hsl(0 0% 0% / 0.35), 0 1px 2px hsl(0 0% 100% / 0.25)",
-              }}
-            />
-          )}
+          <div
+            className="rounded-full"
+            style={{
+              width: "18px",
+              height: "18px",
+              background: "radial-gradient(circle at 35% 35%, hsl(20 7% 32%), hsl(20 7% 18%))",
+              boxShadow: "inset 0 2px 3px hsl(0 0% 0% / 0.35), 0 1px 2px hsl(0 0% 100% / 0.25)",
+              opacity: hasDot ? 1 : 0,
+              transform: hasDot ? "scale(1)" : "scale(0)",
+              transition: "opacity 0.3s ease, transform 0.3s ease",
+            }}
+          />
         </div>
       );
     })}
