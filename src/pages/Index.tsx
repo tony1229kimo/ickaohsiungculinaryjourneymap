@@ -199,7 +199,7 @@ const Index = () => {
             <img
               src={selectedCharacter.image}
               alt=""
-              className="w-[96px] h-[96px] object-contain drop-shadow-md -mt-[24px] my-0" />
+              className="w-[96px] h-[96px] object-contain drop-shadow-md -mt-[12px] my-0" />
 
             }
             <h2 className="text-lg font-black text-foreground tracking-wide">{"\n"}</h2>
