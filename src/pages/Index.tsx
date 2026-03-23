@@ -228,7 +228,7 @@ const Index = () => {
                         @keyframes qs-check-in { 0%, 62% { stroke-dashoffset:45; opacity:0; transform:scale(0.6); } 75% { stroke-dashoffset:0; opacity:1; transform:scale(1.1); } 85%, 92% { stroke-dashoffset:0; opacity:1; transform:scale(1); } 100% { opacity:0; } }
                         @keyframes qs-scan-action { 0%, 45% { transform:translateY(0); opacity:0; } 50% { opacity:1; } 60% { transform:translateY(50px); opacity:1; } 65%, 100% { opacity:0; } }
                         .qs-phone { animation: qs-phone-shake 4s infinite ease-in-out; transform-origin: center; }
-                        .qs-qr { transform-origin: center; transform-box: fill-box; animation: qs-qr-transform 4s infinite ease-in-out; }
+                        .qs-qr { transform-origin: left; transform-box: fill-box; animation: qs-qr-transform 4s infinite ease-in-out; }
                         .qs-checkmark { stroke-dasharray:45; stroke-dashoffset:45; transform-origin: center; transform-box: fill-box; animation: qs-check-in 4s infinite ease-out; }
                         .qs-scanbar { animation: qs-scan-action 4s infinite linear; }
                       `}</style>
