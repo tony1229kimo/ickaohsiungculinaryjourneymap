@@ -293,24 +293,24 @@ const Index = () => {
     `}</style>
   </defs>
 
-  <!-- 主群組：包含手機與內容物，統一進行震動動畫 -->
+  {/* 主群組：包含手機與內容物，統一進行震動動畫 */}
   <g className="qs-main-group">
     
-    <!-- 手機機身：精確計算的中心位置 (X=100為中軸) -->
-    <!-- 外圈 (M70,20...) 順時針 + 內圈 (M60,45...) 逆時針 達成中心鏤空 -->
+    {/* 手機機身：精確計算的中心位置 (X=100為中軸) */}
+    {/* 外圈 (M70,20...) 順時針 + 內圈 (M60,45...) 逆時針 達成中心鏤空 */}
     <path 
       className="qs-shell" 
       d="M 70 20 H 130 A 20 20 0 0 1 150 40 V 160 A 20 20 0 0 1 130 180 H 70 A 20 20 0 0 1 50 160 V 40 A 20 20 0 0 1 70 20 Z 
          M 60 45 H 140 V 140 H 60 Z" 
     />
 
-    <!-- 手機細節：聽筒與 Home 鍵 -->
+    {/* 手機細節：聽筒與 Home 鍵 */}
     <line className="qs-stroke" x1="88" y1="32" x2="112" y2="32" strokeWidth="3" />
     <circle className="qs-stroke" cx="100" cy="160" r="7" strokeWidth="2" />
 
-    <!-- 內容層：QR Code (置於螢幕中心) -->
+    {/* 內容層：QR Code (置於螢幕中心) */}
     <g className="qs-qr" transform="translate(100, 65)">
-      <!-- QR 圖案結構 (54x54) -->
+      {/* QR 圖案結構 (54x54) */}
       <rect className="qs-fill" x="0" y="0" width="18" height="18" rx="3" />
       <rect fill="#ffffff" x="4" y="4" width="10" height="10" rx="1" />
       <rect className="qs-fill" x="6" y="6" width="6" height="6" rx="1" />
@@ -323,7 +323,7 @@ const Index = () => {
       <rect fill="#ffffff" x="4" y="40" width="10" height="10" rx="1" />
       <rect className="qs-fill" x="6" y="42" width="6" height="6" rx="1" />
       
-      <!-- 隨機雜點 -->
+      {/* 隨機雜點 */}
       <rect className="qs-fill" x="22" y="8" width="4" height="4" />
       <rect className="qs-fill" x="28" y="22" width="4" height="4" />
       <rect className="qs-fill" x="22" y="28" width="4" height="4" />
@@ -332,14 +332,14 @@ const Index = () => {
       <rect className="qs-fill" x="40" y="48" width="4" height="6" />
     </g>
 
-    <!-- 成功狀態：打勾 (座標已對齊中心) -->
+    {/* 成功狀態：打勾 (座標已對齊中心) */}
     <polyline 
       className="qs-checkmark qs-stroke" 
       points="82,92 94,104 118,78" 
       strokeWidth="8" 
     />
 
-    <!-- 掃描線：限制在螢幕寬度內 -->
+    {/* 掃描線：限制在螢幕寬度內 */}
     <line 
       className="qs-scanbar" 
       x1="65" y1="55" 
