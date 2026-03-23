@@ -219,7 +219,7 @@ const Index = () => {
                   transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 >
                   <QrCode className="w-full h-full text-primary" strokeWidth={1.5} />
-
+                </motion.div>
                 <p className="text-foreground font-bold mb-1.5">請掃描店家 QR Code</p>
                 <p className="text-xs text-muted-foreground">每次掃描可擲骰一次，完成集點</p>
               </div>
