@@ -229,8 +229,8 @@ const Index = () => {
                         @keyframes qs-check { 0%, 60% { stroke-dashoffset:45; opacity:0; transform:scale(0.8); } 75%, 90% { stroke-dashoffset:0; opacity:1; transform:scale(1); } 100% { stroke-dashoffset:0; opacity:0; transform:scale(1); } }
                         @keyframes qs-scan { 0%, 45% { transform:translateY(0); opacity:0; } 50% { opacity:1; } 55% { transform:translateY(50px); opacity:1; } 60% { opacity:0; } 100% { opacity:0; } }
                         .qs-phone { animation: qs-phone-move 4s infinite ease-in-out; }
-                        .qs-qr { transform-origin: 27px 27px; animation: qs-qr-fade 4s infinite ease-in-out; }
-                        .qs-checkmark { stroke-dasharray:45; stroke-dashoffset:45; transform-origin:27px 27px; animation: qs-check 4s infinite cubic-bezier(0.175,0.885,0.32,1.275); }
+                        .qs-qr { transform-origin: center; transform-box: fill-box; animation: qs-qr-fade 4s infinite ease-in-out; }
+                        .qs-checkmark { stroke-dasharray:45; stroke-dashoffset:45; transform-origin: center; transform-box: fill-box; animation: qs-check 4s infinite cubic-bezier(0.175,0.885,0.32,1.275); }
                         .qs-scanbar { animation: qs-scan 4s infinite; }
                       `}</style>
                     </defs>
