@@ -241,7 +241,7 @@ const Index = () => {
                         />
                         <line className="qs-stroke" x1="35" y1="12" x2="65" y2="12" strokeWidth="3" />
                         <circle className="qs-stroke" cx="50" cy="148" r="8" strokeWidth="2" />
-                        <g className="qs-qr" transform="translate(50,47)">
+                        <g className="qs-qr" transform="translate(560,476)">
                           <rect className="qs-fill" x="0" y="0" width="18" height="18" rx="3" />
                           <rect fill="#fff" x="4" y="4" width="10" height="10" rx="1" />
                           <rect className="qs-fill" x="6" y="6" width="6" height="6" rx="1" />
