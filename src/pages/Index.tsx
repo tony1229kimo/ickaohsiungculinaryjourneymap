@@ -176,7 +176,7 @@ const Index = () => {
     <div
       className="game-container"
       style={{
-        backgroundImage: "url(\"/lovable-uploads/6d8dd835-4ae8-4c06-9aaf-75d55b9e1625.png\")",
+        backgroundImage: "url(\"/lovable-uploads/df075914-91c7-4040-843a-613d26f13054.png\")",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
