@@ -212,13 +212,57 @@ const Index = () => {
           {!isQRVerified ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-5">
               <div className="scan-prompt">
-                <motion.img
-                  src={iconScan}
-                  alt="掃描"
-                  className="w-16 h-16 mx-auto mb-1 opacity-80"
+                <motion.div
+                  className="w-16 h-16 mx-auto mb-1"
                   animate={{ scale: [1, 1.06, 1] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                />
+                >
+                  <svg viewBox="0 0 200 200" className="w-full h-full">
+                    <defs>
+                      <style>{`
+                        .qs-stroke { fill: none; stroke: hsl(var(--primary)); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+                        .qs-fill { fill: hsl(var(--primary)); }
+                        .qs-shell { fill: #ffffff; stroke: hsl(var(--primary)); stroke-width: 4; fill-rule: evenodd; }
+                        .qs-screen { fill: none; stroke: hsl(var(--primary)); stroke-width: 1.5; opacity: 0.3; }
+                        @keyframes qs-phone-move { 0%, 100% { transform: translate(0,0); } 15% { transform: translate(-10px,-6px); } 30% { transform: translate(10px,6px); } 45% { transform: translate(0,0); } }
+                        @keyframes qs-qr-fade { 0%, 50% { opacity:1; transform:scale(1); } 60%, 100% { opacity:0; transform:scale(0.5); } }
+                        @keyframes qs-check { 0%, 60% { stroke-dashoffset:45; opacity:0; transform:scale(0.8); } 75%, 90% { stroke-dashoffset:0; opacity:1; transform:scale(1); } 100% { stroke-dashoffset:0; opacity:0; transform:scale(1); } }
+                        @keyframes qs-scan { 0%, 45% { transform:translateY(0); opacity:0; } 50% { opacity:1; } 55% { transform:translateY(50px); opacity:1; } 60% { opacity:0; } 100% { opacity:0; } }
+                        .qs-phone { animation: qs-phone-move 4s infinite ease-in-out; }
+                        .qs-qr { transform-origin: 27px 27px; animation: qs-qr-fade 4s infinite ease-in-out; }
+                        .qs-checkmark { stroke-dasharray:45; stroke-dashoffset:45; transform-origin:27px 27px; animation: qs-check 4s infinite cubic-bezier(0.175,0.885,0.32,1.275); }
+                        .qs-scanbar { animation: qs-scan 4s infinite; }
+                      `}</style>
+                    </defs>
+                    <g transform="translate(50,20)">
+                      <g className="qs-phone">
+                        <path className="qs-shell" d="M20,0 h60 a20,20 0 0 1 20,20 v120 a20,20 0 0 1 -20,20 h-60 a20,20 0 0 1 -20,-20 v-120 a20,20 0 0 1 20,-20 z M10,25 h80 v95 h-80 z" />
+                        <rect className="qs-screen" x="10" y="25" width="80" height="95" rx="2" />
+                        <line className="qs-stroke" x1="35" y1="12" x2="65" y2="12" strokeWidth="3" />
+                        <circle className="qs-stroke" cx="50" cy="148" r="8" strokeWidth="2" />
+                        <g className="qs-qr" transform="translate(23,45)">
+                          <rect className="qs-fill" x="0" y="0" width="18" height="18" rx="3" />
+                          <rect fill="#fff" x="4" y="4" width="10" height="10" rx="1" />
+                          <rect className="qs-fill" x="6" y="6" width="6" height="6" rx="1" />
+                          <rect className="qs-fill" x="36" y="0" width="18" height="18" rx="3" />
+                          <rect fill="#fff" x="40" y="4" width="10" height="10" rx="1" />
+                          <rect className="qs-fill" x="42" y="6" width="6" height="6" rx="1" />
+                          <rect className="qs-fill" x="0" y="36" width="18" height="18" rx="3" />
+                          <rect fill="#fff" x="4" y="40" width="10" height="10" rx="1" />
+                          <rect className="qs-fill" x="6" y="42" width="6" height="6" rx="1" />
+                          <rect className="qs-fill" x="22" y="8" width="4" height="4" />
+                          <rect className="qs-fill" x="28" y="22" width="4" height="4" />
+                          <rect className="qs-fill" x="22" y="28" width="4" height="4" />
+                          <rect className="qs-fill" x="36" y="36" width="8" height="8" rx="1" />
+                          <rect className="qs-fill" x="48" y="36" width="6" height="6" />
+                          <rect className="qs-fill" x="40" y="48" width="4" height="6" />
+                        </g>
+                        <polyline className="qs-checkmark qs-stroke" points="36,72 46,82 64,58" strokeWidth="6" fill="none" />
+                        <line className="qs-scanbar" x1="12" y1="30" x2="88" y2="30" stroke="hsl(var(--primary))" strokeWidth="2" opacity="0.8" />
+                      </g>
+                    </g>
+                  </svg>
+                </motion.div>
 
                 <p className="text-foreground font-bold mb-1.5">請掃描店家 QR Code</p>
                 <p className="text-xs text-muted-foreground">每次掃描可擲骰一次，完成集點</p>
