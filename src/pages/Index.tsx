@@ -238,7 +238,7 @@ const Index = () => {
                         <path className="qs-shell" d="M20,0 h60 a20,20 0 0 1 20,20 v120 a20,20 0 0 1 -20,20 h-60 a20,20 0 0 1 -20,-20 v-120 a20,20 0 0 1 20,-20 z M10,25 h80 v95 h-80 z" />
                         <line className="qs-stroke" x1="35" y1="12" x2="65" y2="12" strokeWidth="3" />
                         <circle className="qs-stroke" cx="50" cy="148" r="8" strokeWidth="2" />
-                        <g className="qs-qr" transform="translate(23,45.5)">
+                        <g className="qs-qr" transform="translate(23,47)">
                           <rect className="qs-fill" x="0" y="0" width="18" height="18" rx="3" />
                           <rect fill="#fff" x="4" y="4" width="10" height="10" rx="1" />
                           <rect className="qs-fill" x="6" y="6" width="6" height="6" rx="1" />
