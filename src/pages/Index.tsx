@@ -233,7 +233,7 @@ const Index = () => {
                         .qs-scanbar { animation: qs-scan-action 4s infinite linear; }
                       `}</style>
                     </defs>
-                    <g transform="translate(100,20)">
+                    <g transform="translate(50,20)">
                       <g className="qs-phone">
                         <path
                           className="qs-shell"
