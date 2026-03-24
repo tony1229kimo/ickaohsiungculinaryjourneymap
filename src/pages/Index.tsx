@@ -218,7 +218,7 @@ const Index = () => {
                   animate={{ scale: [1, 1.06, 1] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  <img src={qrScanIllustration} alt="掃描 QR Code" className="w-full h-full object-contain" />
+                  <img src={qrScanIllustration} alt="掃描 QR Code" className="block w-full h-full object-contain" />
                 </motion.div>
                 <p className="text-foreground font-bold mb-1.5">請掃描店家 QR Code</p>
                 <p className="text-xs text-muted-foreground">每次掃描可擲骰一次，完成集點</p>
