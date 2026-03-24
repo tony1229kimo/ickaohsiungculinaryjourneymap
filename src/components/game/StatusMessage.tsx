@@ -40,7 +40,7 @@ const StatusMessage = ({ message, type = "info" }: StatusMessageProps) => {
             {icons[type]}
           </motion.span>
         )}
-        <span className="font-medium">{message}</span>
+        <span className="font-medium whitespace-pre-line" dangerouslySetInnerHTML={{ __html: message }} />
       </motion.div>
     </AnimatePresence>);
 
