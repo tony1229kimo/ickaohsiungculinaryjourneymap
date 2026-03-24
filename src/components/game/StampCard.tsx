@@ -98,6 +98,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
   const [displayPosition, setDisplayPosition] = useState(totalPoints);
   const [animatingTile, setAnimatingTile] = useState<number | null>(null);
   const [selectedTile, setSelectedTile] = useState<number | null>(null);
+  const [showGrandPrize, setShowGrandPrize] = useState(true);
   const prevPointsRef = useRef(totalPoints);
 
   useEffect(() => {
@@ -239,21 +240,19 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
         </div>
       </div>
 
-      {/* Grand prize notice */}
-      <AnimatePresence>
-        {totalPoints >= maxPoints &&
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="mt-4 mx-4 p-4 rounded-xl text-center border border-accent/40"
-          style={{ background: "linear-gradient(135deg, hsl(40 20% 72% / 0.5), hsl(43 85% 55% / 0.3))" }}>
-
-            <span className="text-base font-bold reward-text block mb-2">
-              🎉 恭喜集滿 15 點！
-            </span>
-            <p className="text-sm font-medium text-foreground mb-1">獲得「招牌餐點免費兌換」</p>
-            <p className="text-xs text-muted-foreground mb-3">最高價值 NT$3,880，點擊下方按鈕立即領取</p>
-            <button
+      {/* Grand prize dialog */}
+      <Dialog open={totalPoints >= maxPoints && showGrandPrize} onOpenChange={setShowGrandPrize}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl">🎉 恭喜集滿 15 點！</DialogTitle>
+          </DialogHeader>
+          <DialogDescription asChild>
+            <div className="text-center">
+              <p className="text-sm font-medium text-foreground mb-1">獲得「招牌餐點免費兌換」</p>
+              <p className="text-xs text-muted-foreground mb-3">最高價值 NT$3,880，點擊下方按鈕立即領取</p>
+            </div>
+          </DialogDescription>
+          <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
@@ -272,12 +271,10 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
               color: "hsl(0 0% 100%)",
               boxShadow: "0 4px 12px hsl(43 85% 55% / 0.4)"
             }}>
-            
-              🏆 領取終極大獎
-            </button>
-          </motion.div>
-        }
-      </AnimatePresence>
+            🏆 領取終極大獎
+          </button>
+        </DialogContent>
+      </Dialog>
 
       {/* Legend */}
       <div className="mt-4 flex flex-wrap gap-3 justify-center text-sm px-4 pb-4 text-primary">
