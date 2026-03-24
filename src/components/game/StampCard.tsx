@@ -295,7 +295,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
           <span className="text-accent">★</span>
           特殊獎勵
         </span>
-        <span className="text-xs opacity-60">點擊格子查看詳情</span>
+        <span className="text-xs opacity-60">{"\n"}</span>
       </div>
 
       {/* Tile detail dialog */}
