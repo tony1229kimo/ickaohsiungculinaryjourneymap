@@ -206,7 +206,7 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
                   transition={{ delay: 0.15 }}>
                   
                     <span
-                    className="inline-block px-4 py-1.5 rounded-full mb-4 text-primary border-primary text-xl text-center font-medium"
+                    className="inline-block px-4 py-1.5 rounded-full mb-4 border-primary text-xl text-center font-medium text-primary"
                     style={{
                       background: "hsl(0 0% 100% / 0.25)",
                       backdropFilter: "blur(8px)",
