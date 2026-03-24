@@ -280,7 +280,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
       </AnimatePresence>
 
       {/* Legend */}
-      <div className="mt-4 flex flex-wrap gap-3 justify-center text-sm text-muted-foreground px-4 pb-4">
+      <div className="mt-4 flex flex-wrap gap-3 justify-center text-sm px-4 pb-4 text-primary">
         {character &&
         <span className="flex items-center gap-1">
             <img src={character.image} alt="角色" className="w-6 h-6 object-contain" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.2))" }} />
