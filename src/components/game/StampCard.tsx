@@ -98,6 +98,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
   const [displayPosition, setDisplayPosition] = useState(totalPoints);
   const [animatingTile, setAnimatingTile] = useState<number | null>(null);
   const [selectedTile, setSelectedTile] = useState<number | null>(null);
+  const [showGrandPrize, setShowGrandPrize] = useState(true);
   const prevPointsRef = useRef(totalPoints);
 
   useEffect(() => {
