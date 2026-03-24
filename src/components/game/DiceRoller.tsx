@@ -58,7 +58,7 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
 
     intervalRef.current = setInterval(() => {
       setPreviewFace(Math.floor(Math.random() * 6) + 1);
-    }, isRolling ? 80 : 300);
+    }, isRolling ? 80 : 1000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -132,7 +132,7 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
                 ? { duration: 1.4, ease: [0.22, 1, 0.36, 1] }
                 : showResult
                 ? { type: "spring", damping: 14, stiffness: 200 }
-                : { duration: 0.3, ease: "easeInOut", repeat: Infinity }
+                : { duration: 1, ease: "easeInOut", repeat: Infinity }
             }
           >
             {/* Inner bevel highlight */}
