@@ -378,6 +378,30 @@ const Index = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* 暫時用的 debug 按鈕 - 跳過 QR 掃描 */}
+      {!isQRVerified && selectedCharacter && !isLoading && (
+        <button
+          onClick={handleQRSuccess}
+          style={{
+            position: "fixed",
+            bottom: 24,
+            right: 24,
+            width: 48,
+            height: 48,
+            borderRadius: "50%",
+            backgroundColor: "red",
+            color: "white",
+            border: "none",
+            fontSize: 12,
+            fontWeight: "bold",
+            zIndex: 9999,
+            cursor: "pointer",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+          }}
+        >
+          GO
+        </button>
+      )}
     </div>
   );
 };
