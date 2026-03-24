@@ -213,13 +213,9 @@ const Index = () => {
           {!isQRVerified ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-5">
               <div className="scan-prompt">
-                <motion.div
-                  className="w-[200px] h-[200px] mx-auto -mb-2 -mt-4"
-                  animate={{ scale: [1, 1.06, 1] }}
-                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                >
+                <div className="w-[200px] h-[200px] mx-auto -mb-4 -mt-8">
                   <img src={qrScanIllustration} alt="掃描 QR Code" className="block w-full h-full object-contain" />
-                </motion.div>
+                </div>
                 <p className="text-foreground font-bold mb-1.5">請掃描店家 QR Code</p>
                 <p className="text-xs text-muted-foreground">每次掃描可擲骰一次，完成集點</p>
               </div>
