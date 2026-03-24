@@ -247,6 +247,30 @@ const Index = () => {
         </div>
         {/* 掃描ＯＯＯＯＯＯＯＯＯ qrcode EndＯＯＯＯＯＯＯＯＯ*/}
 
+        {/* 遊戲規則彈出視窗 */}
+        <Dialog open={showRulesDialog} onOpenChange={setShowRulesDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-center text-xl">遊戲說明</DialogTitle>
+            </DialogHeader>
+            <DialogDescription asChild>
+              <div className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                <p><strong>參加方式：</strong><br />
+                單筆消費滿 NT$2,000 即可參加，每滿 NT$2,000 獲得一次擲骰機會。<br />掃描店家 QR Code 後即可擲骰，前進 1-3 格。</p>
+
+                <p className="mt-3"><strong>獎項說明：</strong><br />
+                擲出的步數將對應地圖上的獎項，包括主廚招牌餐點、餐飲抵用金、餐點買一送一等隱藏驚喜。 遭遇「機會／命運」格時，您可選擇二選一，讓直覺或運氣為您的旅程增添驚喜。</p>
+
+                <p className="mt-3"><strong>終點獎勵：</strong><br />
+                抵達地圖終點並完成旅程，即可兌換高雄洲際招牌主餐。祝您享受美味旅程！</p>
+              </div>
+            </DialogDescription>
+            <Button onClick={() => setShowRulesDialog(false)} className="w-full mt-2">
+              我知道了
+            </Button>
+          </DialogContent>
+        </Dialog>
+
         <StampCard
           totalPoints={totalPoints}
           maxPoints={15}
