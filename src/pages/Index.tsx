@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { QrCode } from "lucide-react";
+import qrScanIllustration from "@/assets/qr-scan-illustration.png";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import GameHeader from "@/components/game/GameHeader";
@@ -214,11 +214,11 @@ const Index = () => {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-5">
               <div className="scan-prompt">
                 <motion.div
-                  className="w-16 h-16 mx-auto mb-1"
+                  className="w-28 h-28 mx-auto mb-1"
                   animate={{ scale: [1, 1.06, 1] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  <QrCode className="w-full h-full text-primary" strokeWidth={1.5} />
+                  <img src={qrScanIllustration} alt="掃描 QR Code" className="w-full h-full object-contain" />
                 </motion.div>
                 <p className="text-foreground font-bold mb-1.5">請掃描店家 QR Code</p>
                 <p className="text-xs text-muted-foreground">每次掃描可擲骰一次，完成集點</p>
