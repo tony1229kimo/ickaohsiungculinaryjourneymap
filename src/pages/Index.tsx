@@ -1,4 +1,12 @@
 import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import qrScanIllustration from "@/assets/qr-scan-illustration.png";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
@@ -38,6 +46,7 @@ const Index = () => {
   const [pendingPoints, setPendingPoints] = useState(0);
   const [earnedRewards, setEarnedRewards] = useState<LotteryResult[]>([]);
   const [fixedRewardPopup, setFixedRewardPopup] = useState<{ tile: number; name: string; link: string } | null>(null);
+  const [showRulesDialog, setShowRulesDialog] = useState(false);
 
   // Character selection
   const [selectedCharacter, setSelectedCharacter] = useState<GameCharacterInfo | null>(null);
@@ -47,10 +56,9 @@ const Index = () => {
       try {
         await new Promise((resolve) => setTimeout(resolve, 1500));
         setUserName(MOCK_USER.displayName);
-        setStatusMessage(
-          "參加方式：</br>\n單筆消費滿 NT$2,000 即可參加，每滿 NT$2,000 獲得一次擲骰機會。</br>掃描店家 QR Code 後即可擲骰，前進 1-3 格。\n\n獎項說明：</br>\n擲出的步數將對應地圖上的獎項，包括主廚招牌餐點、餐飲抵用金、餐點買一送一等隱藏驚喜。 遭遇「機會／命運」格時，您可選擇二選一，讓直覺或運氣為您的旅程增添驚喜。\n\n終點獎勵：</br>\n抵達地圖終點並完成旅程，即可兌換高雄洲際招牌主餐。祝您享受美味旅程！\n\n",
-        );
+        setStatusMessage("請掃描店家 QR Code 開始遊戲");
         setStatusType("info");
+        setShowRulesDialog(true);
 
         const savedPoints = localStorage.getItem(`points_${MOCK_USER.userId}`);
         if (savedPoints) setTotalPoints(parseInt(savedPoints));
@@ -238,6 +246,30 @@ const Index = () => {
           </div>
         </div>
         {/* 掃描ＯＯＯＯＯＯＯＯＯ qrcode EndＯＯＯＯＯＯＯＯＯ*/}
+
+        {/* 遊戲規則彈出視窗 */}
+        <Dialog open={showRulesDialog} onOpenChange={setShowRulesDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-center text-xl">遊戲說明</DialogTitle>
+            </DialogHeader>
+            <DialogDescription asChild>
+              <div className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                <p><strong>參加方式：</strong><br />
+                單筆消費滿 NT$2,000 即可參加，每滿 NT$2,000 獲得一次擲骰機會。<br />掃描店家 QR Code 後即可擲骰，前進 1-3 格。</p>
+
+                <p className="mt-3"><strong>獎項說明：</strong><br />
+                擲出的步數將對應地圖上的獎項，包括主廚招牌餐點、餐飲抵用金、餐點買一送一等隱藏驚喜。 遭遇「機會／命運」格時，您可選擇二選一，讓直覺或運氣為您的旅程增添驚喜。</p>
+
+                <p className="mt-3"><strong>終點獎勵：</strong><br />
+                抵達地圖終點並完成旅程，即可兌換高雄洲際招牌主餐。祝您享受美味旅程！</p>
+              </div>
+            </DialogDescription>
+            <Button onClick={() => setShowRulesDialog(false)} className="w-full mt-2">
+              我知道了
+            </Button>
+          </DialogContent>
+        </Dialog>
 
         <StampCard
           totalPoints={totalPoints}
