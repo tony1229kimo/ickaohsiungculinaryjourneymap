@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { QrCode } from "lucide-react";
+import qrScanIllustration from "@/assets/qr-scan-illustration.png";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import GameHeader from "@/components/game/GameHeader";
