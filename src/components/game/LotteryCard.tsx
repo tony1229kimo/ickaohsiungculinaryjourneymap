@@ -184,7 +184,7 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
             className="absolute inset-0 rounded-3xl overflow-hidden"
             style={{
               backfaceVisibility: "hidden",
-              transform: "rotateY(180deg)",
+              transform: "rotateY(180deg)"
             }}>
 
 
@@ -215,11 +215,11 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
                       border: "1px solid hsl(0 0% 100% / 0.3)"
                     }}>
                     
-                      {type === "chance" ? (
-                        <>❗<br />機會</>
-                      ) : (
-                        <>🔮<br />命運</>
-                      )}
+                      {type === "chance" ?
+                    <>❗<br />機會</> :
+
+                    <>🔮<br />命運</>
+                    }
                     </span>
                   </motion.div>
 
