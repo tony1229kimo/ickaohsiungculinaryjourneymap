@@ -12,7 +12,7 @@ import CardPicker from "@/components/game/CardPicker";
 import CharacterSelect, { GameCharacterInfo } from "@/components/game/CharacterSelect";
 import iconScan from "@/assets/icon-scan.png";
 import uiBg from "@/assets/ui-background.png";
-import prize141Img from "@/assets/141.png";
+import rewardIconAppetizer from "@/assets/reward-icon-appetizer.png";
 
 const MOCK_USER = {
   userId: "demo_user_123",
