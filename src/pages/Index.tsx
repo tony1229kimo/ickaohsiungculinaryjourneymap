@@ -12,6 +12,7 @@ import CardPicker from "@/components/game/CardPicker";
 import CharacterSelect, { GameCharacterInfo } from "@/components/game/CharacterSelect";
 import iconScan from "@/assets/icon-scan.png";
 import uiBg from "@/assets/ui-background.png";
+import prize141Img from "@/assets/141.png";
 
 const MOCK_USER = {
   userId: "demo_user_123",
@@ -344,7 +345,7 @@ const Index = () => {
                 transition={{ delay: 0.15, type: "spring", damping: 10 }}
                 className="text-6xl mb-3"
               >
-                🎉
+                <img src={prize141Img} alt="獎勵" className="w-24 h-24 object-contain" />
               </motion.div>
               <h3 className="text-lg font-black text-foreground mb-1">恭喜獲得獎勵！</h3>
               <p className="text-base font-bold mb-1" style={{ color: "hsl(30 40% 30%)" }}>
