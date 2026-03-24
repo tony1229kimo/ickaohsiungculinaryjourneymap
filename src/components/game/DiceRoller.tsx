@@ -132,7 +132,7 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
                 ? { duration: 1.4, ease: [0.22, 1, 0.36, 1] }
                 : showResult
                 ? { type: "spring", damping: 14, stiffness: 200 }
-                : { duration: 1, ease: "easeInOut", repeat: Infinity }
+                : { duration: 2, ease: "easeInOut", repeat: Infinity }
             }
           >
             {/* Inner bevel highlight */}
