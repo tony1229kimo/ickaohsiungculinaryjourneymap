@@ -58,7 +58,7 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
 
     intervalRef.current = setInterval(() => {
       setPreviewFace(Math.floor(Math.random() * 6) + 1);
-    }, isRolling ? 80 : 4000);
+    }, isRolling ? 80 : 300);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
