@@ -343,7 +343,7 @@ const Index = () => {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.15, type: "spring", damping: 10 }}
-                className="text-6xl mb-3"
+                className="text-6xl mb-3 flex justify-center"
               >
                 <img src={rewardIconAppetizer} alt="獎勵" className="w-24 h-24 object-contain" />
               </motion.div>
