@@ -46,6 +46,7 @@ const Index = () => {
   const [pendingPoints, setPendingPoints] = useState(0);
   const [earnedRewards, setEarnedRewards] = useState<LotteryResult[]>([]);
   const [fixedRewardPopup, setFixedRewardPopup] = useState<{ tile: number; name: string; link: string } | null>(null);
+  const [showRulesDialog, setShowRulesDialog] = useState(false);
 
   // Character selection
   const [selectedCharacter, setSelectedCharacter] = useState<GameCharacterInfo | null>(null);
