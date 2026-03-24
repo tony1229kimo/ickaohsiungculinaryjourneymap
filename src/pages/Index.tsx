@@ -214,7 +214,7 @@ const Index = () => {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-5">
               <div className="scan-prompt">
                 <motion.div
-                  className="w-28 h-28 mx-auto mb-1"
+                  className="w-[200px] h-[200px] mx-auto -mb-2 -mt-4"
                   animate={{ scale: [1, 1.06, 1] }}
                   transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                 >
