@@ -284,6 +284,7 @@ const Index = () => {
           maxPoints={15}
           character={selectedCharacter ?? undefined}
           isMoving={isProcessing}
+          onGameReset={handleGameReset}
         />
 
         {/* Earned rewards */}
