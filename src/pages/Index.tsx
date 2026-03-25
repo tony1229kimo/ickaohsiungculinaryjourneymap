@@ -177,6 +177,14 @@ const Index = () => {
     localStorage.setItem(`rewards_${MOCK_USER.userId}`, JSON.stringify(newRewards));
   };
 
+  const handleGameReset = () => {
+    setTotalPoints(0);
+    localStorage.setItem(`points_${MOCK_USER.userId}`, "0");
+    setIsQRVerified(false);
+    setStatusMessage("🔄 遊戲已重置！請掃描 QR Code 繼續遊戲");
+    setStatusType("info");
+  };
+
   // Show character selection if no character chosen yet
   if (!isLoading && !selectedCharacter) {
     return <CharacterSelect onSelect={handleCharacterSelect} />;
