@@ -141,7 +141,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, onGameReset }: Stam
   const currentPosition = displayPosition;
 
   return (
-    <div className="stamp-card overflow-visible p-0 rounded bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url(\"/lovable-uploads/c5d3a732-5b71-464e-9512-fcb334ad6c69.png\")" }}>
+    <div className="stamp-card overflow-visible p-0 rounded bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${stampCardBoardBg})` }}>
       {/* Header */}
       <div className="items-center justify-between mb-3 px-4 pt-4 flex flex-col">
         <h3 className="text-lg font-bold text-foreground flex items-center gap-2 my-[15px]">
