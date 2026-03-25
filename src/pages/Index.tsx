@@ -21,6 +21,7 @@ import CharacterSelect, { GameCharacterInfo } from "@/components/game/CharacterS
 import iconScan from "@/assets/icon-scan.png";
 import uiBg from "@/assets/ui-background.png";
 import rewardIconAppetizer from "@/assets/reward-icon-appetizer.png";
+import bgMain from "@/assets/bg-main.png";
 
 const MOCK_USER = {
   userId: "demo_user_123",
@@ -194,7 +195,7 @@ const Index = () => {
     <div
       className="game-container"
       style={{
-        backgroundImage: 'url("/lovable-uploads/df075914-91c7-4040-843a-613d26f13054.png")',
+        backgroundImage: `url(${bgMain})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
