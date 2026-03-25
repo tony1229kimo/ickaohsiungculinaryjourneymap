@@ -21,6 +21,7 @@ import CharacterSelect, { GameCharacterInfo } from "@/components/game/CharacterS
 import iconScan from "@/assets/icon-scan.png";
 import uiBg from "@/assets/ui-background.png";
 import rewardIconAppetizer from "@/assets/reward-icon-appetizer.png";
+import bgMain from "@/assets/bg-main.png";
 
 const MOCK_USER = {
   userId: "demo_user_123",
