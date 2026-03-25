@@ -24,6 +24,7 @@ interface StampCardProps {
   maxPoints?: number;
   character?: GameCharacterInfo;
   isMoving?: boolean;
+  onGameReset?: () => void;
 }
 
 const REWARDS: Record<number, {name: string;shortName: string;isSpecial: boolean;tileImage: string;type: "lottery" | "fixed";}> = {
