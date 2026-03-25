@@ -265,6 +265,11 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, onGameReset }: Stam
               document.body.appendChild(a);
               a.click();
               document.body.removeChild(a);
+              setShowGrandPrize(false);
+              // Reset game after claiming reward
+              if (onGameReset) {
+                setTimeout(() => onGameReset(), 500);
+              }
             }}
             className="inline-block w-full text-center py-3 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer"
             style={{
