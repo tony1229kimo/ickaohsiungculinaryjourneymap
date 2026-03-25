@@ -106,6 +106,14 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, onGameReset }: Stam
     const prevPoints = prevPointsRef.current;
     if (prevPoints === totalPoints) return;
 
+    // Reset grand prize dialog when game resets
+    if (totalPoints === 0) {
+      setShowGrandPrize(true);
+      setDisplayPosition(0);
+      prevPointsRef.current = 0;
+      return;
+    }
+
     const from = prevPoints;
     const to = totalPoints;
     const direction = to > from ? 1 : -1;
