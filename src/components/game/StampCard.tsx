@@ -95,7 +95,7 @@ const TILE_DESCRIPTIONS: Record<number, string> = {
   15: "🏆 終極大獎！可免費兌換招牌主餐一份，最高價值 NT$3,880。"
 };
 
-const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) => {
+const StampCard = ({ totalPoints, maxPoints = 15, character, onGameReset }: StampCardProps) => {
   const [displayPosition, setDisplayPosition] = useState(totalPoints);
   const [animatingTile, setAnimatingTile] = useState<number | null>(null);
   const [selectedTile, setSelectedTile] = useState<number | null>(null);
