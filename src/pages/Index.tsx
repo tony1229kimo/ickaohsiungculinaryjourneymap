@@ -306,7 +306,7 @@ const Index = () => {
                   style={{ background: "hsl(0 0% 100% / 0.5)" }}
                   onClick={() => {
                     const a = document.createElement("a");
-                    a.href = "https://line.me/R/nv/coupon";
+                    a.href = "https://lin.ee/YzwlVWh";
                     a.target = "_blank";
                     a.rel = "noopener noreferrer";
                     a.click();
