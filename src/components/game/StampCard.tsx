@@ -24,6 +24,7 @@ interface StampCardProps {
   maxPoints?: number;
   character?: GameCharacterInfo;
   isMoving?: boolean;
+  onGameReset?: () => void;
 }
 
 const REWARDS: Record<number, {name: string;shortName: string;isSpecial: boolean;tileImage: string;type: "lottery" | "fixed";}> = {
@@ -94,7 +95,7 @@ const TILE_DESCRIPTIONS: Record<number, string> = {
   15: "🏆 終極大獎！可免費兌換招牌主餐一份，最高價值 NT$3,880。"
 };
 
-const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) => {
+const StampCard = ({ totalPoints, maxPoints = 15, character, onGameReset }: StampCardProps) => {
   const [displayPosition, setDisplayPosition] = useState(totalPoints);
   const [animatingTile, setAnimatingTile] = useState<number | null>(null);
   const [selectedTile, setSelectedTile] = useState<number | null>(null);
@@ -104,6 +105,14 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
   useEffect(() => {
     const prevPoints = prevPointsRef.current;
     if (prevPoints === totalPoints) return;
+
+    // Reset grand prize dialog when game resets
+    if (totalPoints === 0) {
+      setShowGrandPrize(true);
+      setDisplayPosition(0);
+      prevPointsRef.current = 0;
+      return;
+    }
 
     const from = prevPoints;
     const to = totalPoints;
@@ -264,6 +273,11 @@ const StampCard = ({ totalPoints, maxPoints = 15, character }: StampCardProps) =
               document.body.appendChild(a);
               a.click();
               document.body.removeChild(a);
+              setShowGrandPrize(false);
+              // Reset game after claiming reward
+              if (onGameReset) {
+                setTimeout(() => onGameReset(), 500);
+              }
             }}
             className="inline-block w-full text-center py-3 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer"
             style={{
