@@ -398,6 +398,7 @@ const BoardTile = React.memo(({ number, reward, isCurrentPosition, isPassed, isJ
           <img
             src={reward.tileImage}
             alt={reward.name}
+            loading="lazy"
             className="w-full h-full object-cover" />
         </div>
 
