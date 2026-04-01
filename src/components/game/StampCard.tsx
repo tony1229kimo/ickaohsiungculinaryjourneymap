@@ -26,6 +26,8 @@ interface StampCardProps {
   character?: GameCharacterInfo;
   isMoving?: boolean;
   onGameReset?: () => void;
+  claimedTiles?: Set<number>;
+  onClaimTile?: (tile: number) => void;
 }
 
 const REWARDS: Record<number, {name: string;shortName: string;isSpecial: boolean;tileImage: string;type: "lottery" | "fixed";}> = {
@@ -96,7 +98,7 @@ const TILE_DESCRIPTIONS: Record<number, string> = {
   15: "🏆 終極大獎！可免費兌換招牌主餐一份，最高價值 NT$3,880。"
 };
 
-const StampCard = ({ totalPoints, maxPoints = 15, character, onGameReset }: StampCardProps) => {
+const StampCard = ({ totalPoints, maxPoints = 15, character, onGameReset, claimedTiles, onClaimTile }: StampCardProps) => {
   const [displayPosition, setDisplayPosition] = useState(totalPoints);
   const [animatingTile, setAnimatingTile] = useState<number | null>(null);
   const [selectedTile, setSelectedTile] = useState<number | null>(null);
@@ -274,6 +276,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, onGameReset }: Stam
               document.body.appendChild(a);
               a.click();
               document.body.removeChild(a);
+              onClaimTile?.(15);
               setShowGrandPrize(false);
               // Reset game after claiming reward
               if (onGameReset) {
@@ -337,6 +340,10 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, onGameReset }: Stam
               {(() => {
               const link = REWARD_LINKS[selectedTile];
               if (!link || selectedTile > displayPosition) return null;
+              const alreadyClaimed = claimedTiles?.has(selectedTile);
+              if (alreadyClaimed) {
+                return <p className="mt-3 text-center text-sm text-muted-foreground font-medium">✓ 已領取</p>;
+              }
               return (
                 <button
                   type="button"
@@ -350,6 +357,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, onGameReset }: Stam
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
+                    onClaimTile?.(selectedTile);
                   }}
                   className="mt-3 block w-full text-center py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer"
                   style={{
@@ -357,7 +365,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, onGameReset }: Stam
                     color: "hsl(0 0% 100%)",
                     boxShadow: "0 4px 12px hsl(43 85% 55% / 0.4)"
                   }}>
-                  
+
                     🎁 領取獎勵
                   </button>);
 

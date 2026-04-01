@@ -15,28 +15,27 @@ import DiceRoller from "@/components/game/DiceRoller";
 import StampCard, { REWARD_LINKS, FIXED_REWARD_TILES } from "@/components/game/StampCard";
 import StatusMessage from "@/components/game/StatusMessage";
 import QRScanner from "@/components/game/QRScanner";
-import LotteryCard, { isLotteryTile, LotteryResult } from "@/components/game/LotteryCard";
+import LotteryCard, { LotteryResult } from "@/components/game/LotteryCard";
 import CardPicker from "@/components/game/CardPicker";
 import CharacterSelect, { GameCharacterInfo } from "@/components/game/CharacterSelect";
-import iconScan from "@/assets/icon-scan.png";
-import uiBg from "@/assets/ui-background.png";
+import { useLiff } from "@/contexts/LiffContext";
+import { useGameState } from "@/hooks/useGameState";
 import rewardIconAppetizer from "@/assets/reward-icon-appetizer.png";
 import bgMain from "@/assets/bg-main.png";
-
-const MOCK_USER = {
-  userId: "demo_user_123",
-  displayName: "洲際玩家",
-};
 
 const EXPECTED_QR_CODE = "INTERCONTINENTAL_2026";
 const LOTTERY_POSITIONS = [1, 3, 4, 5, 7, 9, 10, 12, 13, 14];
 
 const Index = () => {
+  const { user } = useLiff();
+  const userId = user?.userId ?? "anonymous";
+  const displayName = user?.displayName ?? "玩家";
+  const { gameState, isLoading: isApiLoading, save: saveToApi } = useGameState(userId);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
-  const [userName, setUserName] = useState<string | undefined>();
   const [totalPoints, setTotalPoints] = useState(0);
-  const [statusMessage, setStatusMessage] = useState("正在連線至會員系統...");
+  const [statusMessage, setStatusMessage] = useState("正在載入...");
   const [statusType, setStatusType] = useState<"info" | "success" | "error" | "loading">("loading");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isQRVerified, setIsQRVerified] = useState(false);
@@ -52,34 +51,46 @@ const Index = () => {
   // Character selection
   const [selectedCharacter, setSelectedCharacter] = useState<GameCharacterInfo | null>(null);
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        setUserName(MOCK_USER.displayName);
-        setStatusMessage("請掃描店家 QR Code 開始遊戲");
-        setStatusType("info");
-        setShowRulesDialog(true);
+  // Track which tiles have been claimed (prevents duplicate claiming)
+  const [claimedTiles, setClaimedTiles] = useState<Set<number>>(new Set());
 
-        const savedPoints = localStorage.getItem(`points_${MOCK_USER.userId}`);
+  // Load state from API (primary) or localStorage (fallback)
+  useEffect(() => {
+    if (isApiLoading) return;
+
+    try {
+      if (gameState && gameState.totalPoints > 0) {
+        // Prefer API data
+        setTotalPoints(gameState.totalPoints);
+        setEarnedRewards(gameState.earnedRewards ?? []);
+        setSelectedCharacter(gameState.selectedCharacter ?? null);
+        setClaimedTiles(new Set(gameState.claimedTiles ?? []));
+      } else {
+        // Fallback to localStorage
+        const savedPoints = localStorage.getItem(`points_${userId}`);
         if (savedPoints) setTotalPoints(parseInt(savedPoints));
 
-        const savedRewards = localStorage.getItem(`rewards_${MOCK_USER.userId}`);
+        const savedRewards = localStorage.getItem(`rewards_${userId}`);
         if (savedRewards) setEarnedRewards(JSON.parse(savedRewards));
 
-        const savedChar = localStorage.getItem(`character_${MOCK_USER.userId}`);
+        const savedChar = localStorage.getItem(`character_${userId}`);
         if (savedChar) setSelectedCharacter(JSON.parse(savedChar));
 
-        setIsLoading(false);
-      } catch (error) {
-        console.error("System initialization failed", error);
-        setStatusMessage("連線失敗，請重新整理頁面");
-        setStatusType("error");
-        setIsLoading(false);
+        const savedClaimed = localStorage.getItem(`claimed_${userId}`);
+        if (savedClaimed) setClaimedTiles(new Set(JSON.parse(savedClaimed)));
       }
-    };
-    init();
-  }, []);
+
+      setStatusMessage("請掃描店家 QR Code 開始遊戲");
+      setStatusType("info");
+      setShowRulesDialog(true);
+    } catch (error) {
+      console.error("Failed to load saved state", error);
+      setStatusMessage("載入失敗，請重新整理頁面");
+      setStatusType("error");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId, isApiLoading, gameState]);
 
   // Auto-verify if coming from external QR code system
   useEffect(() => {
@@ -94,9 +105,20 @@ const Index = () => {
     }
   }, [searchParams, isLoading, isQRVerified, selectedCharacter, setSearchParams]);
 
+  // Persist state to both localStorage and API
+  const persistState = (updates: Record<string, any>) => {
+    // localStorage (immediate, offline-safe)
+    if ("totalPoints" in updates) localStorage.setItem(`points_${userId}`, String(updates.totalPoints));
+    if ("earnedRewards" in updates) localStorage.setItem(`rewards_${userId}`, JSON.stringify(updates.earnedRewards));
+    if ("selectedCharacter" in updates) localStorage.setItem(`character_${userId}`, JSON.stringify(updates.selectedCharacter));
+    if ("claimedTiles" in updates) localStorage.setItem(`claimed_${userId}`, JSON.stringify(updates.claimedTiles));
+    // API (async, best-effort)
+    saveToApi({ displayName, ...updates }).catch((err) => console.warn("API save failed:", err));
+  };
+
   const handleCharacterSelect = (char: GameCharacterInfo) => {
     setSelectedCharacter(char);
-    localStorage.setItem(`character_${MOCK_USER.userId}`, JSON.stringify(char));
+    persistState({ selectedCharacter: char });
   };
 
   const handleQRSuccess = () => {
@@ -139,11 +161,11 @@ const Index = () => {
 
   const finalizeDiceRoll = (newTotal: number, steps: number) => {
     setTotalPoints(newTotal);
-    localStorage.setItem(`points_${MOCK_USER.userId}`, newTotal.toString());
+    persistState({ totalPoints: newTotal });
     setIsQRVerified(false);
 
-    // Check if landed on a fixed reward tile
-    if (FIXED_REWARD_TILES.includes(newTotal) && REWARD_LINKS[newTotal]) {
+    // Check if landed on a fixed reward tile (only if not already claimed)
+    if (FIXED_REWARD_TILES.includes(newTotal) && REWARD_LINKS[newTotal] && !claimedTiles.has(newTotal)) {
       setFixedRewardPopup({
         tile: newTotal,
         name: FIXED_REWARD_NAMES[newTotal] || `第 ${newTotal} 格獎勵`,
@@ -172,15 +194,27 @@ const Index = () => {
     }
   };
 
+  const markTileClaimed = (tile: number) => {
+    setClaimedTiles((prev) => {
+      const next = new Set(prev).add(tile);
+      persistState({ claimedTiles: [...next] });
+      return next;
+    });
+  };
+
   const handleRewardClaimed = (result: LotteryResult) => {
     const newRewards = [...earnedRewards, result];
     setEarnedRewards(newRewards);
-    localStorage.setItem(`rewards_${MOCK_USER.userId}`, JSON.stringify(newRewards));
+    persistState({ earnedRewards: newRewards });
+    if (pendingPoints > 0) {
+      markTileClaimed(pendingPoints);
+    }
   };
 
   const handleGameReset = () => {
     setTotalPoints(0);
-    localStorage.setItem(`points_${MOCK_USER.userId}`, "0");
+    setClaimedTiles(new Set());
+    persistState({ totalPoints: 0, claimedTiles: [] });
     setIsQRVerified(false);
     setStatusMessage("🔄 遊戲已重置！請掃描 QR Code 繼續遊戲");
     setStatusType("info");
@@ -202,7 +236,7 @@ const Index = () => {
         backgroundAttachment: "fixed",
       }}
     >
-      <GameHeader userName={userName} isLoading={isLoading} />
+      <GameHeader userName={displayName} isLoading={isLoading} />
 
       <motion.main
         initial={{ opacity: 0, y: 20 }}
@@ -210,7 +244,6 @@ const Index = () => {
         transition={{ delay: 0.2 }}
         className="w-full max-w-lg px-3 -mt-4 space-y-6"
       >
-        {/* ＯＯＯＯＯＯＯＯＯ掃描qrcode StartＯＯＯＯＯＯＯＯＯ*/}
 
         <div className="stamp-card rounded mx-0 mb-0 mt-[30px] py-0 my-[35px] overflow-visible">
           <div className="relative gap-2 mb-1 flex-col flex items-center justify-center my-[5px]">
@@ -224,7 +257,7 @@ const Index = () => {
             <h2 className="text-lg font-black text-foreground tracking-wide">{"\n"}</h2>
           </div>
           <p className="text-xs text-muted-foreground text-center mb-4">
-            {userName ? `歡迎，${userName}` : "集點遊戲"}
+            {displayName ? `歡迎，${displayName}` : "集點遊戲"}
           </p>
           <div className="gold-divider mb-5 rounded-none bg-primary-foreground text-destructive" />
 
@@ -254,7 +287,6 @@ const Index = () => {
             <StatusMessage message={statusMessage} type={statusType} />
           </div>
         </div>
-        {/* 掃描ＯＯＯＯＯＯＯＯＯ qrcode EndＯＯＯＯＯＯＯＯＯ*/}
 
         {/* 遊戲規則彈出視窗 */}
         <Dialog open={showRulesDialog} onOpenChange={setShowRulesDialog}>
@@ -286,6 +318,8 @@ const Index = () => {
           character={selectedCharacter ?? undefined}
           isMoving={isProcessing}
           onGameReset={handleGameReset}
+          claimedTiles={claimedTiles}
+          onClaimTile={markTileClaimed}
         />
 
         {/* Earned rewards */}
@@ -406,6 +440,7 @@ const Index = () => {
                   document.body.appendChild(a);
                   a.click();
                   document.body.removeChild(a);
+                  markTileClaimed(fixedRewardPopup.tile);
                   setFixedRewardPopup(null);
                 }}
                 className="w-full py-3 rounded-2xl font-bold text-sm transition-all active:scale-95 cursor-pointer mb-3"
@@ -421,30 +456,6 @@ const Index = () => {
           </motion.div>
         )}
       </AnimatePresence>
-      {/* 暫時用的 debug 按鈕 - 跳過 QR 掃描 */}
-      {!isQRVerified && selectedCharacter && !isLoading && (
-        <button
-          onClick={handleQRSuccess}
-          style={{
-            position: "fixed",
-            bottom: 24,
-            right: 24,
-            width: 48,
-            height: 48,
-            borderRadius: "50%",
-            backgroundColor: "red",
-            color: "white",
-            border: "none",
-            fontSize: 12,
-            fontWeight: "bold",
-            zIndex: 9999,
-            cursor: "pointer",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-          }}
-        >
-          GO
-        </button>
-      )}
     </div>
   );
 };
