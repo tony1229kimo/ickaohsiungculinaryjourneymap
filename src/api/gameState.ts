@@ -34,10 +34,3 @@ export async function claimTileApi(userId: string, tile: number): Promise<{ succ
   return res.json();
 }
 
-export async function resetGameApi(userId: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/game-state/${encodeURIComponent(userId)}/reset`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-  });
-  if (!res.ok) throw new Error(`Failed to reset game: ${res.status}`);
-}

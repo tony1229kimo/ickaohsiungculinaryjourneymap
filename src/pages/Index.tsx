@@ -129,6 +129,13 @@ const Index = () => {
   };
 
   const handleDiceRoll = async (points: number) => {
+    // Guard: 遊戲已達終點,不接受任何擲骰(防止 state 被改 / event 重送)
+    if (totalPoints >= 15) {
+      setStatusMessage("您已完成本次旅程,如需再次體驗請聯絡餐飲部人員");
+      setStatusType("info");
+      return;
+    }
+
     setIsProcessing(true);
     setStatusMessage("正在移動棋子...");
     setStatusType("loading");
@@ -211,15 +218,6 @@ const Index = () => {
     }
   };
 
-  const handleGameReset = () => {
-    setTotalPoints(0);
-    setClaimedTiles(new Set());
-    persistState({ totalPoints: 0, claimedTiles: [] });
-    setIsQRVerified(false);
-    setStatusMessage("🔄 遊戲已重置！請掃描 QR Code 繼續遊戲");
-    setStatusType("info");
-  };
-
   // Show character selection if no character chosen yet
   if (!isLoading && !selectedCharacter) {
     return <CharacterSelect onSelect={handleCharacterSelect} />;
@@ -261,7 +259,24 @@ const Index = () => {
           </p>
           <div className="gold-divider mb-5 rounded-none bg-primary-foreground text-destructive" />
 
-          {!isQRVerified ? (
+          {totalPoints >= 15 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center space-y-4 py-4"
+            >
+              <div className="text-5xl mb-2">🏆</div>
+              <p className="text-lg font-black text-foreground">您已完成本次味蕾旅程</p>
+              <p className="text-sm text-foreground/80 leading-relaxed px-2">
+                招牌餐點兌換券已送至您的 LINE 帳號。
+                <br />
+                若您希望再次體驗,請洽詢餐飲部人員提供新的 QR Code。
+              </p>
+              <p className="text-xs text-muted-foreground pt-1">
+                Thank you for completing the journey.
+              </p>
+            </motion.div>
+          ) : !isQRVerified ? (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-5">
               <div className="scan-prompt">
                 <div className="w-[200px] h-[200px] mx-auto mb-2 -mt-8">
@@ -317,7 +332,6 @@ const Index = () => {
           maxPoints={15}
           character={selectedCharacter ?? undefined}
           isMoving={isProcessing}
-          onGameReset={handleGameReset}
           claimedTiles={claimedTiles}
           onClaimTile={markTileClaimed}
         />

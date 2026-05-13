@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchGameState, saveGameState, claimTileApi, resetGameApi, type GameStateData } from "@/api/gameState";
+import { fetchGameState, saveGameState, claimTileApi, type GameStateData } from "@/api/gameState";
 
 export function useGameState(userId: string | null) {
   const queryClient = useQueryClient();
@@ -22,17 +22,11 @@ export function useGameState(userId: string | null) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey }),
   });
 
-  const resetMutation = useMutation({
-    mutationFn: () => resetGameApi(userId!),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey }),
-  });
-
   return {
     gameState: query.data ?? null,
     isLoading: query.isLoading,
     error: query.error,
     save: saveMutation.mutateAsync,
     claimTile: claimTileMutation.mutateAsync,
-    resetGame: resetMutation.mutateAsync,
   };
 }

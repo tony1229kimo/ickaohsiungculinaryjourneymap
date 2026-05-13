@@ -110,8 +110,15 @@ export function claimTile(userId: string, tile: number): { success: boolean; alr
 }
 
 export function resetGame(userId: string): void {
+  // Full reset — wipe progress AND earned rewards, so admins can clean-slate a test account.
+  // Previously only points/tiles were cleared, leaving stale earned_rewards that would accumulate on replay.
   db.run(
-    "UPDATE game_state SET total_points = 0, claimed_tiles = '[]', updated_at = datetime('now') WHERE user_id = ?",
+    `UPDATE game_state
+     SET total_points = 0,
+         claimed_tiles = '[]',
+         earned_rewards = '[]',
+         updated_at = datetime('now')
+     WHERE user_id = ?`,
     [userId]
   );
   persistDb();

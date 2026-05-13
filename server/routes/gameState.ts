@@ -1,7 +1,22 @@
-import { Router } from "express";
+import { Router, type Request, type Response, type NextFunction } from "express";
 import { getGameState, saveGameState, claimTile, resetGame } from "../db.js";
 
 const router = Router();
+
+// Admin guard — protects state-wiping endpoints. Set ADMIN_TOKEN in Zeabur env.
+// If ADMIN_TOKEN is unset, the guarded endpoints are disabled entirely (503),
+// so a misconfigured deploy can't silently expose them.
+function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  const expected = process.env.ADMIN_TOKEN;
+  if (!expected) {
+    return res.status(503).json({ error: "Admin endpoints disabled (ADMIN_TOKEN not configured)" });
+  }
+  const provided = req.header("x-admin-token");
+  if (provided !== expected) {
+    return res.status(401).json({ error: "Invalid admin token" });
+  }
+  next();
+}
 
 // GET /api/game-state/:userId
 router.get("/:userId", (req, res) => {
@@ -43,8 +58,8 @@ router.post("/:userId/claim-tile", (req, res) => {
   res.json(result);
 });
 
-// POST /api/game-state/:userId/reset
-router.post("/:userId/reset", (req, res) => {
+// POST /api/game-state/:userId/reset — admin-only (requires X-Admin-Token header)
+router.post("/:userId/reset", requireAdmin, (req, res) => {
   resetGame(req.params.userId);
   res.json({ success: true });
 });
