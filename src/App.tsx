@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LiffProvider } from "@/contexts/LiffContext";
 import Index from "./pages/Index";
 import QRCodePage from "./pages/QRCodePage";
+import AboutPage from "./pages/AboutPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,6 +20,9 @@ const App = () => (
         <Routes>
           {/* QR Code page for store staff — no login required */}
           <Route path="/qrcode" element={<QRCodePage />} />
+          {/* Public "about" page — shared via LIFF shareTargetPicker, NO login,
+              NO gameplay. Friends who get the share link land here. */}
+          <Route path="/about" element={<AboutPage />} />
           {/* Game pages — require LINE login */}
           <Route
             path="/"

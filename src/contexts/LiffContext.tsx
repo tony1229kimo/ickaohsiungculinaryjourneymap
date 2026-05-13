@@ -8,6 +8,7 @@ export interface LiffUser {
 
 interface LiffContextType {
   user: LiffUser | null;
+  idToken: string | null;
   isInitialized: boolean;
   isLoggedIn: boolean;
   isInClient: boolean;
@@ -16,11 +17,20 @@ interface LiffContextType {
 
 const LiffContext = createContext<LiffContextType>({
   user: null,
+  idToken: null,
   isInitialized: false,
   isLoggedIn: false,
   isInClient: false,
   error: null,
 });
+
+// Module-scope token accessor so non-React code (fetch helpers) can read the
+// current id_token without importing the React context. Set on each LIFF
+// init success and cleared on logout/error.
+let currentIdToken: string | null = null;
+export function getLineIdToken(): string | null {
+  return currentIdToken;
+}
 
 export const useLiff = () => useContext(LiffContext);
 
@@ -29,6 +39,7 @@ const LIFF_ID = import.meta.env.VITE_LIFF_ID as string | undefined;
 export const LiffProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<LiffContextType>({
     user: null,
+    idToken: null,
     isInitialized: false,
     isLoggedIn: false,
     isInClient: false,
@@ -40,8 +51,10 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
       // Dev mode: no LIFF ID configured — use mock user
       if (!LIFF_ID) {
         console.warn("[LIFF] No VITE_LIFF_ID set, using dev mock user");
+        currentIdToken = null;
         setState({
           user: { userId: "dev_user", displayName: "開發模式" },
+          idToken: null,
           isInitialized: true,
           isLoggedIn: true,
           isInClient: false,
@@ -62,12 +75,15 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
         }
 
         const profile = await liff.getProfile();
+        const idToken = liff.getIDToken();
+        currentIdToken = idToken;
         setState({
           user: {
             userId: profile.userId,
             displayName: profile.displayName,
             pictureUrl: profile.pictureUrl,
           },
+          idToken,
           isInitialized: true,
           isLoggedIn: true,
           isInClient,
@@ -75,6 +91,7 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
         });
       } catch (err) {
         console.error("[LIFF] Init failed:", err);
+        currentIdToken = null;
         setState((prev) => ({
           ...prev,
           isInitialized: true,

@@ -1,7 +1,12 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { getGameState, saveGameState, claimTile, resetGame } from "../db.js";
+import { requireLiffAuth } from "../middleware/liffAuth.js";
 
 const router = Router();
+
+// All per-user routes go through LIFF id_token verification.
+// Admin reset still has its own guard below, so it does not need LIFF auth.
+const liffAuth = requireLiffAuth();
 
 // Admin guard — protects state-wiping endpoints. Set ADMIN_TOKEN in Zeabur env.
 // If ADMIN_TOKEN is unset, the guarded endpoints are disabled entirely (503),
@@ -19,7 +24,7 @@ function requireAdmin(req: Request, res: Response, next: NextFunction) {
 }
 
 // GET /api/game-state/:userId
-router.get("/:userId", (req, res) => {
+router.get("/:userId", liffAuth, (req, res) => {
   const state = getGameState(req.params.userId);
   if (!state) {
     return res.json({
@@ -35,7 +40,7 @@ router.get("/:userId", (req, res) => {
 });
 
 // PUT /api/game-state/:userId
-router.put("/:userId", (req, res) => {
+router.put("/:userId", liffAuth, (req, res) => {
   const { displayName, totalPoints, earnedRewards, selectedCharacter, claimedTiles } = req.body;
   saveGameState({
     userId: req.params.userId,
@@ -49,7 +54,7 @@ router.put("/:userId", (req, res) => {
 });
 
 // POST /api/game-state/:userId/claim-tile
-router.post("/:userId/claim-tile", (req, res) => {
+router.post("/:userId/claim-tile", liffAuth, (req, res) => {
   const { tile } = req.body;
   if (typeof tile !== "number") {
     return res.status(400).json({ error: "tile must be a number" });

@@ -18,8 +18,10 @@ import QRScanner from "@/components/game/QRScanner";
 import LotteryCard, { LotteryResult } from "@/components/game/LotteryCard";
 import CardPicker from "@/components/game/CardPicker";
 import CharacterSelect, { GameCharacterInfo } from "@/components/game/CharacterSelect";
+import ShareButton from "@/components/game/ShareButton";
 import { useLiff } from "@/contexts/LiffContext";
 import { useGameState } from "@/hooks/useGameState";
+import { redeemTicket } from "@/api/ticket";
 import rewardIconAppetizer from "@/assets/reward-icon-appetizer.png";
 import bgMain from "@/assets/bg-main.png";
 
@@ -92,17 +94,47 @@ const Index = () => {
     }
   }, [userId, isApiLoading, gameState]);
 
-  // Auto-verify if coming from external QR code system
+  // Auto-verify if coming from external dynamic-QR system.
+  //
+  // Previous version trusted any ?ticket=… value blindly — attacker could
+  // append ?ticket=foo and skip the scan entirely. Now we POST the ticket to
+  // /api/ticket/redeem which forwards to qrcode-generator's /api/verify
+  // (using a shared secret) and consumes it atomically. Each ticket only
+  // works once across the whole world.
   useEffect(() => {
     const ticket = searchParams.get("ticket");
-    if (ticket && !isLoading && !isQRVerified && selectedCharacter) {
-      setIsQRVerified(true);
-      setStatusMessage("✅ QR Code 驗證成功！請擲骰一次");
-      setStatusType("success");
-      // Remove ticket param from URL
+    if (!ticket || isLoading || isQRVerified || !selectedCharacter) return;
+
+    let cancelled = false;
+    (async () => {
+      setStatusMessage("正在驗證掃描的 QR Code...");
+      setStatusType("loading");
+      const result = await redeemTicket(ticket);
+      if (cancelled) return;
+
+      // Always strip ticket from URL so a refresh can't retry the same one
       searchParams.delete("ticket");
       setSearchParams(searchParams, { replace: true });
-    }
+
+      if (result.ok) {
+        setIsQRVerified(true);
+        setStatusMessage("✅ QR Code 驗證成功！請擲骰一次");
+        setStatusType("success");
+      } else {
+        const reasonText: Record<string, string> = {
+          expired: "此 QR Code 已過期,請洽詢餐飲部人員重新取得",
+          already_redeemed: "此 QR Code 已被使用過,請洽詢餐飲部人員重新取得",
+          unknown: "QR Code 無效,請洽詢餐飲部人員",
+          rejected: "QR Code 驗證失敗,請稍後再試",
+        };
+        setStatusMessage(reasonText[result.reason ?? "rejected"] ?? "QR Code 驗證失敗");
+        setStatusType("error");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [searchParams, isLoading, isQRVerified, selectedCharacter, setSearchParams]);
 
   // Persist state to both localStorage and API
@@ -374,6 +406,8 @@ const Index = () => {
             </div>
           </motion.div>
         )}
+
+        <ShareButton />
 
         <motion.div
           initial={{ opacity: 0 }}
