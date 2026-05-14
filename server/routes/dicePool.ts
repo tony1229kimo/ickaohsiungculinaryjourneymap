@@ -35,7 +35,7 @@ router.get("/me", liffAuth, async (req: Request, res: Response) => {
 
   res.json({
     user_id: userId,
-    dice_remaining: getDiceRemaining(userId),
+    dice_remaining: await getDiceRemaining(userId),
   });
 });
 
@@ -48,7 +48,7 @@ router.post("/roll", liffAuth, async (req: Request, res: Response) => {
   const userId = (req as Request & { lineUserId?: string }).lineUserId;
   if (!userId) return res.status(401).json({ error: "no user" });
 
-  const consumed = takeOneDice(userId);
+  const consumed = await takeOneDice(userId);
   if (!consumed) {
     return res.status(409).json({ error: "no_dice_available", dice_remaining: 0 });
   }

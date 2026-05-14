@@ -35,7 +35,7 @@ router.post("/redeem", requireLiffAuth(), async (req: Request, res: Response) =>
     return res.status(400).json({ ok: false, reason: "qr_required" });
   }
 
-  const result = redeemInvoice(userId, raw);
+  const result = await redeemInvoice(userId, raw);
   if (result.ok) {
     return res.json({
       ok: true,

@@ -101,8 +101,8 @@ async function handleFollow(event: LineEvent) {
   // Record the new follower in profile + events for marketing analytics
   const userId = event.source?.userId;
   if (userId) {
-    upsertProfile(userId);
-    recordEvent({
+    await upsertProfile(userId);
+    await recordEvent({
       userId,
       eventType: "bind",
       payload: { source: "follow" },
@@ -126,7 +126,7 @@ async function handleMessage(event: LineEvent) {
     return;
   }
 
-  if (!tableExists(tableId)) {
+  if (!(await tableExists(tableId))) {
     if (event.replyToken) {
       await replyToLine(
         event.replyToken,
@@ -136,7 +136,7 @@ async function handleMessage(event: LineEvent) {
     return;
   }
 
-  const ok = bindTableUser(tableId, userId);
+  const ok = await bindTableUser(tableId, userId);
   if (!ok) {
     if (event.replyToken) {
       await replyToLine(event.replyToken, "綁定失敗,請聯絡現場人員。Binding failed — please contact staff.");
@@ -146,7 +146,7 @@ async function handleMessage(event: LineEvent) {
 
   // Marketing audit — track every table binding by restaurant prefix
   const restaurantId = tableId.replace(/\d+$/, "");
-  recordEvent({
+  await recordEvent({
     userId,
     eventType: "bind",
     restaurantId,

@@ -33,7 +33,7 @@ async function requireStaffWhitelist(req: Request, res: Response, next: NextFunc
   if (!userId) {
     return res.status(401).json({ error: "Missing line user" });
   }
-  if (isStaff(userId)) {
+  if (await isStaff(userId)) {
     return next();
   }
   // Dev fallback: bypass if no LIFF channel configured (we already log this).
@@ -53,9 +53,7 @@ const staffAuth = [liffAuth, requireStaffWhitelist];
 // ─────────────────────────────────────────────────────────────────
 
 router.get("/restaurants", ...staffAuth, async (_req, res) => {
-  // TODO future: filter to the staff's own restaurant_id if non-NULL in
-  // staff_whitelist. For now everyone sees all of IC Kaohsiung's 5 restaurants.
-  res.json({ restaurants: listRestaurants("KH") });
+  res.json({ restaurants: await listRestaurants("KH") });
 });
 
 // ─────────────────────────────────────────────────────────────────
@@ -63,7 +61,7 @@ router.get("/restaurants", ...staffAuth, async (_req, res) => {
 // ─────────────────────────────────────────────────────────────────
 
 router.get("/restaurants/:rid/tables", ...staffAuth, async (req, res) => {
-  const rows = listRestaurantTables(req.params.rid);
+  const rows = await listRestaurantTables(req.params.rid);
   res.json({
     restaurant_id: req.params.rid,
     tables: rows.map((t) => ({
@@ -106,7 +104,7 @@ router.post("/tables/:tid/activate", ...staffAuth, async (req: Request, res: Res
   }
 
   const staffId = (req as Request & { lineUserId?: string }).lineUserId ?? "dev";
-  const result = activateTable(tableId, amount, dice, staffId);
+  const result = await activateTable(tableId, amount, dice, staffId);
 
   if (!result.ok) {
     const status = result.reason === "table_not_found" ? 404 : 409;
@@ -119,7 +117,8 @@ router.post("/tables/:tid/activate", ...staffAuth, async (req: Request, res: Res
     ? `https://liff.line.me/${liffId}`
     : process.env.GAME_BASE_URL ?? "";
   // Restaurant name for the push card.
-  const restaurantName = (listRestaurants("KH").find((r) => tableId.startsWith(r.id))?.name_zh) ?? "高雄洲際";
+  const restaurantsForName = await listRestaurants("KH");
+  const restaurantName = restaurantsForName.find((r) => tableId.startsWith(r.id))?.name_zh ?? "高雄洲際";
 
   const pushResult = await pushGameInvite("KH", {
     customerUserId: result.userId!,

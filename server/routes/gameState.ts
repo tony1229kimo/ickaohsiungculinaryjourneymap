@@ -24,8 +24,8 @@ function requireAdmin(req: Request, res: Response, next: NextFunction) {
 }
 
 // GET /api/game-state/:userId
-router.get("/:userId", liffAuth, (req, res) => {
-  const state = getGameState(req.params.userId);
+router.get("/:userId", liffAuth, async (req, res) => {
+  const state = await getGameState(req.params.userId);
   if (!state) {
     return res.json({
       userId: req.params.userId,
@@ -40,9 +40,9 @@ router.get("/:userId", liffAuth, (req, res) => {
 });
 
 // PUT /api/game-state/:userId
-router.put("/:userId", liffAuth, (req, res) => {
+router.put("/:userId", liffAuth, async (req, res) => {
   const { displayName, totalPoints, earnedRewards, selectedCharacter, claimedTiles } = req.body;
-  saveGameState({
+  await saveGameState({
     userId: req.params.userId,
     displayName: displayName ?? "",
     totalPoints: totalPoints ?? 0,
@@ -54,18 +54,18 @@ router.put("/:userId", liffAuth, (req, res) => {
 });
 
 // POST /api/game-state/:userId/claim-tile
-router.post("/:userId/claim-tile", liffAuth, (req, res) => {
+router.post("/:userId/claim-tile", liffAuth, async (req, res) => {
   const { tile } = req.body;
   if (typeof tile !== "number") {
     return res.status(400).json({ error: "tile must be a number" });
   }
-  const result = claimTile(req.params.userId, tile);
+  const result = await claimTile(req.params.userId, tile);
   res.json(result);
 });
 
 // POST /api/game-state/:userId/reset — admin-only (requires X-Admin-Token header)
-router.post("/:userId/reset", requireAdmin, (req, res) => {
-  resetGame(req.params.userId);
+router.post("/:userId/reset", requireAdmin, async (req, res) => {
+  await resetGame(req.params.userId);
   res.json({ success: true });
 });
 
