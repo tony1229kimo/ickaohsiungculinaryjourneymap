@@ -29,6 +29,7 @@ const REASON_TEXT: Record<string, string> = {
   parse_failed: "QR 解析失敗,請確認您掃的是電子發票左側的 QR Code",
   qr_required: "未取得 QR 資料",
   no_user: "請重新登入 LINE",
+  server_error: "後端發生錯誤",
 };
 
 const InvoiceScanner = ({ onSuccess, onClose }: Props) => {
@@ -70,8 +71,10 @@ const InvoiceScanner = ({ onSuccess, onClose }: Props) => {
             if (result.ok) {
               onSuccess(result);
             } else {
-              const msg = REASON_TEXT[result.reason ?? ""] ?? `兌換失敗:${result.reason ?? "未知"}`;
-              setError(msg);
+              const baseMsg = REASON_TEXT[result.reason ?? ""] ?? `兌換失敗:${result.reason ?? "未知"}`;
+              // Append server-side error detail when reason === server_error
+              const detail = result.error ? ` (${result.error})` : "";
+              setError(baseMsg + detail);
               handledRef.current = false; // allow retry
               // restart scanner so user can rescan a different invoice
               setTimeout(() => start(), 800);

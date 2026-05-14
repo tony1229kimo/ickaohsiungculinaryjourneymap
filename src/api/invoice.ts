@@ -7,7 +7,15 @@ export interface InvoiceRedeemResponse {
   dice_issued?: number;
   amount?: number;
   restaurant_id?: string;
-  reason?: "already_redeemed" | "no_active_binding" | "amount_below_threshold" | "parse_failed" | "qr_required" | "no_user";
+  reason?:
+    | "already_redeemed"
+    | "no_active_binding"
+    | "amount_below_threshold"
+    | "parse_failed"
+    | "qr_required"
+    | "no_user"
+    | "server_error";
+  error?: string;  // populated on server_error
 }
 
 export async function redeemInvoice(rawQR: string): Promise<InvoiceRedeemResponse> {
