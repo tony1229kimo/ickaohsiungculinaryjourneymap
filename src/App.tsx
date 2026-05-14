@@ -7,6 +7,7 @@ import { LiffProvider } from "@/contexts/LiffContext";
 import Index from "./pages/Index";
 import QRCodePage from "./pages/QRCodePage";
 import AboutPage from "./pages/AboutPage";
+import AdminTablesPage from "./pages/AdminTablesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,16 @@ const App = () => (
             element={
               <LiffProvider>
                 <Index />
+              </LiffProvider>
+            }
+          />
+          {/* Staff admin — also require LIFF login; backend then enforces
+              staff_whitelist (see server/db.ts:isStaff). */}
+          <Route
+            path="/admin/tables"
+            element={
+              <LiffProvider>
+                <AdminTablesPage />
               </LiffProvider>
             }
           />

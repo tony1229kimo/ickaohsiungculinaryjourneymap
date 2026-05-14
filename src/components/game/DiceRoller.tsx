@@ -4,6 +4,15 @@ import { motion, AnimatePresence } from "framer-motion";
 interface DiceRollerProps {
   onRoll: (points: number) => void;
   disabled?: boolean;
+  /**
+   * Server-authoritative dice roll. If provided, the dice face shown is the
+   * value returned by the server (anti-tamper). If omitted, falls back to
+   * client-side Math.random — keep for local dev/QR-scan flow.
+   *
+   * Return null to indicate "out of dice" — the component then shows the
+   * preview face but does not fire onRoll.
+   */
+  rollFn?: () => Promise<number | null>;
 }
 
 const DICE_FACES: Record<number, number[][]> = {
@@ -41,7 +50,7 @@ const DiceDots = ({ value }: { value: number }) => (
   </div>
 );
 
-const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
+const DiceRoller = ({ onRoll, disabled, rollFn }: DiceRollerProps) => {
   const [isRolling, setIsRolling] = useState(false);
   const [rollResult, setRollResult] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -69,15 +78,28 @@ const DiceRoller = ({ onRoll, disabled }: DiceRollerProps) => {
     setIsRolling(true);
     setShowResult(false);
 
-    await new Promise(resolve => setTimeout(resolve, 1400));
+    // Kick off server roll in parallel with the animation so total time
+    // perceived by the user is still ~1.4s.
+    const serverPromise = rollFn
+      ? rollFn().catch(() => null)
+      : Promise.resolve<number | null>(Math.floor(Math.random() * 3) + 1);
 
-    const points = Math.floor(Math.random() * 3) + 1;
+    const [serverValue] = await Promise.all([
+      serverPromise,
+      new Promise((resolve) => setTimeout(resolve, 1400)),
+    ]);
 
-    setRollResult(points);
+    if (serverValue === null) {
+      // Out of dice — abort visually
+      setIsRolling(false);
+      return;
+    }
+
+    setRollResult(serverValue);
     setIsRolling(false);
     setShowResult(true);
 
-    onRoll(points);
+    onRoll(serverValue);
   };
 
   const displayFace = showResult && rollResult !== null ? rollResult : previewFace;

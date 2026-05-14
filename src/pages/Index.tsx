@@ -21,6 +21,7 @@ import CharacterSelect, { GameCharacterInfo } from "@/components/game/CharacterS
 import ShareButton from "@/components/game/ShareButton";
 import { useLiff } from "@/contexts/LiffContext";
 import { useGameState } from "@/hooks/useGameState";
+import { useDicePool } from "@/hooks/useDicePool";
 import { redeemTicket } from "@/api/ticket";
 import rewardIconAppetizer from "@/assets/reward-icon-appetizer.png";
 import bgMain from "@/assets/bg-main.png";
@@ -33,6 +34,12 @@ const Index = () => {
   const userId = user?.userId ?? "anonymous";
   const displayName = user?.displayName ?? "玩家";
   const { gameState, isLoading: isApiLoading, save: saveToApi } = useGameState(userId);
+  // Dice pool — primary gate after staff activation pushes a LIFF link.
+  // Old QR-Scan flow is kept as backup for stores without staff console.
+  const { diceRemaining, refetch: refetchDice, roll: serverRollDice, isRolling } = useDicePool(
+    userId,
+    /* enabled */ userId !== "anonymous",
+  );
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
@@ -158,6 +165,23 @@ const Index = () => {
     setShowScanner(false);
     setStatusMessage("✅ 驗證成功！請擲骰一次");
     setStatusType("success");
+  };
+
+  /**
+   * Server-authoritative roll. Called by DiceRoller via rollFn prop —
+   * decrements the user's dice_pool atomically on the backend and returns
+   * the rolled value (1-3). Returns null if no dice available so the
+   * DiceRoller component can abort visually.
+   */
+  const handleServerRoll = async (): Promise<number | null> => {
+    const result = await serverRollDice();
+    if (result && "rolled" in result) {
+      return result.rolled;
+    }
+    // Out of dice — surface to status bar so user knows what happened
+    setStatusMessage("擲骰機會已用完,請洽詢餐飲部人員結帳並重新啟用");
+    setStatusType("info");
+    return null;
   };
 
   const handleDiceRoll = async (points: number) => {
@@ -308,14 +332,35 @@ const Index = () => {
                 Thank you for completing the journey.
               </p>
             </motion.div>
-          ) : !isQRVerified ? (
+          ) : diceRemaining > 0 || isQRVerified ? (
+            // Primary path: customer has dice in pool (from staff "activate") OR
+            // legacy path: came in via QR scan and isQRVerified=true.
+            <div className="space-y-3">
+              {diceRemaining > 0 && (
+                <p className="text-center text-sm font-medium text-foreground bg-accent/15 rounded-full px-4 py-1.5">
+                  🎲 您還有 <strong className="text-accent-foreground">{diceRemaining}</strong> 次擲骰機會
+                </p>
+              )}
+              <DiceRoller
+                onRoll={handleDiceRoll}
+                disabled={isLoading || isProcessing || isRolling}
+                rollFn={diceRemaining > 0 ? handleServerRoll : undefined}
+              />
+            </div>
+          ) : (
+            // No dice in pool AND no QR ticket — show waiting screen.
+            // Customer needs staff to activate at /api/admin/tables/:id/activate.
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-5">
               <div className="scan-prompt">
                 <div className="w-[200px] h-[200px] mx-auto mb-2 -mt-8">
-                  <img src={qrScanIllustration} alt="掃描 QR Code" className="block w-full h-full object-contain" />
+                  <img src={qrScanIllustration} alt="等待結帳" className="block w-full h-full object-contain" />
                 </div>
-                <p className="text-foreground font-bold mb-1.5">請掃描店家 QR Code</p>
-                <p className="text-xs text-muted-foreground">每次掃描可擲骰一次，完成集點</p>
+                <p className="text-foreground font-bold mb-1.5">請於結帳後再開始遊戲</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  消費滿 NT$2,000 後,餐飲部人員確認帳單即可開始擲骰。
+                  <br />
+                  您也可掃描店家 QR Code 立即體驗(舊版流程)
+                </p>
               </div>
               <button
                 onClick={() => setShowScanner(true)}
@@ -323,11 +368,16 @@ const Index = () => {
                 style={{ backgroundColor: "#DAD9D6", boxShadow: "0 4px 15px rgba(0,0,0,0.1)" }}
                 className="w-full py-2 px-4 rounded-2xl font-bold text-lg transition-all duration-300 relative overflow-hidden text-foreground"
               >
-                <span className="flex items-center justify-center gap-2">📷 開始掃描 QR Code</span>
+                <span className="flex items-center justify-center gap-2">📷 掃描店家 QR Code(備援)</span>
+              </button>
+              <button
+                onClick={() => refetchDice()}
+                disabled={isLoading}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                🔄 重新整理狀態
               </button>
             </motion.div>
-          ) : (
-            <DiceRoller onRoll={handleDiceRoll} disabled={isLoading || isProcessing} />
           )}
 
           <div className="mt-5">
