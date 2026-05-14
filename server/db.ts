@@ -89,6 +89,12 @@ export function getGameState(userId: string): GameState | null {
 }
 
 export function saveGameState(state: GameState): void {
+  // Diff earned_rewards vs current to detect new lottery prizes and emit events.
+  // Client sends the whole array each save; we record one event per new entry.
+  const before = getGameState(state.userId);
+  const beforeRewards = (before?.earnedRewards as unknown[]) ?? [];
+  const newRewards = state.earnedRewards.slice(beforeRewards.length);
+
   db.run(
     `INSERT INTO game_state (user_id, display_name, total_points, earned_rewards, selected_character, claimed_tiles, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
@@ -109,6 +115,19 @@ export function saveGameState(state: GameState): void {
     ]
   );
   persistDb();
+
+  // Sync display_name onto profile if client just told us
+  if (state.displayName) {
+    upsertProfile(state.userId, state.displayName);
+  }
+  // One event per newly added lottery reward
+  for (const r of newRewards) {
+    recordEvent({
+      userId: state.userId,
+      eventType: "reward_lottery",
+      payload: r as Record<string, unknown>,
+    });
+  }
 }
 
 export function claimTile(userId: string, tile: number): { success: boolean; alreadyClaimed: boolean } {
@@ -126,6 +145,15 @@ export function claimTile(userId: string, tile: number): { success: boolean; alr
     [JSON.stringify(claimed), userId]
   );
   persistDb();
+
+  // Audit: fixed-tile reward claim (tiles 2/6/8/11/15 in StampCard.tsx).
+  // Lottery rewards (chance/fate cards) go through saveGameState's
+  // earned_rewards diff — see saveGameState below.
+  recordEvent({
+    userId,
+    eventType: "reward_fixed",
+    payload: { tile },
+  });
 
   return { success: true, alreadyClaimed: false };
 }
@@ -333,12 +361,29 @@ export function activateTable(
   const restaurantId = (tStmt.getAsObject().restaurant_id as string) ?? "";
   tStmt.free();
 
+  // Check if customer needs cross-season reset (Tony 2026-05-14: option A).
+  // If they already reached the finish line (15), wipe progress for a new
+  // lap but keep earned_rewards as historical record.
+  const existing = getGameState(binding.user_id);
+  const needsSeasonReset = !!existing && existing.totalPoints >= 15;
+
   db.run("BEGIN TRANSACTION");
   try {
     db.run(
       `UPDATE table_bindings SET consumed_at = datetime('now') WHERE id = ?`,
       [binding.id],
     );
+
+    if (needsSeasonReset) {
+      // Start a fresh season: zero position + tile flags, keep rewards history
+      db.run(
+        `UPDATE game_state
+         SET total_points = 0, claimed_tiles = '[]', updated_at = datetime('now')
+         WHERE user_id = ?`,
+        [binding.user_id],
+      );
+    }
+
     db.run(
       `INSERT INTO dice_pool
          (user_id, restaurant_id, dice_remaining, amount_spent, issued_by_staff_id, table_id)
@@ -362,12 +407,29 @@ export function activateTable(
       [
         staffUserId,
         tableId,
-        JSON.stringify({ amount, dice: diceIssued, user_id: binding.user_id }),
+        JSON.stringify({ amount, dice: diceIssued, user_id: binding.user_id, season_reset: needsSeasonReset }),
       ],
     );
 
     db.run("COMMIT");
     persistDb();
+
+    // Audit events (outside transaction — recordEvent persists itself)
+    if (needsSeasonReset) {
+      recordEvent({
+        userId: binding.user_id,
+        eventType: "season_reset",
+        restaurantId,
+      });
+    }
+    recordEvent({
+      userId: binding.user_id,
+      eventType: "activate",
+      restaurantId,
+      amount,
+      payload: { table_id: tableId, dice_issued: diceIssued },
+    });
+
     return { ok: true, userId: binding.user_id, diceIssued, poolId };
   } catch (err) {
     db.run("ROLLBACK");
@@ -430,6 +492,21 @@ export function takeOneDice(userId: string): { poolId: number; remaining: number
     [newRemaining, newRemaining, poolId],
   );
   persistDb();
+
+  // Audit: record the roll. restaurant_id pulled from the pool row so we
+  // can later answer "how many rolls happened at each restaurant".
+  const rStmt = db.prepare("SELECT restaurant_id FROM dice_pool WHERE id = ?");
+  rStmt.bind([poolId]);
+  rStmt.step();
+  const restaurantId = (rStmt.getAsObject().restaurant_id as string) ?? null;
+  rStmt.free();
+  recordEvent({
+    userId,
+    eventType: "roll",
+    restaurantId,
+    payload: { pool_id: poolId, remaining_after: newRemaining },
+  });
+
   return { poolId, remaining: newRemaining };
 }
 
@@ -439,4 +516,95 @@ export function isStaff(userId: string): boolean {
   const found = stmt.step();
   stmt.free();
   return found;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Customer profile + event audit (migration 002)
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * UPSERT a customer profile. Called every time we see a LINE user
+ * (bind, LIFF login, etc.). Updates display_name/picture_url if newer
+ * data available and refreshes last_seen_at.
+ */
+export function upsertProfile(
+  userId: string,
+  displayName?: string | null,
+  pictureUrl?: string | null,
+): void {
+  db.run(
+    `INSERT INTO customer_profiles (user_id, display_name, picture_url, last_seen_at)
+     VALUES (?, ?, ?, datetime('now'))
+     ON CONFLICT(user_id) DO UPDATE SET
+       display_name = COALESCE(?, customer_profiles.display_name),
+       picture_url = COALESCE(?, customer_profiles.picture_url),
+       last_seen_at = datetime('now')`,
+    [userId, displayName ?? null, pictureUrl ?? null, displayName ?? null, pictureUrl ?? null],
+  );
+  // persist deferred — caller often does several writes in a transaction
+}
+
+export interface RecordEventOpts {
+  userId: string;
+  eventType:
+    | "bind"
+    | "activate"
+    | "roll"
+    | "reward_lottery"
+    | "reward_fixed"
+    | "season_reset"
+    | "invoice_redeem";
+  payload?: unknown;
+  restaurantId?: string | null;
+  amount?: number | null;
+}
+
+/**
+ * Append an event + bump the relevant aggregate counter on the profile.
+ *
+ * Aggregate buckets are derived from event_type so /admin/customers can
+ * sort by them without scanning events. Source of truth remains the events
+ * table — profile counters are denormalised for read speed.
+ */
+export function recordEvent(opts: RecordEventOpts): void {
+  upsertProfile(opts.userId); // make sure profile exists
+
+  db.run(
+    `INSERT INTO customer_events (user_id, event_type, payload, restaurant_id, amount)
+     VALUES (?, ?, ?, ?, ?)`,
+    [
+      opts.userId,
+      opts.eventType,
+      opts.payload ? JSON.stringify(opts.payload) : null,
+      opts.restaurantId ?? null,
+      opts.amount ?? null,
+    ],
+  );
+
+  // Bump denormalised counters
+  if (opts.eventType === "activate") {
+    db.run(
+      `UPDATE customer_profiles
+       SET total_visits = total_visits + 1,
+           total_spend = total_spend + ?
+       WHERE user_id = ?`,
+      [opts.amount ?? 0, opts.userId],
+    );
+  } else if (opts.eventType === "roll") {
+    db.run(
+      `UPDATE customer_profiles SET total_dice_rolled = total_dice_rolled + 1 WHERE user_id = ?`,
+      [opts.userId],
+    );
+  } else if (opts.eventType === "reward_lottery" || opts.eventType === "reward_fixed") {
+    db.run(
+      `UPDATE customer_profiles SET total_rewards_earned = total_rewards_earned + 1 WHERE user_id = ?`,
+      [opts.userId],
+    );
+  } else if (opts.eventType === "season_reset") {
+    db.run(
+      `UPDATE customer_profiles SET total_seasons = total_seasons + 1 WHERE user_id = ?`,
+      [opts.userId],
+    );
+  }
+  persistDb();
 }

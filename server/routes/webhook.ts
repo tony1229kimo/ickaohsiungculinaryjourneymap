@@ -21,7 +21,7 @@
 
 import { Router, type Request, type Response } from "express";
 import crypto from "crypto";
-import { bindTableUser, tableExists } from "../db.js";
+import { bindTableUser, tableExists, upsertProfile, recordEvent } from "../db.js";
 
 const router = Router();
 
@@ -97,6 +97,18 @@ interface LineEvent {
 
 async function handleFollow(event: LineEvent) {
   if (!event.replyToken) return;
+
+  // Record the new follower in profile + events for marketing analytics
+  const userId = event.source?.userId;
+  if (userId) {
+    upsertProfile(userId);
+    recordEvent({
+      userId,
+      eventType: "bind",
+      payload: { source: "follow" },
+    });
+  }
+
   await replyToLine(
     event.replyToken,
     "歡迎加入高雄洲際酒店！\n\n用餐時請對著桌邊立牌再掃一次 QR,\n結帳後即可開始味蕾旅程遊戲 🎲\n\nWelcome to InterContinental Kaohsiung!"
@@ -131,6 +143,15 @@ async function handleMessage(event: LineEvent) {
     }
     return;
   }
+
+  // Marketing audit — track every table binding by restaurant prefix
+  const restaurantId = tableId.replace(/\d+$/, "");
+  recordEvent({
+    userId,
+    eventType: "bind",
+    restaurantId,
+    payload: { table_id: tableId, source: "table_qr" },
+  });
 
   if (event.replyToken) {
     await replyToLine(
