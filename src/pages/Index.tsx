@@ -51,6 +51,9 @@ const Index = () => {
   const [isQRVerified, setIsQRVerified] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [showInvoiceScanner, setShowInvoiceScanner] = useState(false);
+  // Single-fire guard for the fixed-reward "領取獎勵" button.
+  // Without it, fast double-tap could fire reward link + markTileClaimed twice.
+  const [isClaimingFixed, setIsClaimingFixed] = useState(false);
   const [showCardPicker, setShowCardPicker] = useState(false);
   const [showLottery, setShowLottery] = useState(false);
   const [lotteryType, setLotteryType] = useState<"chance" | "fate">("chance");
@@ -440,14 +443,21 @@ const Index = () => {
           onClaimTile={markTileClaimed}
         />
 
-        {/* Earned rewards */}
+        {/* Earned rewards — read-only history (NOT a redeem button)
+            獎券會在抽獎當下自動推送到客戶 LINE 帳號(透過 Omnichat),這裡只是
+            歷史記錄。之前 entry 是 cursor-pointer 點開新分頁 → 客戶以為可以反覆
+            領取。改為純展示 + 「已存入 LINE」狀態。Tony 2026-05-14 報的 bug。 */}
         {earnedRewards.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="stamp-card">
-            <h3 className="text-base font-bold text-foreground mb-4 flex items-center gap-2">
+            <h3 className="text-base font-bold text-foreground mb-2 flex items-center gap-2">
               🎁 <span>已獲得獎項</span>
               <span className="ml-auto text-xs font-normal text-muted-foreground">{earnedRewards.length} 項</span>
             </h3>
-            <p className="text-xs text-muted-foreground mb-3">（請從個人 LINE 帳號查看）</p>
+            <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+              獎券已自動發送至您的 LINE 訊息,請從聊天視窗查看。
+              <br />
+              Rewards have been delivered to your LINE inbox.
+            </p>
             <div className="space-y-2.5">
               {earnedRewards.map((reward, index) => (
                 <motion.div
@@ -455,15 +465,8 @@ const Index = () => {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="flex items-center gap-3 p-3 rounded-2xl border border-border/60 cursor-pointer hover:bg-accent/30 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-2xl border border-border/60"
                   style={{ background: "hsl(0 0% 100% / 0.5)" }}
-                  onClick={() => {
-                    const a = document.createElement("a");
-                    a.href = "https://lin.ee/YzwlVWh";
-                    a.target = "_blank";
-                    a.rel = "noopener noreferrer";
-                    a.click();
-                  }}
                 >
                   <span className="text-2xl">{reward.reward.icon}</span>
                   <div className="flex-1 min-w-0">
@@ -472,7 +475,15 @@ const Index = () => {
                       {reward.type === "chance" ? "機會卡" : "命運卡"}
                     </p>
                   </div>
-                  <span className="text-xs text-primary font-medium shrink-0">查看 →</span>
+                  <span
+                    className="text-[11px] font-bold shrink-0 px-2 py-1 rounded-full"
+                    style={{
+                      background: "hsl(140 50% 90%)",
+                      color: "hsl(140 60% 30%)",
+                    }}
+                  >
+                    ✓ 已發送
+                  </span>
                 </motion.div>
               ))}
             </div>
@@ -566,9 +577,14 @@ const Index = () => {
               <p className="text-xs text-muted-foreground mb-5">第 {fixedRewardPopup.tile} 格固定獎勵</p>
               <button
                 type="button"
+                disabled={isClaimingFixed}
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
+                  // Single-fire guard against double-tap
+                  if (isClaimingFixed) return;
+                  setIsClaimingFixed(true);
+
                   const a = document.createElement("a");
                   a.href = fixedRewardPopup.link;
                   a.target = "_blank";
@@ -578,15 +594,17 @@ const Index = () => {
                   document.body.removeChild(a);
                   markTileClaimed(fixedRewardPopup.tile);
                   setFixedRewardPopup(null);
+                  // Reset guard for next tile claim
+                  setTimeout(() => setIsClaimingFixed(false), 1000);
                 }}
-                className="w-full py-3 rounded-2xl font-bold text-sm transition-all active:scale-95 cursor-pointer mb-3"
+                className="w-full py-3 rounded-2xl font-bold text-sm transition-all active:scale-95 cursor-pointer mb-3 disabled:opacity-60"
                 style={{
                   background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
                   color: "hsl(0 0% 100%)",
                   boxShadow: "0 4px 12px hsl(43 85% 55% / 0.4)",
                 }}
               >
-                🎁 領取獎勵
+                {isClaimingFixed ? "領取中..." : "🎁 領取獎勵"}
               </button>
             </motion.div>
           </motion.div>

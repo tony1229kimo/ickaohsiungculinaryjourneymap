@@ -38,6 +38,9 @@ interface LotteryCardProps {
 const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
   const [phase, setPhase] = useState<"back" | "flipping" | "front">("back");
   const [reward, setReward] = useState<{id: number;name: string;icon: string;image?: string;link?: string;} | null>(null);
+  // Guard: prevent double-fire if user taps "領取獎勵" twice quickly.
+  // Otherwise the same reward gets pushed twice into earnedRewards.
+  const [isClaiming, setIsClaiming] = useState(false);
 
   const bgImage = type === "chance" ? cardChanceBg : cardFateBg;
 
@@ -71,10 +74,14 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
   const handleClaim = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    // Single-fire guard — double-tap protection
+    if (isClaiming) return;
+    setIsClaiming(true);
+
     if (reward) {
       onRewardClaimed({ type, reward: { id: reward.id, name: reward.name, icon: reward.icon } });
       if (reward.link) {
-        // 使用 <a> 模擬點擊，避免被瀏覽器攔截
+        // 使用 <a> 模擬點擊,避免被瀏覽器攔截
         const a = document.createElement("a");
         a.href = reward.link;
         a.target = "_blank";
@@ -269,17 +276,18 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.55 }}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.97 }}
+                  whileHover={{ scale: isClaiming ? 1 : 1.05 }}
+                  whileTap={{ scale: isClaiming ? 1 : 0.97 }}
                   onClick={handleClaim}
-                  className="px-8 py-3 rounded-2xl font-bold text-lg transition-colors"
+                  disabled={isClaiming}
+                  className="px-8 py-3 rounded-2xl font-bold text-lg transition-colors disabled:opacity-60"
                   style={{
                     background: "hsl(0 0% 100% / 0.92)",
                     color: type === "chance" ? "hsl(30 40% 30%)" : "hsl(230 30% 25%)",
                     boxShadow: "0 4px 20px hsl(0 0% 0% / 0.2), inset 0 1px 0 hsl(0 0% 100%)"
                   }}>
-                  
-                    領取獎勵 🎉
+
+                    {isClaiming ? "領取中..." : "領取獎勵 🎉"}
                   </motion.button>
 
                   {/* Note */}

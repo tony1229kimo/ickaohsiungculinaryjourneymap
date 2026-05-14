@@ -102,6 +102,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, claimedTiles, onCla
   const [animatingTile, setAnimatingTile] = useState<number | null>(null);
   const [selectedTile, setSelectedTile] = useState<number | null>(null);
   const [showGrandPrize, setShowGrandPrize] = useState(true);
+  const [isClaimingGrand, setIsClaimingGrand] = useState(false);
   const prevPointsRef = useRef(totalPoints);
 
   useEffect(() => {
@@ -257,9 +258,14 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, claimedTiles, onCla
           </DialogDescription>
           <button
             type="button"
+            disabled={isClaimingGrand}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
+              // Single-fire guard
+              if (isClaimingGrand) return;
+              setIsClaimingGrand(true);
+
               const a = document.createElement("a");
               a.href = REWARD_LINKS[15];
               a.target = "_blank";
@@ -270,13 +276,13 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, claimedTiles, onCla
               onClaimTile?.(15);
               setShowGrandPrize(false);
             }}
-            className="inline-block w-full text-center py-3 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer"
+            className="inline-block w-full text-center py-3 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer disabled:opacity-60"
             style={{
               background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
               color: "hsl(0 0% 100%)",
               boxShadow: "0 4px 12px hsl(43 85% 55% / 0.4)"
             }}>
-            🏆 領取終極大獎
+            {isClaimingGrand ? "領取中..." : "🏆 領取終極大獎"}
           </button>
         </DialogContent>
       </Dialog>
