@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  桌邊立牌 mock(壓克力立架印刷用底稿)
+  尺寸:約 100mm × 150mm(直立桌牌)
+  顏色:IC 品牌色(洲際黑 #3D3935 + 琥珀金 #BFB592)
+  此檔交設計部換正式視覺後再印
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" width="400" height="600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FAF8F4"/>
+      <stop offset="1" stop-color="#EFEAE0"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#D9CDA1"/>
+      <stop offset="1" stop-color="#A89968"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 卡片底 -->
+  <rect x="0" y="0" width="400" height="600" rx="20" fill="url(#bg)"/>
+  <rect x="0" y="0" width="400" height="600" rx="20"
+        fill="none" stroke="url(#gold)" stroke-width="3"/>
+
+  <!-- Logo placeholder -->
+  <g transform="translate(200, 70)">
+    <circle cx="0" cy="0" r="32" fill="#3D3935"/>
+    <text x="0" y="9" font-family="serif" font-size="36" font-weight="bold"
+          fill="#BFB592" text-anchor="middle">IC</text>
+  </g>
+
+  <!-- 飯店中英文名 -->
+  <text x="200" y="135" font-family="'Noto Sans TC', sans-serif"
+        font-size="20" font-weight="bold" fill="#3D3935" text-anchor="middle">
+    高雄洲際酒店
+  </text>
+  <text x="200" y="155" font-family="serif" font-size="11"
+        fill="#6E6A62" text-anchor="middle" letter-spacing="2">
+    INTERCONTINENTAL KAOHSIUNG
+  </text>
+
+  <!-- 分隔 -->
+  <line x1="100" y1="175" x2="300" y2="175" stroke="url(#gold)" stroke-width="1"/>
+
+  <!-- 標題 -->
+  <text x="200" y="205" font-family="'Noto Sans TC', sans-serif"
+        font-size="16" font-weight="bold" fill="#3D3935" text-anchor="middle">
+    🎲 味蕾旅遊地圖集點遊戲
+  </text>
+  <text x="200" y="225" font-family="serif" font-size="10"
+        fill="#6E6A62" text-anchor="middle" letter-spacing="1.5">
+    Culinary Journey Map Game
+  </text>
+
+  <!-- QR Code 框(實際印刷時放 LINE 加好友 QR) -->
+  <g transform="translate(120, 250)">
+    <rect x="0" y="0" width="160" height="160" fill="#FFFFFF"
+          stroke="#3D3935" stroke-width="2" rx="8"/>
+    <!-- 假 QR pattern (給 mock 用,實際印 LINE QR) -->
+    <text x="80" y="65" font-family="monospace" font-size="11"
+          fill="#999" text-anchor="middle">[ LINE QR ]</text>
+    <text x="80" y="85" font-family="monospace" font-size="9"
+          fill="#bbb" text-anchor="middle">加 IC 高雄</text>
+    <text x="80" y="100" font-family="monospace" font-size="9"
+          fill="#bbb" text-anchor="middle">官方帳號</text>
+    <text x="80" y="115" font-family="monospace" font-size="7"
+          fill="#ccc" text-anchor="middle">deep link 帶</text>
+    <text x="80" y="128" font-family="monospace" font-size="9"
+          fill="#3D3935" text-anchor="middle" font-weight="bold">table:A05</text>
+  </g>
+
+  <!-- 步驟說明 -->
+  <g transform="translate(40, 440)">
+    <text font-family="'Noto Sans TC', sans-serif" font-size="11" fill="#3D3935">
+      <tspan x="0" dy="0" font-weight="bold">1.</tspan>
+      <tspan dx="6">掃描 QR 加入 LINE 官方帳號</tspan>
+    </text>
+    <text font-family="'Noto Sans TC', sans-serif" font-size="11" fill="#3D3935">
+      <tspan x="0" dy="22" font-weight="bold">2.</tspan>
+      <tspan dx="6">結帳後將自動收到遊戲通知</tspan>
+    </text>
+    <text font-family="'Noto Sans TC', sans-serif" font-size="11" fill="#3D3935">
+      <tspan x="0" dy="22" font-weight="bold">3.</tspan>
+      <tspan dx="6">擲骰前進,贏取招牌主餐</tspan>
+    </text>
+
+    <text font-family="serif" font-size="8.5" fill="#888">
+      <tspan x="0" dy="22">1. Scan to add LINE official account</tspan>
+    </text>
+    <text font-family="serif" font-size="8.5" fill="#888">
+      <tspan x="0" dy="11">2. Receive a game invite after checkout</tspan>
+    </text>
+    <text font-family="serif" font-size="8.5" fill="#888">
+      <tspan x="0" dy="11">3. Roll the dice, win signature dishes</tspan>
+    </text>
+  </g>
+
+  <!-- 桌號 -->
+  <g transform="translate(200, 570)">
+    <rect x="-65" y="-22" width="130" height="30" rx="15" fill="#3D3935"/>
+    <text y="-1" font-family="'Noto Sans TC', sans-serif"
+          font-size="14" font-weight="bold" fill="#BFB592" text-anchor="middle">
+      A 餐廳 · 桌號 05
+    </text>
+  </g>
+</svg>

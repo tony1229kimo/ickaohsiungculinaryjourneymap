@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 
 const DB_PATH = process.env.DATABASE_PATH || path.join(import.meta.dirname, "game.db");
+const MIGRATIONS_DIR = path.join(import.meta.dirname, "migrations");
 
 let db: Database;
 
@@ -28,8 +29,28 @@ export async function initDb(): Promise<Database> {
     )
   `);
 
+  runMigrations();
+
   persistDb();
   return db;
+}
+
+// Run any .sql files in /migrations alphabetically.
+// They MUST be idempotent (use CREATE TABLE IF NOT EXISTS / INSERT OR IGNORE)
+// because we re-run on every startup — there's no migrations-applied tracking
+// table yet. Good enough for in-memory sql.js where the DB is per-deploy.
+function runMigrations(): void {
+  if (!fs.existsSync(MIGRATIONS_DIR)) return;
+  const files = fs.readdirSync(MIGRATIONS_DIR).filter((f) => f.endsWith(".sql")).sort();
+  for (const file of files) {
+    try {
+      const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), "utf-8");
+      db.run(sql);
+      console.log(`[db] applied migration: ${file}`);
+    } catch (err) {
+      console.error(`[db] migration ${file} failed:`, err);
+    }
+  }
 }
 
 function persistDb() {
