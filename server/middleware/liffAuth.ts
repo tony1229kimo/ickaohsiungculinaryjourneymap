@@ -43,7 +43,11 @@ export function requireLiffAuth() {
           error: "LIFF auth disabled (LINE_CHANNEL_ID not configured in production)",
         });
       }
-      console.warn("[liffAuth] LINE_CHANNEL_ID unset — skipping verification (dev only)");
+      // Dev: accept an explicit X-Dev-UserId header so e2e tests can
+      // simulate different users; fall back to "dev_user" otherwise.
+      const devUserId = req.header("x-dev-userid") || req.params.userId || "dev_user";
+      (req as Request & { lineUserId?: string }).lineUserId = devUserId;
+      console.warn(`[liffAuth] LINE_CHANNEL_ID unset — dev bypass as user=${devUserId}`);
       return next();
     }
 

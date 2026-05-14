@@ -21,6 +21,7 @@
 
 import { Router, type Request, type Response } from "express";
 import crypto from "crypto";
+import { bindTableUser, tableExists } from "../db.js";
 
 const router = Router();
 
@@ -45,7 +46,9 @@ function verifyLineSignature(rawBody: string, signature: string | undefined, sec
 // because LINE bot messages often get auto-formatted (space/zh-tw colons).
 // ─────────────────────────────────────────────────────────────────
 
-const TABLE_BIND_RE = /^\s*table\s*[:：]\s*([A-Z]\d{1,3})\s*$/i;
+// Table IDs are <restaurant_code><number>, e.g. ZL05, WR12, BL30.
+// Restaurant code is 1-3 letters; table number is 1-3 digits.
+const TABLE_BIND_RE = /^\s*table\s*[:：]\s*([A-Z]{1,3}\d{1,3})\s*$/i;
 
 function parseTableId(text: string | undefined): string | null {
   if (!text) return null;
@@ -111,16 +114,28 @@ async function handleMessage(event: LineEvent) {
     return;
   }
 
-  // TODO: bindTableUser(tableId, userId)
-  //   - check table exists
-  //   - INSERT INTO table_bindings (table_id, user_id, expires_at=now+30min)
-  //   - return error if table not in any restaurant we know
-  console.log(`[webhook] TODO: bind user ${userId} to table ${tableId}`);
+  if (!tableExists(tableId)) {
+    if (event.replyToken) {
+      await replyToLine(
+        event.replyToken,
+        `找不到「${tableId}」這張桌號,請確認桌邊立牌的 QR Code 是否正確。\n\nTable ${tableId} not found.`,
+      );
+    }
+    return;
+  }
+
+  const ok = bindTableUser(tableId, userId);
+  if (!ok) {
+    if (event.replyToken) {
+      await replyToLine(event.replyToken, "綁定失敗,請聯絡現場人員。Binding failed — please contact staff.");
+    }
+    return;
+  }
 
   if (event.replyToken) {
     await replyToLine(
       event.replyToken,
-      `已綁定 ${tableId} 桌!\n\n結帳後即可開始遊戲 🎲\n\nTable ${tableId} bound — game opens after checkout.`
+      `✅ 已綁定 ${tableId} 桌\n結帳後將收到遊戲通知 🎲\n\nTable ${tableId} bound — game invite arrives after checkout.`,
     );
   }
 }

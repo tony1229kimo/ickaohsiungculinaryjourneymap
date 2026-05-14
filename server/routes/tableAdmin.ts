@@ -17,6 +17,8 @@
 
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { requireLiffAuth } from "../middleware/liffAuth.js";
+import { activateTable, isStaff, listRestaurants, listRestaurantTables } from "../db.js";
+import { pushGameInvite } from "../lib/linePush.js";
 
 const router = Router();
 const liffAuth = requireLiffAuth();
@@ -31,8 +33,11 @@ async function requireStaffWhitelist(req: Request, res: Response, next: NextFunc
   if (!userId) {
     return res.status(401).json({ error: "Missing line user" });
   }
-  // TODO: SELECT * FROM staff_whitelist WHERE user_id = ?
-  // For now, dev fallback: pass through with warning
+  if (isStaff(userId)) {
+    return next();
+  }
+  // Dev fallback: bypass if no LIFF channel configured (we already log this).
+  // In production the whitelist is enforced.
   const isDev = process.env.NODE_ENV !== "production";
   if (isDev) {
     console.warn(`[tableAdmin] dev mode — bypassing staff check for ${userId}`);
@@ -48,13 +53,9 @@ const staffAuth = [liffAuth, requireStaffWhitelist];
 // ─────────────────────────────────────────────────────────────────
 
 router.get("/restaurants", ...staffAuth, async (_req, res) => {
-  // TODO: query restaurants joined with staff_whitelist.restaurant_id
-  // (NULL restaurant_id = super_admin sees all)
-  res.json({
-    restaurants: [
-      { id: "A", code: "TBD-A", name_zh: "TBD 餐廳 A", name_en: "TBD Restaurant A" },
-    ],
-  });
+  // TODO future: filter to the staff's own restaurant_id if non-NULL in
+  // staff_whitelist. For now everyone sees all of IC Kaohsiung's 5 restaurants.
+  res.json({ restaurants: listRestaurants("KH") });
 });
 
 // ─────────────────────────────────────────────────────────────────
@@ -62,15 +63,17 @@ router.get("/restaurants", ...staffAuth, async (_req, res) => {
 // ─────────────────────────────────────────────────────────────────
 
 router.get("/restaurants/:rid/tables", ...staffAuth, async (req, res) => {
-  // TODO: SELECT t.*, latest_binding(user_id, bound_at) FROM tables t
-  //       LEFT JOIN table_bindings ... WHERE t.restaurant_id = ?
+  const rows = listRestaurantTables(req.params.rid);
   res.json({
     restaurant_id: req.params.rid,
-    tables: [
-      // shape preview — replace with real query
-      { id: `${req.params.rid}05`, label: "05", state: "bound",
-        binding: { user_id: "Uxxx", display_name: "李 X 芬", bound_at: "12:48" } },
-    ],
+    tables: rows.map((t) => ({
+      id: t.id,
+      label: t.display_label,
+      state: t.state,
+      binding: t.active_user_id
+        ? { user_id: t.active_user_id, bound_at: t.bound_at }
+        : null,
+    })),
   });
 });
 
@@ -93,7 +96,7 @@ router.post("/tables/:tid/activate", ...staffAuth, async (req: Request, res: Res
   }
 
   const DICE_PER_2000 = 2000;
-  const DICE_CAP = 5; // TBD §10 — defensive cap until Tony confirms
+  const DICE_CAP = 5; // defensive cap; raise if Tony wants no ceiling
   const dice = Math.min(Math.floor(amount / DICE_PER_2000), DICE_CAP);
 
   if (dice <= 0) {
@@ -102,29 +105,36 @@ router.post("/tables/:tid/activate", ...staffAuth, async (req: Request, res: Res
     });
   }
 
-  // TODO:
-  //   1. SELECT latest non-consumed bindings for tableId within 30 min window
-  //   2. According to TBD §10 choice (A/B/C), pick recipient(s)
-  //   3. BEGIN TRANSACTION
-  //      a. INSERT INTO dice_pool for each recipient
-  //      b. UPDATE table_bindings SET consumed_at = now() for those bindings
-  //      c. UPDATE tables SET state='activated' WHERE id=?
-  //      d. INSERT INTO staff_actions audit log
-  //   4. COMMIT
-  //   5. Call LINE push API with Flex Message containing LIFF deep link to game
-
   const staffId = (req as Request & { lineUserId?: string }).lineUserId ?? "dev";
+  const result = activateTable(tableId, amount, dice, staffId);
 
-  console.log(
-    `[tableAdmin] TODO: activate table=${tableId} amount=${amount} dice=${dice} staff=${staffId}`
-  );
+  if (!result.ok) {
+    const status = result.reason === "table_not_found" ? 404 : 409;
+    return res.status(status).json({ ok: false, reason: result.reason });
+  }
+
+  // Compose the LIFF deep link the customer taps from their LINE message.
+  const liffId = process.env.GAME_LIFF_ID ?? "";
+  const liffUrl = liffId
+    ? `https://liff.line.me/${liffId}`
+    : process.env.GAME_BASE_URL ?? "";
+  // Restaurant name for the push card.
+  const restaurantName = (listRestaurants("KH").find((r) => tableId.startsWith(r.id))?.name_zh) ?? "高雄洲際";
+
+  const pushResult = await pushGameInvite("KH", {
+    customerUserId: result.userId!,
+    diceCount: result.diceIssued!,
+    restaurantName,
+    liffUrl,
+  });
 
   res.json({
     ok: true,
     table_id: tableId,
-    dice_issued: dice,
-    recipients: [], // will be filled when wired
-    // TODO: also return push_status so the admin UI can show "✓ 已推送給 X 位客戶"
+    dice_issued: result.diceIssued,
+    customer_user_id: result.userId,
+    push_ok: pushResult.ok,
+    push_reason: pushResult.ok ? undefined : pushResult.reason,
   });
 });
 

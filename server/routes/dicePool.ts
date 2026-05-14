@@ -19,6 +19,7 @@
 
 import { Router, type Request, type Response } from "express";
 import { requireLiffAuth } from "../middleware/liffAuth.js";
+import { getDiceRemaining, takeOneDice } from "../db.js";
 
 const router = Router();
 const liffAuth = requireLiffAuth();
@@ -32,12 +33,9 @@ router.get("/me", liffAuth, async (req: Request, res: Response) => {
   const userId = (req as Request & { lineUserId?: string }).lineUserId;
   if (!userId) return res.status(401).json({ error: "no user" });
 
-  // TODO: SELECT SUM(dice_remaining) FROM dice_pool
-  //       WHERE user_id=? AND exhausted_at IS NULL
   res.json({
     user_id: userId,
-    dice_remaining: 0, // TODO: replace with real query
-    pools: [],         // TODO: per-restaurant breakdown { restaurant_id, remaining }
+    dice_remaining: getDiceRemaining(userId),
   });
 });
 
@@ -50,27 +48,17 @@ router.post("/roll", liffAuth, async (req: Request, res: Response) => {
   const userId = (req as Request & { lineUserId?: string }).lineUserId;
   if (!userId) return res.status(401).json({ error: "no user" });
 
-  // TODO:
-  //   BEGIN TRANSACTION
-  //     SELECT id, dice_remaining FROM dice_pool
-  //       WHERE user_id=? AND exhausted_at IS NULL AND dice_remaining > 0
-  //       ORDER BY issued_at ASC LIMIT 1   -- oldest pool first (FIFO)
-  //     If none → return 409 { error: "no dice available" }
-  //     UPDATE dice_pool SET dice_remaining = dice_remaining - 1
-  //       WHERE id = ?
-  //     If new dice_remaining = 0 → UPDATE exhausted_at = now()
-  //   COMMIT
-  //
-  // Then roll the actual dice value server-side:
-  //   const value = 1 + Math.floor(Math.random() * 3);
+  const consumed = takeOneDice(userId);
+  if (!consumed) {
+    return res.status(409).json({ error: "no_dice_available", dice_remaining: 0 });
+  }
 
-  const value = 1 + Math.floor(Math.random() * 3);
-
-  console.log(`[dicePool] TODO: persist roll for user=${userId} value=${value}`);
+  // Server-authoritative roll. Client can never tamper with this.
+  const rolled = 1 + Math.floor(Math.random() * 3);
 
   res.json({
-    rolled: value,           // 1-3
-    dice_remaining: 0,       // TODO: actual remaining after decrement
+    rolled,
+    dice_remaining: consumed.remaining,
   });
 });
 
