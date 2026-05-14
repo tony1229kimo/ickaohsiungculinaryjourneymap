@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import QRCodePage from "./pages/QRCodePage";
 import AboutPage from "./pages/AboutPage";
 import AdminTablesPage from "./pages/AdminTablesPage";
+import AdminCustomersPage from "./pages/AdminCustomersPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,14 @@ const App = () => (
             element={
               <LiffProvider>
                 <AdminTablesPage />
+              </LiffProvider>
+            }
+          />
+          <Route
+            path="/admin/customers"
+            element={
+              <LiffProvider>
+                <AdminCustomersPage />
               </LiffProvider>
             }
           />
