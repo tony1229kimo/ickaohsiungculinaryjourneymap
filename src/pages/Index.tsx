@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -68,6 +68,10 @@ const Index = () => {
   // Track which tiles have been claimed (prevents duplicate claiming)
   const [claimedTiles, setClaimedTiles] = useState<Set<number>>(new Set());
 
+  // One-shot guard so the rules dialog only appears on first load,
+  // not every 30s when gameState refetch returns a new object reference.
+  const hasShownRulesRef = useRef(false);
+
   // Load state from API (primary) or localStorage (fallback)
   useEffect(() => {
     if (isApiLoading) return;
@@ -96,7 +100,11 @@ const Index = () => {
 
       setStatusMessage("請掃描店家 QR Code 開始遊戲");
       setStatusType("info");
-      setShowRulesDialog(true);
+      // Show rules only once per session, not on every gameState refetch
+      if (!hasShownRulesRef.current) {
+        setShowRulesDialog(true);
+        hasShownRulesRef.current = true;
+      }
     } catch (error) {
       console.error("Failed to load saved state", error);
       setStatusMessage("載入失敗，請重新整理頁面");
@@ -369,7 +377,11 @@ const Index = () => {
 
               {/* PRIMARY: 掃發票 (紙本發票自助路徑) */}
               <button
-                onClick={() => setShowInvoiceScanner(true)}
+                onClick={() => {
+                  // Close rules dialog if open — otherwise it covers the camera
+                  setShowRulesDialog(false);
+                  setShowInvoiceScanner(true);
+                }}
                 disabled={isLoading}
                 className="w-full py-3 px-4 rounded-2xl font-bold text-base transition-all duration-300 relative overflow-hidden"
                 style={{
@@ -388,7 +400,10 @@ const Index = () => {
                 或掃店家 QR Code(備援流程):
               </p>
               <button
-                onClick={() => setShowScanner(true)}
+                onClick={() => {
+                  setShowRulesDialog(false);
+                  setShowScanner(true);
+                }}
                 disabled={isLoading}
                 style={{ backgroundColor: "#DAD9D6", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}
                 className="w-full py-2 px-4 rounded-2xl font-medium text-sm transition-all duration-300 relative overflow-hidden text-foreground"

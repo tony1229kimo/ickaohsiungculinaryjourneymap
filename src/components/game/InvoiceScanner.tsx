@@ -35,6 +35,7 @@ const InvoiceScanner = ({ onSuccess, onClose }: Props) => {
   const [error, setError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [lastScanFeedback, setLastScanFeedback] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const handledRef = useRef(false); // prevent double-submit on rapid double-scan
 
@@ -50,10 +51,13 @@ const InvoiceScanner = ({ onSuccess, onClose }: Props) => {
           async (decodedText) => {
             if (handledRef.current) return;
 
+            // Immediate visual confirmation that the camera DID see *something*.
+            // Tony 2026-05-14 feedback: 「不知道是否成功掃過」 — UX gap fixed.
+            setLastScanFeedback(`📷 偵測到 QR (${decodedText.length} 字)`);
+
             // Quick sanity check — does this look like a 台灣電子發票?
             if (!INVOICE_NO_PREFIX.test(decodedText) || decodedText.length < 77) {
-              setError("這不是電子發票 QR Code,請對準發票左側的 QR Code 再試");
-              setTimeout(() => setError(null), 3000);
+              setError(`這 QR 不是電子發票格式(掃到內容:${decodedText.slice(0, 30)}...)。請對準發票左側的 QR Code 再試`);
               return;
             }
 
@@ -66,11 +70,11 @@ const InvoiceScanner = ({ onSuccess, onClose }: Props) => {
             if (result.ok) {
               onSuccess(result);
             } else {
-              const msg = REASON_TEXT[result.reason ?? ""] ?? "兌換失敗,請稍後再試";
+              const msg = REASON_TEXT[result.reason ?? ""] ?? `兌換失敗:${result.reason ?? "未知"}`;
               setError(msg);
               handledRef.current = false; // allow retry
               // restart scanner so user can rescan a different invoice
-              setTimeout(() => start(), 500);
+              setTimeout(() => start(), 800);
             }
           },
           () => {
@@ -139,9 +143,16 @@ const InvoiceScanner = ({ onSuccess, onClose }: Props) => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="mb-4 rounded-lg bg-destructive/10 p-3 text-center text-sm text-destructive"
+              className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
             >
-              {error}
+              <p className="font-bold mb-1">⚠️ 掃描結果</p>
+              <p className="text-xs leading-relaxed">{error}</p>
+              <button
+                onClick={() => { setError(null); setLastScanFeedback(null); }}
+                className="mt-2 text-[11px] underline"
+              >
+                關閉訊息再試
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -153,6 +164,11 @@ const InvoiceScanner = ({ onSuccess, onClose }: Props) => {
               ? "📷 請對準發票左側的 QR Code"
               : "正在啟動相機..."}
         </p>
+        {lastScanFeedback && !error && !isProcessing && (
+          <p className="text-center text-[11px] text-accent-foreground bg-accent/20 rounded-md py-1 px-2 mb-1">
+            {lastScanFeedback}
+          </p>
+        )}
         <p className="text-center text-[11px] text-muted-foreground/80">
           發票需在 60 分鐘內掃過桌邊 LINE QR 後使用,且每張只能用一次
         </p>
