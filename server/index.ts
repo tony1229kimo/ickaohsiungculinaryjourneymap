@@ -8,6 +8,7 @@ import tableAdminRoutes from "./routes/tableAdmin.js";
 import dicePoolRoutes from "./routes/dicePool.js";
 import invoiceRoutes from "./routes/invoice.js";
 import customersRoutes from "./routes/customers.js";
+import staffAdminRoutes from "./routes/staffAdmin.js";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3001");
@@ -38,6 +39,7 @@ app.use("/api/dice", dicePoolRoutes);
 app.use("/api/dice-pool", dicePoolRoutes); // alias to match spec naming
 app.use("/api/invoice", invoiceRoutes);
 app.use("/api/admin/customers", customersRoutes);
+app.use("/api/admin", staffAdminRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
