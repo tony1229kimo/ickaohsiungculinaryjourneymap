@@ -19,6 +19,7 @@ import LotteryCard, { LotteryResult } from "@/components/game/LotteryCard";
 import CardPicker from "@/components/game/CardPicker";
 import CharacterSelect, { GameCharacterInfo } from "@/components/game/CharacterSelect";
 import ShareButton from "@/components/game/ShareButton";
+import InvoiceScanner from "@/components/game/InvoiceScanner";
 import { useLiff } from "@/contexts/LiffContext";
 import { useGameState } from "@/hooks/useGameState";
 import { useDicePool } from "@/hooks/useDicePool";
@@ -49,6 +50,7 @@ const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isQRVerified, setIsQRVerified] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [showInvoiceScanner, setShowInvoiceScanner] = useState(false);
   const [showCardPicker, setShowCardPicker] = useState(false);
   const [showLottery, setShowLottery] = useState(false);
   const [lotteryType, setLotteryType] = useState<"chance" | "fate">("chance");
@@ -348,27 +350,47 @@ const Index = () => {
               />
             </div>
           ) : (
-            // No dice in pool AND no QR ticket — show waiting screen.
-            // Customer needs staff to activate at /api/admin/tables/:id/activate.
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-5">
+            // No dice in pool AND no QR ticket — show waiting screen with
+            // self-serve invoice scan (primary, paper invoice customers) +
+            // backup options for 載具/統編 customers.
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center space-y-4">
               <div className="scan-prompt">
-                <div className="w-[200px] h-[200px] mx-auto mb-2 -mt-8">
+                <div className="w-[180px] h-[180px] mx-auto mb-2 -mt-8">
                   <img src={qrScanIllustration} alt="等待結帳" className="block w-full h-full object-contain" />
                 </div>
-                <p className="text-foreground font-bold mb-1.5">請於結帳後再開始遊戲</p>
+                <p className="text-foreground font-bold mb-1.5">結帳後開始遊戲</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  消費滿 NT$2,000 後,餐飲部人員確認帳單即可開始擲骰。
-                  <br />
-                  您也可掃描店家 QR Code 立即體驗(舊版流程)
+                  消費滿 NT$2,000 即可開始擲骰
                 </p>
               </div>
+
+              {/* PRIMARY: 掃發票 (紙本發票自助路徑) */}
+              <button
+                onClick={() => setShowInvoiceScanner(true)}
+                disabled={isLoading}
+                className="w-full py-3 px-4 rounded-2xl font-bold text-base transition-all duration-300 relative overflow-hidden"
+                style={{
+                  background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
+                  color: "white",
+                  boxShadow: "0 4px 15px hsl(43 85% 55% / 0.4)",
+                }}
+              >
+                <span className="flex items-center justify-center gap-2">📄 掃發票拿擲骰機會</span>
+              </button>
+
+              {/* SECONDARY: 載具/統編客戶請洽服務人員 */}
+              <p className="text-[11px] text-muted-foreground leading-relaxed px-2">
+                使用統編 / 載具沒紙本? 請洽服務人員協助開始遊戲。
+                <br />
+                或掃店家 QR Code(備援流程):
+              </p>
               <button
                 onClick={() => setShowScanner(true)}
                 disabled={isLoading}
-                style={{ backgroundColor: "#DAD9D6", boxShadow: "0 4px 15px rgba(0,0,0,0.1)" }}
-                className="w-full py-2 px-4 rounded-2xl font-bold text-lg transition-all duration-300 relative overflow-hidden text-foreground"
+                style={{ backgroundColor: "#DAD9D6", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}
+                className="w-full py-2 px-4 rounded-2xl font-medium text-sm transition-all duration-300 relative overflow-hidden text-foreground"
               >
-                <span className="flex items-center justify-center gap-2">📷 掃描店家 QR Code(備援)</span>
+                <span className="flex items-center justify-center gap-2">📷 掃店家 QR Code</span>
               </button>
               <button
                 onClick={() => refetchDice()}
@@ -475,6 +497,22 @@ const Index = () => {
             expectedCode={EXPECTED_QR_CODE}
             onSuccess={handleQRSuccess}
             onClose={() => setShowScanner(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showInvoiceScanner && (
+          <InvoiceScanner
+            onSuccess={(result) => {
+              setShowInvoiceScanner(false);
+              setStatusMessage(
+                `✅ 兌換成功! 消費 NT$${result.amount} → ${result.dice_issued} 次擲骰機會`,
+              );
+              setStatusType("success");
+              refetchDice(); // refresh dice_remaining so UI shows the new pool
+            }}
+            onClose={() => setShowInvoiceScanner(false)}
           />
         )}
       </AnimatePresence>

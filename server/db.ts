@@ -519,6 +519,203 @@ export function isStaff(userId: string): boolean {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Invoice redeem (migration 003)
+// ─────────────────────────────────────────────────────────────────
+
+const BINDING_WINDOW_MIN = 60; // how long after table bind invoice scan still works
+const DICE_PER_2000 = 2000;
+const DICE_CAP = 5;
+
+export interface ParsedInvoice {
+  invoiceNo: string;
+  invoiceDate: string;       // yyyymmdd民國 → yyyymmdd西元 (we keep as-is)
+  randomCode: string;
+  amountSales: number;
+  amountTotal: number;
+  buyerVat: string;
+  sellerVat: string;
+}
+
+/**
+ * Parse the left-side QR string from a Taiwan electronic invoice (財政部 spec).
+ *
+ * Format (固定長度 metadata,然後 ":" + 商品明細):
+ *   chars 0-9   :  發票字軌號碼  (e.g. AB12345678)
+ *   chars 10-16 :  開立日期民國 yyymmdd (e.g. 1130514)
+ *   chars 17-20 :  隨機碼
+ *   chars 21-28 :  銷售額  (8-char hex)
+ *   chars 29-36 :  總額    (8-char hex)
+ *   chars 37-44 :  買方統編 (8 digit or 00000000)
+ *   chars 45-52 :  賣方統編
+ *   chars 53-76 :  加密驗證碼
+ *   chars 77+   :  ":" + 商品明細
+ *
+ * Returns null if input doesn't look like a valid metadata block.
+ */
+export function parseInvoiceQR(raw: string): ParsedInvoice | null {
+  if (typeof raw !== "string" || raw.length < 77) return null;
+
+  const invoiceNo = raw.slice(0, 10);
+  // sanity: 2 alpha + 8 digits
+  if (!/^[A-Z]{2}\d{8}$/i.test(invoiceNo)) return null;
+
+  const invoiceDate = raw.slice(10, 17);
+  const randomCode = raw.slice(17, 21);
+  const salesHex = raw.slice(21, 29);
+  const totalHex = raw.slice(29, 37);
+  const buyerVat = raw.slice(37, 45);
+  const sellerVat = raw.slice(45, 53);
+
+  const amountSales = parseInt(salesHex, 16);
+  const amountTotal = parseInt(totalHex, 16);
+  if (!Number.isFinite(amountTotal) || amountTotal <= 0) return null;
+
+  return {
+    invoiceNo: invoiceNo.toUpperCase(),
+    invoiceDate,
+    randomCode,
+    amountSales,
+    amountTotal,
+    buyerVat,
+    sellerVat,
+  };
+}
+
+export interface InvoiceRedeemResult {
+  ok: boolean;
+  reason?:
+    | "parse_failed"
+    | "already_redeemed"
+    | "no_active_binding"
+    | "amount_below_threshold";
+  diceIssued?: number;
+  amount?: number;
+  restaurantId?: string;
+}
+
+/**
+ * Attempt to redeem an invoice as dice for a LIFF user.
+ *
+ * Preconditions:
+ *   1. raw QR parses to a valid invoice metadata block
+ *   2. invoice_no not in our invoices table
+ *   3. user has an active table_binding in the last BINDING_WINDOW_MIN minutes
+ *   4. amount_total >= DICE_PER_2000
+ *
+ * On success:
+ *   - Insert dice_pool row with restaurant_id from latest binding
+ *   - Insert invoices row (invoice_no PK locks dedup)
+ *   - Insert customer_events 'invoice_redeem'
+ *   - Cross-season reset if user previously hit 15 (matches activateTable)
+ *
+ * Returns reason on failure so caller can surface a useful error.
+ */
+export function redeemInvoice(userId: string, rawQR: string): InvoiceRedeemResult {
+  const parsed = parseInvoiceQR(rawQR);
+  if (!parsed) return { ok: false, reason: "parse_failed" };
+
+  const diceIssued = Math.min(Math.floor(parsed.amountTotal / DICE_PER_2000), DICE_CAP);
+  if (diceIssued <= 0) {
+    return { ok: false, reason: "amount_below_threshold", amount: parsed.amountTotal };
+  }
+
+  // Find an active table binding for this user in the last BINDING_WINDOW_MIN.
+  // We DON'T verify seller_vat — instead we require physical presence via table QR.
+  const bindStmt = db.prepare(
+    `SELECT tb.table_id, t.restaurant_id FROM table_bindings tb
+     JOIN tables t ON t.id = tb.table_id
+     WHERE tb.user_id = ?
+       AND datetime(tb.bound_at) > datetime('now', ?)
+     ORDER BY datetime(tb.bound_at) DESC
+     LIMIT 1`,
+  );
+  bindStmt.bind([userId, `-${BINDING_WINDOW_MIN} minutes`]);
+  if (!bindStmt.step()) {
+    bindStmt.free();
+    return { ok: false, reason: "no_active_binding" };
+  }
+  const bindRow = bindStmt.getAsObject();
+  bindStmt.free();
+  const restaurantId = bindRow.restaurant_id as string;
+  const tableId = bindRow.table_id as string;
+
+  // Cross-season reset check (same logic as activateTable)
+  const existing = getGameState(userId);
+  const needsSeasonReset = !!existing && existing.totalPoints >= 15;
+
+  db.run("BEGIN TRANSACTION");
+  try {
+    // dedup — INSERT will throw if invoice_no already exists (PK conflict)
+    db.run(
+      `INSERT INTO invoices
+         (invoice_no, seller_vat, buyer_vat, amount_total, amount_sales,
+          invoice_date, redeemed_by_userid, restaurant_id, table_id,
+          dice_issued, raw_qr)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        parsed.invoiceNo,
+        parsed.sellerVat,
+        parsed.buyerVat,
+        parsed.amountTotal,
+        parsed.amountSales,
+        parsed.invoiceDate,
+        userId,
+        restaurantId,
+        tableId,
+        diceIssued,
+        rawQR.slice(0, 500), // cap raw length
+      ],
+    );
+
+    if (needsSeasonReset) {
+      db.run(
+        `UPDATE game_state
+         SET total_points = 0, claimed_tiles = '[]', updated_at = datetime('now')
+         WHERE user_id = ?`,
+        [userId],
+      );
+    }
+
+    db.run(
+      `INSERT INTO dice_pool
+         (user_id, restaurant_id, dice_remaining, amount_spent,
+          issued_by_staff_id, table_id)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [userId, restaurantId, diceIssued, parsed.amountTotal, "self_invoice", tableId],
+    );
+
+    db.run("COMMIT");
+    persistDb();
+
+    if (needsSeasonReset) {
+      recordEvent({ userId, eventType: "season_reset", restaurantId });
+    }
+    recordEvent({
+      userId,
+      eventType: "invoice_redeem",
+      restaurantId,
+      amount: parsed.amountTotal,
+      payload: {
+        invoice_no: parsed.invoiceNo,
+        dice_issued: diceIssued,
+        table_id: tableId,
+      },
+    });
+
+    return { ok: true, diceIssued, amount: parsed.amountTotal, restaurantId };
+  } catch (err) {
+    db.run("ROLLBACK");
+    // PK conflict = already redeemed
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/UNIQUE|PRIMARY KEY|constraint/i.test(msg)) {
+      return { ok: false, reason: "already_redeemed" };
+    }
+    console.error("[redeemInvoice] unexpected error:", err);
+    return { ok: false, reason: "parse_failed" };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Customer profile + event audit (migration 002)
 // ─────────────────────────────────────────────────────────────────
 

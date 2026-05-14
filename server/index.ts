@@ -6,6 +6,7 @@ import ticketRoutes from "./routes/ticket.js";
 import webhookRoutes from "./routes/webhook.js";
 import tableAdminRoutes from "./routes/tableAdmin.js";
 import dicePoolRoutes from "./routes/dicePool.js";
+import invoiceRoutes from "./routes/invoice.js";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3001");
@@ -34,6 +35,7 @@ app.use("/api/webhook", webhookRoutes);
 app.use("/api/admin", tableAdminRoutes);
 app.use("/api/dice", dicePoolRoutes);
 app.use("/api/dice-pool", dicePoolRoutes); // alias to match spec naming
+app.use("/api/invoice", invoiceRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
