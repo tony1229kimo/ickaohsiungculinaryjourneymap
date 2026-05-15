@@ -23,7 +23,7 @@ import InvoiceScanner from "@/components/game/InvoiceScanner";
 import { useLiff } from "@/contexts/LiffContext";
 import { useGameState } from "@/hooks/useGameState";
 import { useDicePool } from "@/hooks/useDicePool";
-import { redeemTicket } from "@/api/ticket";
+import { redeemCheckoutTicket } from "@/api/checkoutTicket";
 import rewardIconAppetizer from "@/assets/reward-icon-appetizer.png";
 import bgMain from "@/assets/bg-main.png";
 
@@ -114,22 +114,21 @@ const Index = () => {
     }
   }, [userId, isApiLoading, gameState]);
 
-  // Auto-verify if coming from external dynamic-QR system.
+  // Auto-redeem when customer lands here from a staff-issued checkout QR.
   //
-  // Previous version trusted any ?ticket=… value blindly — attacker could
-  // append ?ticket=foo and skip the scan entirely. Now we POST the ticket to
-  // /api/ticket/redeem which forwards to qrcode-generator's /api/verify
-  // (using a shared secret) and consumes it atomically. Each ticket only
-  // works once across the whole world.
+  // Phase 8 (2026-05-15): replaces old qrcode-generator forwarding. Backend
+  // /api/checkout-ticket/redeem atomically marks token used + inserts a
+  // dice_pool row, so a successful response means dice are already credited
+  // — we just refetch to surface them in the UI.
   useEffect(() => {
-    const ticket = searchParams.get("ticket");
-    if (!ticket || isLoading || isQRVerified || !selectedCharacter) return;
+    const token = searchParams.get("ticket");
+    if (!token || isLoading || !selectedCharacter) return;
 
     let cancelled = false;
     (async () => {
       setStatusMessage("正在驗證掃描的 QR Code...");
       setStatusType("loading");
-      const result = await redeemTicket(ticket);
+      const result = await redeemCheckoutTicket(token);
       if (cancelled) return;
 
       // Always strip ticket from URL so a refresh can't retry the same one
@@ -137,17 +136,17 @@ const Index = () => {
       setSearchParams(searchParams, { replace: true });
 
       if (result.ok) {
-        setIsQRVerified(true);
-        setStatusMessage("✅ QR Code 驗證成功！請擲骰一次");
+        await refetchDice();
+        setStatusMessage(`✅ 結帳 QR 已兌換!您獲得 ${result.dice_issued ?? "?"} 次擲骰機會`);
         setStatusType("success");
       } else {
         const reasonText: Record<string, string> = {
           expired: "此 QR Code 已過期,請洽詢餐飲部人員重新取得",
-          already_redeemed: "此 QR Code 已被使用過,請洽詢餐飲部人員重新取得",
-          unknown: "QR Code 無效,請洽詢餐飲部人員",
-          rejected: "QR Code 驗證失敗,請稍後再試",
+          already_used: "此 QR Code 已被使用過,請洽詢餐飲部人員重新取得",
+          not_found: "QR Code 無效,請確認是 IC 員工所發",
+          no_user: "請重新登入 LINE 後再試",
         };
-        setStatusMessage(reasonText[result.reason ?? "rejected"] ?? "QR Code 驗證失敗");
+        setStatusMessage(reasonText[result.reason ?? ""] ?? `QR Code 驗證失敗 (${result.reason ?? "unknown"})`);
         setStatusType("error");
       }
     })();
@@ -155,7 +154,7 @@ const Index = () => {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, isLoading, isQRVerified, selectedCharacter, setSearchParams]);
+  }, [searchParams, isLoading, selectedCharacter, setSearchParams, refetchDice]);
 
   // Persist state to both localStorage and API
   const persistState = (updates: Record<string, any>) => {

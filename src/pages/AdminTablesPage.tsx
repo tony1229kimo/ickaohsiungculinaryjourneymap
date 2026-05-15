@@ -1,4 +1,15 @@
 /**
+ * ⚠️ DEPRECATED 2026-05-15 — superseded by /admin/checkout (Phase 8 two-QR).
+ *
+ * Kept as emergency backup only. New SOP:
+ *   Staff opens /admin/checkout → PIN → enter amount → show QR → customer
+ *   scans with LINE camera → dice land directly in their pool.
+ *
+ * This page (table-binding + staff_whitelist) is left in tree in case the
+ * checkout-QR endpoint is down; service can fall back to typing table IDs.
+ * Do NOT advertise this URL in staff training.
+ *
+ * ── Original docs (kept for context) ──
  * Staff admin LIFF page — used by IC Kaohsiung wait staff after a customer
  * checks out. The staff:
  *   1. Picks the restaurant they work at (tabs at top)
@@ -7,8 +18,7 @@
  *   4. Backend pushes a LINE invite to the customer's LIFF, with dice issued
  *      = floor(amount / 2000), capped at 5.
  *
- * Access control: server enforces both LIFF auth + staff_whitelist. The
- * client side just shows "not authorized" if any /api/admin call 401/403s.
+ * Access control: server enforces both LIFF auth + staff_whitelist.
  */
 
 import { useEffect, useState } from "react";
@@ -132,9 +142,17 @@ const AdminTablesPage = () => {
 
   return (
     <div className="min-h-screen bg-background pb-12">
+      {/* Deprecation banner */}
+      <div className="bg-amber-100 border-b border-amber-300 px-4 py-3 text-amber-900 text-sm">
+        <p className="font-bold">⚠️ 此頁為緊急備用 / Emergency backup only</p>
+        <p className="text-xs mt-1">
+          標準流程已改為「結帳 QR」<a href="/admin/checkout" className="underline font-semibold">前往新頁面</a>。
+          本頁只在新流程失效時使用。
+        </p>
+      </div>
       {/* Header */}
       <div className="bg-foreground text-primary-foreground p-4">
-        <h1 className="text-lg font-bold text-center">🎲 IC 高雄 · 桌邊管理</h1>
+        <h1 className="text-lg font-bold text-center">🎲 IC 高雄 · 桌邊管理 (備用)</h1>
         <p className="text-xs text-center opacity-80 mt-0.5">
           {user?.displayName ?? "服務人員"} · {restaurants.length} 餐廳可管
         </p>

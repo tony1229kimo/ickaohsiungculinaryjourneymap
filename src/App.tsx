@@ -9,6 +9,7 @@ import QRCodePage from "./pages/QRCodePage";
 import AboutPage from "./pages/AboutPage";
 import AdminTablesPage from "./pages/AdminTablesPage";
 import AdminCustomersPage from "./pages/AdminCustomersPage";
+import AdminCheckoutQRPage from "./pages/AdminCheckoutQRPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,9 @@ const App = () => (
               </LiffProvider>
             }
           />
+          {/* New checkout-QR page (Phase 8). PIN-gated, NO LIFF — so any
+              shared cashier phone can use it without re-logging-in every shift. */}
+          <Route path="/admin/checkout" element={<AdminCheckoutQRPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

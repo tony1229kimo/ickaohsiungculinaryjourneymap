@@ -389,7 +389,9 @@ export async function isStaff(userId: string): Promise<boolean> {
 // Invoice redeem (migration 003)
 // ─────────────────────────────────────────────────────────────────
 
-const BINDING_WINDOW_MIN = 60;
+// Tony 2026-05-15: tightened paper-invoice window 60 → 20 min after two-QR redesign.
+// New flow: customer is expected to scan invoice while still at table, not later.
+const BINDING_WINDOW_MIN = 20;
 const DICE_PER_2000 = 2000;
 const DICE_CAP = 5;
 
@@ -506,6 +508,118 @@ export async function redeemInvoice(userId: string, rawQR: string): Promise<Invo
   });
 
   return { ok: true, diceIssued, amount: parsed.amountTotal, restaurantId };
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Checkout tickets (migration 004) — staff-issued amount-bearing QR
+// ─────────────────────────────────────────────────────────────────
+
+const CHECKOUT_TICKET_TTL_SEC = 120; // 2 min — short enough that a stolen screenshot is useless
+
+export interface IssuedTicket {
+  token: string;
+  amount: number;
+  diceToIssue: number;
+  expiresAt: string;
+}
+
+function diceForAmount(amount: number): number {
+  return Math.min(Math.floor(amount / DICE_PER_2000), DICE_CAP);
+}
+
+function randomToken(): string {
+  // 12 chars, base36, ~62 bits — fine for a 2-min window.
+  return Array.from({ length: 12 }, () => Math.floor(Math.random() * 36).toString(36)).join("");
+}
+
+export async function issueCheckoutTicket(
+  amount: number,
+  issuedBy: string,
+  restaurantId: string | null,
+): Promise<IssuedTicket | { error: "amount_below_threshold" }> {
+  const dice = diceForAmount(amount);
+  if (dice <= 0) return { error: "amount_below_threshold" };
+
+  const token = randomToken();
+  const r = await pool.query(
+    `INSERT INTO checkout_tickets (token, amount, dice_to_issue, issued_by, restaurant_id, expires_at)
+     VALUES ($1, $2, $3, $4, $5, NOW() + ($6 || ' seconds')::interval)
+     RETURNING expires_at`,
+    [token, amount, dice, issuedBy, restaurantId, String(CHECKOUT_TICKET_TTL_SEC)],
+  );
+  return { token, amount, diceToIssue: dice, expiresAt: r.rows[0].expires_at };
+}
+
+export interface CheckoutRedeemResult {
+  ok: boolean;
+  reason?: "not_found" | "expired" | "already_used";
+  diceIssued?: number;
+  amount?: number;
+  restaurantId?: string | null;
+}
+
+export async function redeemCheckoutTicket(userId: string, token: string): Promise<CheckoutRedeemResult> {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const sel = await client.query(
+      `SELECT token, amount, dice_to_issue, restaurant_id, expires_at, used_at
+       FROM checkout_tickets WHERE token = $1 FOR UPDATE`,
+      [token],
+    );
+    if (sel.rowCount === 0) {
+      await client.query("ROLLBACK");
+      client.release();
+      return { ok: false, reason: "not_found" };
+    }
+    const row = sel.rows[0];
+    if (row.used_at) {
+      await client.query("ROLLBACK");
+      client.release();
+      return { ok: false, reason: "already_used" };
+    }
+    if (new Date(row.expires_at).getTime() < Date.now()) {
+      await client.query("ROLLBACK");
+      client.release();
+      return { ok: false, reason: "expired" };
+    }
+
+    const existing = await getGameState(userId);
+    const needsSeasonReset = !!existing && existing.totalPoints >= 15;
+
+    await client.query(`UPDATE checkout_tickets SET used_at = NOW(), used_by_user_id = $1 WHERE token = $2`, [userId, token]);
+    if (needsSeasonReset) {
+      await client.query(
+        `UPDATE game_state SET total_points = 0, claimed_tiles = '[]'::jsonb, updated_at = NOW() WHERE user_id = $1`,
+        [userId],
+      );
+    }
+    await client.query(
+      `INSERT INTO dice_pool (user_id, restaurant_id, dice_remaining, amount_spent, issued_by_staff_id, table_id)
+       VALUES ($1, $2, $3, $4, $5, NULL)`,
+      [userId, row.restaurant_id, row.dice_to_issue, row.amount, "checkout_qr"],
+    );
+    await client.query("COMMIT");
+    client.release();
+
+    if (needsSeasonReset) {
+      await recordEvent({ userId, eventType: "season_reset", restaurantId: row.restaurant_id });
+    }
+    await recordEvent({
+      userId,
+      eventType: "activate",
+      restaurantId: row.restaurant_id,
+      amount: row.amount,
+      payload: { source: "checkout_qr", token, dice_issued: row.dice_to_issue },
+    });
+
+    return { ok: true, diceIssued: row.dice_to_issue, amount: row.amount, restaurantId: row.restaurant_id };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    client.release();
+    console.error("[redeemCheckoutTicket] failed:", err);
+    return { ok: false, reason: "not_found" };
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────
