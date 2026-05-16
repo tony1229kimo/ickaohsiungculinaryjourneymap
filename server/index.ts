@@ -30,7 +30,9 @@ app.use("/api/webhook", express.raw({ type: "application/json" }), (req, _res, n
   }
   next();
 });
-app.use(express.json());
+// 4MB limit covers compressed receipt photos (we resize client-side to ~1MB max)
+// while keeping a safety margin. Default 100kb is too small for base64 images.
+app.use(express.json({ limit: "4mb" }));
 
 app.use("/api/game-state", gameStateRoutes);
 app.use("/api/ticket", ticketRoutes);

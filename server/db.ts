@@ -578,6 +578,125 @@ export async function redeemInvoice(userId: string, rawQR: string): Promise<Invo
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Receipt-image redeem (Phase 8.1) — 載具客's POS slip path
+// ─────────────────────────────────────────────────────────────────
+// Reuses the invoices table for dedup. The vision-extracted invoice_no
+// (e.g. "BM-36258862" from the POS slip) goes into invoices.invoice_no PK,
+// so the same slip can't be redeemed twice across all users.
+
+export interface ReceiptRedeemInput {
+  invoiceNo: string;       // BM-XXXXX from vision
+  totalAmount: number;
+  dateIso: string;         // YYYY-MM-DD
+  restaurantName?: string | null;
+}
+
+export interface ReceiptRedeemResult {
+  ok: boolean;
+  reason?: InvoiceRedeemResult["reason"];
+  diceIssued?: number;
+  amount?: number;
+  restaurantId?: string;
+}
+
+export async function redeemReceiptImage(userId: string, input: ReceiptRedeemInput): Promise<ReceiptRedeemResult> {
+  const { invoiceNo, totalAmount, dateIso } = input;
+
+  // Apply the same triple-lock as the e-invoice path, minus seller_vat (the POS
+  // slip doesn't print 統編 — IC branding visual check on the image is the
+  // replacement, already enforced in receiptVision.analyzeReceipt).
+  const { today, yesterday } = taipeiTodayAndYesterday();
+  if (dateIso !== today && dateIso !== yesterday) {
+    return { ok: false, reason: "stale_invoice", amount: totalAmount };
+  }
+
+  const diceIssued = Math.min(Math.floor(totalAmount / DICE_PER_2000), DICE_CAP);
+  if (diceIssued <= 0) {
+    return { ok: false, reason: "amount_below_threshold", amount: totalAmount };
+  }
+
+  const bind = await pool.query(
+    `SELECT tb.id, tb.table_id, t.restaurant_id FROM table_bindings tb
+     JOIN tables t ON t.id = tb.table_id
+     WHERE tb.user_id = $1 AND tb.bound_at > NOW() - ($2 || ' minutes')::interval
+     ORDER BY tb.bound_at DESC LIMIT 1`,
+    [userId, String(BINDING_WINDOW_MIN)],
+  );
+  if (bind.rowCount === 0) return { ok: false, reason: "no_active_binding" };
+  const { table_id: tableId, restaurant_id: restaurantId } = bind.rows[0];
+
+  // One-binding-one-invoice — applies to both e-invoice and POS-slip paths combined
+  const reuse = await pool.query(
+    `SELECT 1 FROM invoices
+     WHERE redeemed_by_userid = $1 AND table_id = $2
+       AND redeemed_at > NOW() - ($3 || ' minutes')::interval
+     LIMIT 1`,
+    [userId, tableId, String(BINDING_WINDOW_MIN)],
+  );
+  if ((reuse.rowCount ?? 0) > 0) {
+    return { ok: false, reason: "binding_already_used", amount: totalAmount };
+  }
+
+  const existing = await getGameState(userId);
+  const needsSeasonReset = !!existing && existing.totalPoints >= 15;
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `INSERT INTO invoices
+         (invoice_no, seller_vat, buyer_vat, amount_total, amount_sales,
+          invoice_date, redeemed_by_userid, restaurant_id, table_id, dice_issued, raw_qr)
+       VALUES ($1, $2, '', $3, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        invoiceNo,
+        IC_KAOHSIUNG_VAT,
+        totalAmount,
+        dateIso.replace(/-/g, ""), // store as YYYYMMDD to align with e-invoice path
+        userId,
+        restaurantId,
+        tableId,
+        diceIssued,
+        `POS_SLIP|${invoiceNo}|${totalAmount}|${dateIso}`,
+      ],
+    );
+    if (needsSeasonReset) {
+      await client.query(
+        `UPDATE game_state SET total_points = 0, claimed_tiles = '[]'::jsonb, updated_at = NOW() WHERE user_id = $1`,
+        [userId],
+      );
+    }
+    await client.query(
+      `INSERT INTO dice_pool (user_id, restaurant_id, dice_remaining, amount_spent, issued_by_staff_id, table_id)
+       VALUES ($1, $2, $3, $4, 'self_receipt', $5)`,
+      [userId, restaurantId, diceIssued, totalAmount, tableId],
+    );
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    client.release();
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/duplicate key|unique constraint|already exists/i.test(msg)) {
+      return { ok: false, reason: "already_redeemed" };
+    }
+    console.error("[redeemReceiptImage] error:", err);
+    return { ok: false, reason: "parse_failed" };
+  }
+  client.release();
+
+  if (needsSeasonReset) await recordEvent({ userId, eventType: "season_reset", restaurantId });
+  await recordEvent({
+    userId,
+    eventType: "invoice_redeem",
+    restaurantId,
+    amount: totalAmount,
+    payload: { invoice_no: invoiceNo, dice_issued: diceIssued, table_id: tableId, source: "pos_slip" },
+  });
+
+  return { ok: true, diceIssued, amount: totalAmount, restaurantId };
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Checkout tickets (migration 004) — staff-issued amount-bearing QR
 // ─────────────────────────────────────────────────────────────────
 

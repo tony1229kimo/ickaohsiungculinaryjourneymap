@@ -20,6 +20,7 @@ import CardPicker from "@/components/game/CardPicker";
 import CharacterSelect, { GameCharacterInfo } from "@/components/game/CharacterSelect";
 import ShareButton from "@/components/game/ShareButton";
 import InvoiceScanner from "@/components/game/InvoiceScanner";
+import ReceiptCapture from "@/components/game/ReceiptCapture";
 import { useLiff } from "@/contexts/LiffContext";
 import { useGameState } from "@/hooks/useGameState";
 import { useDicePool } from "@/hooks/useDicePool";
@@ -51,6 +52,7 @@ const Index = () => {
   const [isQRVerified, setIsQRVerified] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [showInvoiceScanner, setShowInvoiceScanner] = useState(false);
+  const [showReceiptCapture, setShowReceiptCapture] = useState(false);
   // Single-fire guard for the fixed-reward "領取獎勵" button.
   // Without it, fast double-tap could fire reward link + markTileClaimed twice.
   const [isClaimingFixed, setIsClaimingFixed] = useState(false);
@@ -392,11 +394,26 @@ const Index = () => {
                 <span className="flex items-center justify-center gap-2">📄 掃發票拿擲骰機會</span>
               </button>
 
-              {/* SECONDARY: 載具/統編客戶請洽服務人員 */}
+              {/* SECONDARY: 載具客拍小白單 (Phase 8.1 AI vision path) */}
+              <button
+                onClick={() => {
+                  setShowRulesDialog(false);
+                  setShowReceiptCapture(true);
+                }}
+                disabled={isLoading}
+                style={{
+                  background: "linear-gradient(135deg, hsl(200 70% 55%), hsl(210 60% 45%))",
+                  color: "white",
+                  boxShadow: "0 3px 10px hsl(200 70% 55% / 0.35)",
+                }}
+                className="w-full py-2.5 px-4 rounded-2xl font-semibold text-sm transition-all duration-300 relative overflow-hidden"
+              >
+                <span className="flex items-center justify-center gap-2">📸 我用載具(拍小白單)</span>
+              </button>
+
+              {/* TERTIARY: 備援 / 老流程 */}
               <p className="text-[11px] text-muted-foreground leading-relaxed px-2">
-                使用統編 / 載具沒紙本? 請洽服務人員協助開始遊戲。
-                <br />
-                或掃店家 QR Code(備援流程):
+                若以上都失敗,可洽詢服務人員協助開始,或:
               </p>
               <button
                 onClick={() => {
@@ -538,6 +555,22 @@ const Index = () => {
               refetchDice(); // refresh dice_remaining so UI shows the new pool
             }}
             onClose={() => setShowInvoiceScanner(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showReceiptCapture && (
+          <ReceiptCapture
+            onSuccess={(result) => {
+              setShowReceiptCapture(false);
+              setStatusMessage(
+                `✅ 小白單兌換成功! 消費 NT$${result.amount} → ${result.dice_issued} 次擲骰機會`,
+              );
+              setStatusType("success");
+              refetchDice();
+            }}
+            onClose={() => setShowReceiptCapture(false)}
           />
         )}
       </AnimatePresence>
