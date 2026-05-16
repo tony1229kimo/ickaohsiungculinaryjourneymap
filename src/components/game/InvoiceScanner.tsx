@@ -24,12 +24,15 @@ const INVOICE_NO_PREFIX = /^[A-Z]{2}\d{8}/i;
 
 const REASON_TEXT: Record<string, string> = {
   already_redeemed: "此發票已被使用過,無法重複領取",
-  no_active_binding: "請先掃描桌邊立牌 QR Code 加入 LINE 並綁定桌號,然後 60 分鐘內再來掃發票",
+  no_active_binding: "請先掃描桌邊立牌 QR Code 加入 LINE 並綁定桌號,然後 20 分鐘內再來掃發票",
   amount_below_threshold: "發票金額需滿 NT$2,000 才能換擲骰機會",
   parse_failed: "QR 解析失敗,請確認您掃的是電子發票左側的 QR Code",
   qr_required: "未取得 QR 資料",
   no_user: "請重新登入 LINE",
   server_error: "後端發生錯誤",
+  wrong_seller: "這張發票不是 IC 高雄洲際開的,請確認您掃的是本飯店的電子發票",
+  stale_invoice: "發票日期不是今天,只能使用當日開立的發票",
+  binding_already_used: "您這一桌已經兌換過一張發票了,每桌每次用餐只能兌換一張",
 };
 
 const InvoiceScanner = ({ onSuccess, onClose }: Props) => {

@@ -14,7 +14,10 @@ export interface InvoiceRedeemResponse {
     | "parse_failed"
     | "qr_required"
     | "no_user"
-    | "server_error";
+    | "server_error"
+    | "wrong_seller"
+    | "stale_invoice"
+    | "binding_already_used";
   error?: string;  // populated on server_error
 }
 

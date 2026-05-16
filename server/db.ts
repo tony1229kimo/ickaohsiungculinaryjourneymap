@@ -395,6 +395,32 @@ const BINDING_WINDOW_MIN = 20;
 const DICE_PER_2000 = 2000;
 const DICE_CAP = 5;
 
+// Tony 2026-05-15: 三重鎖反作弊 (triple-lock anti-fraud)
+//   #1 sellerVat allowlist — must be IC Kaohsiung's tax id
+//   #2 invoiceDate freshness — today or yesterday only (handles late-night dining)
+//   #3 one-binding-one-invoice — same table_binding can't redeem twice
+// invoice_no PK already deduplicates across all users (existing safeguard).
+const IC_KAOHSIUNG_VAT = "91097496";
+
+/** Convert ROC date string "1150515" → ISO "2026-05-15". Returns null on bad input. */
+function rocDateToISO(rocStr: string): string | null {
+  if (!/^\d{7}$/.test(rocStr)) return null;
+  const rocYear = parseInt(rocStr.slice(0, 3), 10);
+  if (rocYear < 100 || rocYear > 200) return null; // sanity: ROC 100 (=2011) .. 200
+  const year = rocYear + 1911;
+  return `${year}-${rocStr.slice(3, 5)}-${rocStr.slice(5, 7)}`;
+}
+
+/** Today/yesterday in Asia/Taipei as ISO date strings. */
+function taipeiTodayAndYesterday(): { today: string; yesterday: string } {
+  const fmt = (d: Date) => d.toLocaleDateString("sv-SE", { timeZone: "Asia/Taipei" });
+  const now = new Date();
+  return {
+    today: fmt(now),
+    yesterday: fmt(new Date(now.getTime() - 86_400_000)),
+  };
+}
+
 export interface ParsedInvoice {
   invoiceNo: string;
   invoiceDate: string;
@@ -431,7 +457,14 @@ export function parseInvoiceQR(raw: string): ParsedInvoice | null {
 
 export interface InvoiceRedeemResult {
   ok: boolean;
-  reason?: "parse_failed" | "already_redeemed" | "no_active_binding" | "amount_below_threshold";
+  reason?:
+    | "parse_failed"
+    | "already_redeemed"
+    | "no_active_binding"
+    | "amount_below_threshold"
+    | "wrong_seller"          // not from IC Kaohsiung (91097496)
+    | "stale_invoice"         // not today / yesterday
+    | "binding_already_used"; // this table_binding already redeemed an invoice
   diceIssued?: number;
   amount?: number;
   restaurantId?: string;
@@ -441,6 +474,25 @@ export async function redeemInvoice(userId: string, rawQR: string): Promise<Invo
   const parsed = parseInvoiceQR(rawQR);
   if (!parsed) return { ok: false, reason: "parse_failed" };
 
+  // Lock #1 — seller must be IC Kaohsiung.
+  // Catches: customer scans a 7-11 / Starbucks / other restaurant's QR by accident OR intent.
+  if (parsed.sellerVat !== IC_KAOHSIUNG_VAT) {
+    return { ok: false, reason: "wrong_seller", amount: parsed.amountTotal };
+  }
+
+  // Lock #2 — invoice must be from today (or yesterday, to handle late-night dining
+  // where the customer scans after midnight). Catches: customer pulls an old paper
+  // invoice from their wallet weeks/months later and tries to replay.
+  const invoiceISO = rocDateToISO(parsed.invoiceDate);
+  if (!invoiceISO) {
+    // Date parse failed — treat as stale rather than parse_failed since the QR itself was valid
+    return { ok: false, reason: "stale_invoice", amount: parsed.amountTotal };
+  }
+  const { today, yesterday } = taipeiTodayAndYesterday();
+  if (invoiceISO !== today && invoiceISO !== yesterday) {
+    return { ok: false, reason: "stale_invoice", amount: parsed.amountTotal };
+  }
+
   const diceIssued = Math.min(Math.floor(parsed.amountTotal / DICE_PER_2000), DICE_CAP);
   if (diceIssued <= 0) {
     return { ok: false, reason: "amount_below_threshold", amount: parsed.amountTotal };
@@ -448,14 +500,29 @@ export async function redeemInvoice(userId: string, rawQR: string): Promise<Invo
 
   // active binding in last BINDING_WINDOW_MIN min
   const bind = await pool.query(
-    `SELECT tb.table_id, t.restaurant_id FROM table_bindings tb
+    `SELECT tb.id, tb.table_id, t.restaurant_id FROM table_bindings tb
      JOIN tables t ON t.id = tb.table_id
      WHERE tb.user_id = $1 AND tb.bound_at > NOW() - ($2 || ' minutes')::interval
      ORDER BY tb.bound_at DESC LIMIT 1`,
     [userId, String(BINDING_WINDOW_MIN)],
   );
   if (bind.rowCount === 0) return { ok: false, reason: "no_active_binding" };
-  const { table_id: tableId, restaurant_id: restaurantId } = bind.rows[0];
+  const { id: bindingId, table_id: tableId, restaurant_id: restaurantId } = bind.rows[0];
+
+  // Lock #3 — this binding hasn't redeemed an invoice yet.
+  // Catches: customer scans both the POS receipt AND the final 電子發票證明聯 (which
+  // would have different invoice_no so global PK dedup wouldn't fire). One sitting,
+  // one invoice — fair to the rule of "結帳金額 = 擲骰機會".
+  const reuse = await pool.query(
+    `SELECT 1 FROM invoices
+     WHERE redeemed_by_userid = $1 AND table_id = $2
+       AND redeemed_at > NOW() - ($3 || ' minutes')::interval
+     LIMIT 1`,
+    [userId, tableId, String(BINDING_WINDOW_MIN)],
+  );
+  if ((reuse.rowCount ?? 0) > 0) {
+    return { ok: false, reason: "binding_already_used", amount: parsed.amountTotal };
+  }
 
   const existing = await getGameState(userId);
   const needsSeasonReset = !!existing && existing.totalPoints >= 15;

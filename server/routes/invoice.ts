@@ -51,8 +51,11 @@ router.post("/redeem", requireLiffAuth(), async (req: Request, res: Response) =>
 
     const httpStatus =
       result.reason === "already_redeemed" ? 409 :
+      result.reason === "binding_already_used" ? 409 :
       result.reason === "no_active_binding" ? 412 :
       result.reason === "amount_below_threshold" ? 400 :
+      result.reason === "wrong_seller" ? 403 :
+      result.reason === "stale_invoice" ? 410 :
       422; // parse_failed
     return res.status(httpStatus).json({ ok: false, reason: result.reason, amount: result.amount });
   } catch (err) {
