@@ -31,7 +31,7 @@ const REASON_TEXT: Record<string, string> = {
   no_user: "請重新登入 LINE",
   server_error: "後端發生錯誤",
   wrong_seller: "這張發票不是 IC 高雄洲際開的,請確認您掃的是本飯店的電子發票",
-  stale_invoice: "發票日期不是今天,只能使用當日開立的發票",
+  stale_invoice: "發票日期超過 3 天,只能使用今天 / 昨天 / 前天開立的發票",
   binding_already_used: "您這一桌已經兌換過一張發票了,每桌每次用餐只能兌換一張",
 };
 

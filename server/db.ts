@@ -411,13 +411,19 @@ function rocDateToISO(rocStr: string): string | null {
   return `${year}-${rocStr.slice(3, 5)}-${rocStr.slice(5, 7)}`;
 }
 
-/** Today/yesterday in Asia/Taipei as ISO date strings. */
-function taipeiTodayAndYesterday(): { today: string; yesterday: string } {
+/**
+ * Three-day window in Asia/Taipei as ISO date strings — used to gate invoice
+ * freshness. Tony 2026-05-15: widened from today/yesterday → today/yesterday/
+ * dayBeforeYesterday so customers who dined late, paid by carrier, and only
+ * pull up the LIFF the morning-after-the-morning-after still qualify.
+ */
+function taipeiThreeDayWindow(): { today: string; yesterday: string; dayBefore: string } {
   const fmt = (d: Date) => d.toLocaleDateString("sv-SE", { timeZone: "Asia/Taipei" });
   const now = new Date();
   return {
     today: fmt(now),
     yesterday: fmt(new Date(now.getTime() - 86_400_000)),
+    dayBefore: fmt(new Date(now.getTime() - 2 * 86_400_000)),
   };
 }
 
@@ -480,16 +486,15 @@ export async function redeemInvoice(userId: string, rawQR: string): Promise<Invo
     return { ok: false, reason: "wrong_seller", amount: parsed.amountTotal };
   }
 
-  // Lock #2 — invoice must be from today (or yesterday, to handle late-night dining
-  // where the customer scans after midnight). Catches: customer pulls an old paper
-  // invoice from their wallet weeks/months later and tries to replay.
+  // Lock #2 — invoice must be from today / yesterday / day-before-yesterday.
+  // Catches: customer pulls an old paper invoice from their wallet weeks later
+  // and tries to replay. 3-day window per Tony 2026-05-15.
   const invoiceISO = rocDateToISO(parsed.invoiceDate);
   if (!invoiceISO) {
-    // Date parse failed — treat as stale rather than parse_failed since the QR itself was valid
     return { ok: false, reason: "stale_invoice", amount: parsed.amountTotal };
   }
-  const { today, yesterday } = taipeiTodayAndYesterday();
-  if (invoiceISO !== today && invoiceISO !== yesterday) {
+  const { today, yesterday, dayBefore } = taipeiThreeDayWindow();
+  if (invoiceISO !== today && invoiceISO !== yesterday && invoiceISO !== dayBefore) {
     return { ok: false, reason: "stale_invoice", amount: parsed.amountTotal };
   }
 
@@ -605,8 +610,8 @@ export async function redeemReceiptImage(userId: string, input: ReceiptRedeemInp
   // Apply the same triple-lock as the e-invoice path, minus seller_vat (the POS
   // slip doesn't print 統編 — IC branding visual check on the image is the
   // replacement, already enforced in receiptVision.analyzeReceipt).
-  const { today, yesterday } = taipeiTodayAndYesterday();
-  if (dateIso !== today && dateIso !== yesterday) {
+  const { today, yesterday, dayBefore } = taipeiThreeDayWindow();
+  if (dateIso !== today && dateIso !== yesterday && dateIso !== dayBefore) {
     return { ok: false, reason: "stale_invoice", amount: totalAmount };
   }
 
