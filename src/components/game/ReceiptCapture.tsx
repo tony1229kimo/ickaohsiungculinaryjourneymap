@@ -37,7 +37,7 @@ const REASON_TEXT: Record<string, string> = {
   binding_already_used: "您這一桌已經兌換過一張了,每桌每次用餐只能兌換一張",
   no_active_binding: "請先掃描桌邊立牌 QR Code 加入 LINE 並綁定桌號,20 分鐘內再來",
   amount_below_threshold: "金額需滿 NT$2,000 才能換擲骰機會",
-  stale_invoice: "單據日期超過 3 天,只能使用今天 / 昨天 / 前天的小白單",
+  stale_invoice: "單據日期過期,只能使用今天 / 昨天的小白單",
   no_user: "請重新登入 LINE",
   server_error: "後端發生錯誤",
 };
