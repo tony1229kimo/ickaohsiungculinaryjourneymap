@@ -25,6 +25,11 @@ const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 const MAX_IMAGE_BYTES_BASE64 = 1_500_000; // ~1.1MB raw image after base64
 const MIN_CONFIDENCE = 0.85;
 
+// Tony 2026-05-15: model name swappable via env so we can upgrade gpt-4o →
+// gpt-5 / gpt-5-mini without a redeploy. Default = gpt-4o for OCR accuracy on
+// Chinese receipts (gpt-4o-mini hallucinates 數字 too often on small print).
+const MODEL = process.env.OPENAI_VISION_MODEL || "gpt-4o";
+
 export interface ReceiptAnalysis {
   ok: boolean;
   reason?:
@@ -98,7 +103,7 @@ export async function analyzeReceipt(imageBase64DataUrl: string): Promise<Receip
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: MODEL,
         response_format: { type: "json_object" },
         temperature: 0,
         max_tokens: 400,
