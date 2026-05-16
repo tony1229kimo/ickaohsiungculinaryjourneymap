@@ -40,6 +40,9 @@ const InvoiceScanner = ({ onSuccess, onClose }: Props) => {
   const [isScanning, setIsScanning] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastScanFeedback, setLastScanFeedback] = useState<string | null>(null);
+  // Tony 2026-05-15: after 2 failed scans escalate to staff fallback so
+  // the customer isn't stuck retrying the same broken invoice indefinitely.
+  const [failureCount, setFailureCount] = useState(0);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const handledRef = useRef(false); // prevent double-submit on rapid double-scan
 
@@ -62,6 +65,7 @@ const InvoiceScanner = ({ onSuccess, onClose }: Props) => {
             // Quick sanity check — does this look like a 台灣電子發票?
             if (!INVOICE_NO_PREFIX.test(decodedText) || decodedText.length < 77) {
               setError(`這 QR 不是電子發票格式(掃到內容:${decodedText.slice(0, 30)}...)。請對準發票左側的 QR Code 再試`);
+              setFailureCount((c) => c + 1);
               return;
             }
 
@@ -78,6 +82,7 @@ const InvoiceScanner = ({ onSuccess, onClose }: Props) => {
               // Append server-side error detail when reason === server_error
               const detail = result.error ? ` (${result.error})` : "";
               setError(baseMsg + detail);
+              setFailureCount((c) => c + 1);
               handledRef.current = false; // allow retry
               // restart scanner so user can rescan a different invoice
               setTimeout(() => start(), 800);
@@ -163,6 +168,31 @@ const InvoiceScanner = ({ onSuccess, onClose }: Props) => {
           )}
         </AnimatePresence>
 
+        {/* Escalation banner — after 2 failures, push the customer to ask staff
+            for the manual "結帳 QR" backup. Tony 2026-05-15. */}
+        <AnimatePresence>
+          {failureCount >= 2 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mb-4 rounded-lg bg-amber-100 border border-amber-300 p-3 text-sm text-amber-900"
+            >
+              <p className="font-bold mb-1">🛎️ 已嘗試 {failureCount} 次仍無法兌換</p>
+              <p className="text-xs leading-relaxed">
+                請洽現場服務人員協助,服務人員會為您「補發結帳 QR」,
+                您只需用 LINE 相機掃一次即可開始遊戲。
+              </p>
+              <button
+                onClick={handleClose}
+                className="mt-2 w-full rounded-md bg-amber-200 hover:bg-amber-300 py-1.5 text-xs font-semibold"
+              >
+                關閉,我去找服務人員
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <p className="text-center text-sm text-muted-foreground mb-1">
           {isProcessing
             ? "🔄 正在驗證發票..."
@@ -176,7 +206,7 @@ const InvoiceScanner = ({ onSuccess, onClose }: Props) => {
           </p>
         )}
         <p className="text-center text-[11px] text-muted-foreground/80">
-          發票需在 60 分鐘內掃過桌邊 LINE QR 後使用,且每張只能用一次
+          發票需在 20 分鐘內掃過桌邊 LINE QR 後使用,且每張只能用一次
         </p>
       </motion.div>
     </motion.div>

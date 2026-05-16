@@ -74,6 +74,8 @@ const ReceiptCapture = ({ onSuccess, onClose }: Props) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Tony 2026-05-15: 2 failures → push to staff fallback (mirrors InvoiceScanner)
+  const [failureCount, setFailureCount] = useState(0);
 
   const handleFileChosen = async (evt: React.ChangeEvent<HTMLInputElement>) => {
     const file = evt.target.files?.[0];
@@ -100,6 +102,7 @@ const ReceiptCapture = ({ onSuccess, onClose }: Props) => {
     }
     const baseMsg = REASON_TEXT[result.reason ?? ""] ?? `兌換失敗:${result.reason ?? "未知"}`;
     setError(baseMsg + (result.error ? ` (${result.error})` : ""));
+    setFailureCount((c) => c + 1);
   };
 
   const handleRetake = () => {
@@ -192,6 +195,32 @@ const ReceiptCapture = ({ onSuccess, onClose }: Props) => {
                 className="mt-2 text-[11px] underline"
               >
                 關閉訊息再試
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Escalation banner — same logic as InvoiceScanner.
+            After 2 failed OCR attempts, direct customer to staff for manual
+            "結帳 QR" backup so they're never stuck retrying a bad photo. */}
+        <AnimatePresence>
+          {failureCount >= 2 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mt-4 rounded-lg bg-amber-100 border border-amber-300 p-3 text-sm text-amber-900"
+            >
+              <p className="font-bold mb-1">🛎️ 已嘗試 {failureCount} 次仍無法兌換</p>
+              <p className="text-xs leading-relaxed">
+                請洽現場服務人員協助,服務人員會為您「補發結帳 QR」,
+                您只需用 LINE 相機掃一次即可開始遊戲。
+              </p>
+              <button
+                onClick={onClose}
+                className="mt-2 w-full rounded-md bg-amber-200 hover:bg-amber-300 py-1.5 text-xs font-semibold"
+              >
+                關閉,我去找服務人員
               </button>
             </motion.div>
           )}
