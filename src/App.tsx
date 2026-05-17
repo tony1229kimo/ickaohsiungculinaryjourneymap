@@ -10,6 +10,7 @@ import AboutPage from "./pages/AboutPage";
 import AdminTablesPage from "./pages/AdminTablesPage";
 import AdminCustomersPage from "./pages/AdminCustomersPage";
 import AdminCheckoutQRPage from "./pages/AdminCheckoutQRPage";
+import AdminLookupPage from "./pages/AdminLookupPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,8 @@ const App = () => (
           {/* New checkout-QR page (Phase 8). PIN-gated, NO LIFF — so any
               shared cashier phone can use it without re-logging-in every shift. */}
           <Route path="/admin/checkout" element={<AdminCheckoutQRPage />} />
+          {/* Customer-complaint lookup (Phase 8.3) — PIN gated, no LIFF */}
+          <Route path="/admin/lookup" element={<AdminLookupPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

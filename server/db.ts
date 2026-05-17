@@ -711,6 +711,11 @@ export interface IssuedTicket {
   expiresAt: string;
 }
 
+export interface IssueError {
+  error: "amount_below_threshold" | "invoice_format_invalid" | "invoice_already_used" | "invoice_already_pending";
+  existing?: InvoiceLookupResult;  // populated for invoice_already_used so UI can show details
+}
+
 function diceForAmount(amount: number): number {
   return Math.min(Math.floor(amount / DICE_PER_2000), DICE_CAP);
 }
@@ -720,20 +725,45 @@ function randomToken(): string {
   return Array.from({ length: 12 }, () => Math.floor(Math.random() * 36).toString(36)).join("");
 }
 
+const INVOICE_NO_PATTERN = /^[A-Z]{2}\d{8}$/;
+
 export async function issueCheckoutTicket(
   amount: number,
   issuedBy: string,
   restaurantId: string | null,
-): Promise<IssuedTicket | { error: "amount_below_threshold" }> {
+  invoiceNo: string,
+): Promise<IssuedTicket | IssueError> {
+  // Validate invoice_no format up front (BM-XXXXXXXX, VH-XXXXXXXX, etc — caller strips the dash)
+  const normalized = invoiceNo.toUpperCase().replace(/-/g, "");
+  if (!INVOICE_NO_PATTERN.test(normalized)) {
+    return { error: "invoice_format_invalid" };
+  }
+
   const dice = diceForAmount(amount);
   if (dice <= 0) return { error: "amount_below_threshold" };
 
+  // Lock against double-issue (Tony 2026-05-17):
+  // a) if invoice was already redeemed (full success) — block + return details
+  // b) if invoice is currently pending in another unused ticket — block
+  const already = await lookupInvoice(normalized);
+  if (already.used) {
+    return { error: "invoice_already_used", existing: already };
+  }
+  const pending = await pool.query(
+    `SELECT token, expires_at FROM checkout_tickets
+     WHERE invoice_no = $1 AND used_at IS NULL AND expires_at > NOW() LIMIT 1`,
+    [normalized],
+  );
+  if ((pending.rowCount ?? 0) > 0) {
+    return { error: "invoice_already_pending" };
+  }
+
   const token = randomToken();
   const r = await pool.query(
-    `INSERT INTO checkout_tickets (token, amount, dice_to_issue, issued_by, restaurant_id, expires_at)
-     VALUES ($1, $2, $3, $4, $5, NOW() + ($6 || ' seconds')::interval)
+    `INSERT INTO checkout_tickets (token, amount, dice_to_issue, issued_by, restaurant_id, invoice_no, expires_at)
+     VALUES ($1, $2, $3, $4, $5, $6, NOW() + ($7 || ' seconds')::interval)
      RETURNING expires_at`,
-    [token, amount, dice, issuedBy, restaurantId, String(CHECKOUT_TICKET_TTL_SEC)],
+    [token, amount, dice, issuedBy, restaurantId, normalized, String(CHECKOUT_TICKET_TTL_SEC)],
   );
   return { token, amount, diceToIssue: dice, expiresAt: r.rows[0].expires_at };
 }
@@ -751,7 +781,7 @@ export async function redeemCheckoutTicket(userId: string, token: string): Promi
   try {
     await client.query("BEGIN");
     const sel = await client.query(
-      `SELECT token, amount, dice_to_issue, restaurant_id, expires_at, used_at
+      `SELECT token, amount, dice_to_issue, restaurant_id, invoice_no, expires_at, used_at
        FROM checkout_tickets WHERE token = $1 FOR UPDATE`,
       [token],
     );
@@ -776,6 +806,29 @@ export async function redeemCheckoutTicket(userId: string, token: string): Promi
     const needsSeasonReset = !!existing && existing.totalPoints >= 15;
 
     await client.query(`UPDATE checkout_tickets SET used_at = NOW(), used_by_user_id = $1 WHERE token = $2`, [userId, token]);
+
+    // Tony 2026-05-17: when an invoice_no was bound to the ticket, register it
+    // in the global invoices table so the customer can't later try to self-scan
+    // the same paper invoice for a second helping of dice.
+    if (row.invoice_no) {
+      try {
+        await client.query(
+          `INSERT INTO invoices
+             (invoice_no, seller_vat, buyer_vat, amount_total, amount_sales,
+              invoice_date, redeemed_by_userid, restaurant_id, table_id, dice_issued, raw_qr)
+           VALUES ($1, $2, '', $3, $3, '', $4, $5, NULL, $6, $7)
+           ON CONFLICT (invoice_no) DO NOTHING`,
+          [
+            row.invoice_no, "91097496", row.amount, userId, row.restaurant_id,
+            row.dice_to_issue, `CHECKOUT_QR|${token}|${row.amount}`,
+          ],
+        );
+      } catch (e) {
+        // Even if this fails the redeem still succeeds — the ticket is the source of truth
+        console.warn("[redeemCheckoutTicket] invoice register failed:", e);
+      }
+    }
+
     if (needsSeasonReset) {
       await client.query(
         `UPDATE game_state SET total_points = 0, claimed_tiles = '[]'::jsonb, updated_at = NOW() WHERE user_id = $1`,
@@ -798,7 +851,7 @@ export async function redeemCheckoutTicket(userId: string, token: string): Promi
       eventType: "activate",
       restaurantId: row.restaurant_id,
       amount: row.amount,
-      payload: { source: "checkout_qr", token, dice_issued: row.dice_to_issue },
+      payload: { source: "checkout_qr", token, invoice_no: row.invoice_no ?? null, dice_issued: row.dice_to_issue },
     });
 
     return { ok: true, diceIssued: row.dice_to_issue, amount: row.amount, restaurantId: row.restaurant_id };
@@ -808,6 +861,76 @@ export async function redeemCheckoutTicket(userId: string, token: string): Promi
     console.error("[redeemCheckoutTicket] failed:", err);
     return { ok: false, reason: "not_found" };
   }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Invoice lookup (Tony 2026-05-17) — for /admin/lookup customer-complaint tool.
+// "客人說我這張沒用過!" → service staff types the BM-XXXXXXXX → see who/when.
+// ─────────────────────────────────────────────────────────────────
+
+export interface InvoiceLookupResult {
+  invoiceNo: string;
+  used: boolean;
+  usedAt?: string;
+  userId?: string;
+  displayName?: string | null;
+  tableId?: string | null;
+  restaurantId?: string | null;
+  amountTotal?: number;
+  diceIssued?: number;
+  source?: "e_invoice" | "pos_slip" | "checkout_qr";
+  pendingTicket?: { token: string; expiresAt: string; amount: number };  // not yet redeemed but reserved
+}
+
+export async function lookupInvoice(invoiceNo: string): Promise<InvoiceLookupResult> {
+  const normalized = invoiceNo.toUpperCase().replace(/-/g, "");
+
+  const r = await pool.query(
+    `SELECT i.invoice_no, i.redeemed_at, i.redeemed_by_userid, i.table_id, i.restaurant_id,
+            i.amount_total, i.dice_issued, i.raw_qr, p.display_name
+     FROM invoices i
+     LEFT JOIN customer_profiles p ON p.user_id = i.redeemed_by_userid
+     WHERE i.invoice_no = $1`,
+    [normalized],
+  );
+  if ((r.rowCount ?? 0) > 0) {
+    const row = r.rows[0];
+    const raw = (row.raw_qr as string | null) ?? "";
+    const source: InvoiceLookupResult["source"] =
+      raw.startsWith("POS_SLIP") ? "pos_slip" :
+      raw.startsWith("CHECKOUT_QR") ? "checkout_qr" :
+      "e_invoice";
+    return {
+      invoiceNo: row.invoice_no,
+      used: true,
+      usedAt: row.redeemed_at,
+      userId: row.redeemed_by_userid,
+      displayName: row.display_name,
+      tableId: row.table_id,
+      restaurantId: row.restaurant_id,
+      amountTotal: row.amount_total,
+      diceIssued: row.dice_issued,
+      source,
+    };
+  }
+
+  // Not redeemed — but possibly currently reserved by a pending checkout-QR ticket
+  const pending = await pool.query(
+    `SELECT token, expires_at, amount FROM checkout_tickets
+     WHERE invoice_no = $1 AND used_at IS NULL AND expires_at > NOW()
+     ORDER BY issued_at DESC LIMIT 1`,
+    [normalized],
+  );
+  if ((pending.rowCount ?? 0) > 0) {
+    const row = pending.rows[0];
+    return {
+      invoiceNo: normalized,
+      used: false,
+      pendingTicket: { token: row.token, expiresAt: row.expires_at, amount: row.amount },
+    };
+  }
+
+  return { invoiceNo: normalized, used: false };
 }
 
 // ─────────────────────────────────────────────────────────────────

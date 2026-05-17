@@ -29,10 +29,12 @@ const gameOrigin = () => window.location.origin;
 const AdminCheckoutQRPage = () => {
   const [pin, setPin] = useState<string>(() => sessionStorage.getItem(PIN_CACHE_KEY) ?? "");
   const [pinLocked, setPinLocked] = useState<boolean>(!!sessionStorage.getItem(PIN_CACHE_KEY));
+  const [invoiceInput, setInvoiceInput] = useState("");
   const [amountInput, setAmountInput] = useState("");
   const [issuing, setIssuing] = useState(false);
   const [ticket, setTicket] = useState<{ token: string; amount: number; dice: number; expiresAt: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [duplicateInfo, setDuplicateInfo] = useState<NonNullable<Awaited<ReturnType<typeof issueCheckoutTicket>>["existing"]> | null>(null);
   const [now, setNow] = useState(Date.now());
 
   // Countdown ticker — only when a ticket exists
@@ -53,15 +55,26 @@ const AdminCheckoutQRPage = () => {
 
   const ticketUrl = ticket ? `${gameOrigin()}/?ticket=${encodeURIComponent(ticket.token)}` : "";
 
+  const normalizedInvoice = useMemo(
+    () => invoiceInput.toUpperCase().replace(/-|\s/g, "").trim(),
+    [invoiceInput],
+  );
+  const invoiceLooksValid = /^[A-Z]{2}\d{8}$/.test(normalizedInvoice);
+
   const handleIssue = async () => {
     setError(null);
+    setDuplicateInfo(null);
     const amount = parseInt(amountInput, 10);
     if (!Number.isFinite(amount) || amount < 2000) {
       setError("金額需 ≥ NT$2,000 才有擲骰機會");
       return;
     }
+    if (!invoiceLooksValid) {
+      setError("發票編號格式錯誤,請輸入 2 字母 + 8 數字(如 BM36258896)");
+      return;
+    }
     setIssuing(true);
-    const res = await issueCheckoutTicket(amount, pin);
+    const res = await issueCheckoutTicket(amount, pin, normalizedInvoice);
     setIssuing(false);
     if (!res.ok || !res.token || !res.expires_at) {
       if (res.reason === "invalid_pin") {
@@ -73,6 +86,23 @@ const AdminCheckoutQRPage = () => {
       }
       if (res.reason === "pin_not_configured") {
         setError("後台 STAFF_NUMERIC_PASSWORD 未設定,請通知 IT");
+        return;
+      }
+      if (res.reason === "invoice_already_used" && res.existing) {
+        setDuplicateInfo(res.existing);
+        setError(null);
+        return;
+      }
+      if (res.reason === "invoice_already_pending") {
+        setError("這張發票剛剛已經產生過 QR Code,2 分鐘內請勿重複開單");
+        return;
+      }
+      if (res.reason === "invoice_format_invalid") {
+        setError("發票編號格式錯誤,請確認");
+        return;
+      }
+      if (res.reason === "invoice_required") {
+        setError("請填發票編號");
         return;
       }
       setError(`產生失敗:${res.reason ?? "unknown"}`);
@@ -99,7 +129,9 @@ const AdminCheckoutQRPage = () => {
   const handleReset = () => {
     setTicket(null);
     setAmountInput("");
+    setInvoiceInput("");
     setError(null);
+    setDuplicateInfo(null);
   };
 
   const handleLogout = () => {
@@ -172,7 +204,31 @@ const AdminCheckoutQRPage = () => {
               exit={{ opacity: 0 }}
               className="rounded-2xl bg-card p-5 shadow-lg"
             >
-              <label className="block text-sm font-medium mb-2">消費金額 (NT$)</label>
+              <label className="block text-sm font-medium mb-2">
+                發票編號 <span className="text-destructive">*</span>
+                <span className="ml-2 text-[11px] text-muted-foreground font-normal">
+                  小白單上「發票號碼」欄
+                </span>
+              </label>
+              <input
+                type="text"
+                value={invoiceInput}
+                onChange={(e) => setInvoiceInput(e.target.value.toUpperCase())}
+                placeholder="例:BM36258896 或 BM-36258896"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-lg text-center tracking-wider font-mono"
+                maxLength={12}
+              />
+              <div className="mt-1 text-center text-[11px]">
+                {invoiceInput.length === 0 ? (
+                  <span className="text-muted-foreground">2 字母 + 8 數字(系統會自動忽略「-」)</span>
+                ) : invoiceLooksValid ? (
+                  <span className="text-emerald-700">✓ 格式正確</span>
+                ) : (
+                  <span className="text-amber-700">格式還沒完整 / 不符</span>
+                )}
+              </div>
+
+              <label className="block text-sm font-medium mb-2 mt-4">消費金額 (NT$)</label>
               <input
                 type="number"
                 inputMode="numeric"
@@ -199,16 +255,38 @@ const AdminCheckoutQRPage = () => {
                 </p>
               )}
 
+              {duplicateInfo && (
+                <div className="mt-3 rounded-md bg-amber-50 border border-amber-300 p-3 text-xs text-amber-900">
+                  <p className="font-bold mb-1">⛔ 這張發票已被使用過</p>
+                  <div className="space-y-0.5 leading-relaxed">
+                    <p>• 使用時間:<span className="font-mono">{duplicateInfo.usedAt ? new Date(duplicateInfo.usedAt).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" }) : "—"}</span></p>
+                    <p>• 使用者:<strong>{duplicateInfo.displayName ?? duplicateInfo.userId ?? "未知"}</strong></p>
+                    {duplicateInfo.tableId && <p>• 桌號:{duplicateInfo.tableId}</p>}
+                    {duplicateInfo.amountTotal != null && <p>• 當時金額:NT${duplicateInfo.amountTotal.toLocaleString()}</p>}
+                    {duplicateInfo.diceIssued != null && <p>• 給予擲骰:{duplicateInfo.diceIssued} 次</p>}
+                    {duplicateInfo.source && (
+                      <p>• 兌換方式:{
+                        duplicateInfo.source === "e_invoice" ? "客人自助掃發票" :
+                        duplicateInfo.source === "pos_slip" ? "客人自助拍小白單" :
+                        "服務人員結帳 QR"
+                      }</p>
+                    )}
+                  </div>
+                  <button onClick={() => setDuplicateInfo(null)} className="mt-2 text-[11px] underline">關閉</button>
+                </div>
+              )}
+
               <button
                 onClick={handleIssue}
-                disabled={issuing || dicePreview <= 0}
+                disabled={issuing || dicePreview <= 0 || !invoiceLooksValid}
                 className="mt-4 w-full rounded-lg bg-primary text-primary-foreground py-3 font-semibold disabled:opacity-50"
               >
                 {issuing ? "產生中..." : "✓ 產生 QR Code"}
               </button>
 
               <p className="mt-4 text-[11px] text-muted-foreground leading-relaxed">
-                規則:每 NT$2,000 = 1 次擲骰,上限 5 次。QR 將於 2 分鐘後失效。
+                規則:每 NT$2,000 = 1 次擲骰,上限 5 次。QR 將於 2 分鐘後失效。<br />
+                <strong>同一張發票編號只能用一次</strong> — 防雙領機制。
               </p>
             </motion.div>
           ) : (

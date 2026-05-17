@@ -10,6 +10,7 @@ import invoiceRoutes from "./routes/invoice.js";
 import customersRoutes from "./routes/customers.js";
 import staffAdminRoutes from "./routes/staffAdmin.js";
 import checkoutTicketRoutes from "./routes/checkoutTicket.js";
+import staffLookupRoutes from "./routes/staffLookup.js";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3001");
@@ -44,6 +45,7 @@ app.use("/api/invoice", invoiceRoutes);
 app.use("/api/admin/customers", customersRoutes);
 app.use("/api/admin", staffAdminRoutes);
 app.use("/api/checkout-ticket", checkoutTicketRoutes);
+app.use("/api/staff", staffLookupRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });

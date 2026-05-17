@@ -28,7 +28,7 @@ import { issueCheckoutTicket, redeemCheckoutTicket } from "../db.js";
 
 const router = Router();
 
-function requireStaffPin(req: Request, res: Response, next: NextFunction) {
+export function requireStaffPin(req: Request, res: Response, next: NextFunction) {
   const expected = process.env.STAFF_NUMERIC_PASSWORD;
   if (!expected) {
     return res.status(503).json({ ok: false, reason: "pin_not_configured" });
@@ -41,18 +41,26 @@ function requireStaffPin(req: Request, res: Response, next: NextFunction) {
 }
 
 // Issue a new amount-bearing ticket. Staff-only via numeric PIN.
+// Tony 2026-05-17: invoice_no is now REQUIRED — see issueCheckoutTicket() in db.ts.
 router.post("/issue", requireStaffPin, async (req: Request, res: Response) => {
   try {
     const amount = Number(req.body?.amount);
     if (!Number.isFinite(amount) || amount <= 0) {
       return res.status(400).json({ ok: false, reason: "invalid_amount" });
     }
+    const invoiceNo = (req.body?.invoice_no as string | undefined)?.trim();
+    if (!invoiceNo) {
+      return res.status(400).json({ ok: false, reason: "invoice_required" });
+    }
     const restaurantId = (req.body?.restaurant_id as string | undefined) ?? null;
     const issuedBy = (req.body?.issued_by as string | undefined) ?? "numeric_password";
 
-    const result = await issueCheckoutTicket(amount, issuedBy, restaurantId);
+    const result = await issueCheckoutTicket(amount, issuedBy, restaurantId, invoiceNo);
     if ("error" in result) {
-      return res.status(400).json({ ok: false, reason: result.error });
+      const status = result.error === "invoice_already_used" ? 409 :
+                     result.error === "invoice_already_pending" ? 409 :
+                     400;
+      return res.status(status).json({ ok: false, reason: result.error, existing: result.existing });
     }
     return res.json({
       ok: true,

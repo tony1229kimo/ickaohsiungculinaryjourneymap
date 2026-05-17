@@ -2,6 +2,18 @@ import { getLineIdToken } from "@/contexts/LiffContext";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
+export interface InvoiceExisting {
+  used: boolean;
+  usedAt?: string;
+  userId?: string;
+  displayName?: string | null;
+  tableId?: string | null;
+  restaurantId?: string | null;
+  amountTotal?: number;
+  diceIssued?: number;
+  source?: "e_invoice" | "pos_slip" | "checkout_qr";
+}
+
 export interface IssueResponse {
   ok: boolean;
   reason?: string;
@@ -9,16 +21,22 @@ export interface IssueResponse {
   dice_to_issue?: number;
   amount?: number;
   expires_at?: string;
+  existing?: InvoiceExisting;  // populated when reason === "invoice_already_used"
 }
 
-export async function issueCheckoutTicket(amount: number, pin: string, restaurantId?: string | null): Promise<IssueResponse> {
+export async function issueCheckoutTicket(
+  amount: number,
+  pin: string,
+  invoiceNo: string,
+  restaurantId?: string | null,
+): Promise<IssueResponse> {
   const res = await fetch(`${API_BASE}/api/checkout-ticket/issue`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Staff-Pin": pin,
     },
-    body: JSON.stringify({ amount, restaurant_id: restaurantId ?? null }),
+    body: JSON.stringify({ amount, invoice_no: invoiceNo, restaurant_id: restaurantId ?? null }),
   });
   const data = await res.json().catch(() => ({}));
   return { ok: res.ok && data.ok === true, ...data };
