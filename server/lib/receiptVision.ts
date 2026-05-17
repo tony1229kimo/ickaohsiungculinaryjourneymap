@@ -84,6 +84,30 @@ Extract the data and return JSON ONLY with this exact schema (no markdown, no pr
   "confidence": number               // 0-1, how confident in the extraction
 }
 
+SPECIFIC PITFALLS TO AVOID (Tony 2026-05-17 from real samples):
+
+1. **"此單曾取消付款" section** — Some receipts show a cancelled-payment block
+   near the bottom with lines like "取消付款次數: 1" and "上次付款金額: 7,678".
+   IGNORE these lines. Use only the MAIN "總計" figure above the payment block,
+   which represents what the customer actually paid this time.
+
+2. **"載具號碼" field** — Carrier-bound customers have a line like
+   "載具號碼: /6PBM6BK" between 發票號碼 and the line items. This is FINE,
+   the receipt is still valid. The invoice_no you extract should be from
+   the "發票號碼" line (e.g. "BM-36258897"), NOT the carrier number.
+
+3. **"(NG) 餐券抵用" or 餐券/coupon offsets** — When customers pay with
+   restaurant coupons (e.g. "餐券抵用(Zhan Lu): 7,000"), the 總計 line
+   still represents the full invoiced amount. Extract that, not the
+   credit-card balance.
+
+4. **Negative service charge** — Some receipts show 服務費 as a negative
+   number when IHG member discounts apply. This is cosmetic; you only
+   need to read 總計, ignore line-item signs.
+
+5. **Date format** — 日期 always appears as YYYY-MM-DD already (not ROC
+   format), e.g. "2026-05-17". Pass through directly to date_iso.
+
 If the image is blurry, dark, cropped, or shows something else (not a receipt), set looks_like_receipt=false and confidence < 0.5. Be strict — false positives cost the hotel money.`;
 
 export async function analyzeReceipt(imageBase64DataUrl: string): Promise<ReceiptAnalysis> {
