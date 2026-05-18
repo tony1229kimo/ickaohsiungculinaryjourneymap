@@ -62,23 +62,60 @@ function parseTableId(text: string | undefined): string | null {
 // ─────────────────────────────────────────────────────────────────
 
 async function replyToLine(replyToken: string, text: string): Promise<void> {
+  await sendLineReply(replyToken, [{ type: "text", text }]);
+}
+
+// Tony 2026-05-18: bind success message must include a tap-through button
+// so the customer can launch the LIFF game without typing a URL.
+async function replyBindSuccess(replyToken: string, tableId: string): Promise<void> {
+  const liffId = process.env.GAME_LIFF_ID ?? "";
+  const liffUrl = liffId ? `https://liff.line.me/${liffId}` : "";
+
+  if (!liffUrl) {
+    // Fallback: env var missing → at least send text so the customer knows
+    await replyToLine(
+      replyToken,
+      `✅ 已綁定 ${tableId} 桌\n結帳後將收到遊戲通知 🎲\n\nTable ${tableId} bound — game invite arrives after checkout.`,
+    );
+    return;
+  }
+
+  // LINE buttons-template limits: title ≤ 40 chars, text ≤ 60 chars, label ≤ 20 chars.
+  await sendLineReply(replyToken, [
+    {
+      type: "template",
+      altText: `✅ 已綁定 ${tableId} 桌 — 點擊進入遊戲`,
+      template: {
+        type: "buttons",
+        title: `✅ 已綁定 ${tableId} 桌`,
+        text: "結帳後消費滿 NT$2,000 即可開始遊戲 🎲",
+        actions: [
+          { type: "uri", label: "▶ 進入遊戲", uri: liffUrl },
+        ],
+      },
+    },
+  ]);
+}
+
+async function sendLineReply(replyToken: string, messages: unknown[]): Promise<void> {
   const token = process.env.LINE_MESSAGING_ACCESS_TOKEN_KH;
   if (!token) {
     console.warn("[webhook] LINE_MESSAGING_ACCESS_TOKEN_KH not set, skipping reply");
     return;
   }
   try {
-    await fetch("https://api.line.me/v2/bot/message/reply", {
+    const res = await fetch("https://api.line.me/v2/bot/message/reply", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        replyToken,
-        messages: [{ type: "text", text }],
-      }),
+      body: JSON.stringify({ replyToken, messages }),
     });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      console.error(`[webhook] LINE reply ${res.status}: ${errText.slice(0, 300)}`);
+    }
   } catch (err) {
     console.error("[webhook] reply failed:", err);
   }
@@ -154,10 +191,7 @@ async function handleMessage(event: LineEvent) {
   });
 
   if (event.replyToken) {
-    await replyToLine(
-      event.replyToken,
-      `✅ 已綁定 ${tableId} 桌\n結帳後將收到遊戲通知 🎲\n\nTable ${tableId} bound — game invite arrives after checkout.`,
-    );
+    await replyBindSuccess(event.replyToken, tableId);
   }
 }
 
