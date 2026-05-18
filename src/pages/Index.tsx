@@ -25,6 +25,7 @@ import { useLiff } from "@/contexts/LiffContext";
 import { useGameState } from "@/hooks/useGameState";
 import { useDicePool } from "@/hooks/useDicePool";
 import { redeemCheckoutTicket } from "@/api/checkoutTicket";
+import { bindRestaurant } from "@/api/bind";
 import rewardIconAppetizer from "@/assets/reward-icon-appetizer.png";
 import bgMain from "@/assets/bg-main.png";
 
@@ -115,6 +116,35 @@ const Index = () => {
       setIsLoading(false);
     }
   }, [userId, isApiLoading, gameState]);
+
+  // Auto-bind restaurant when customer arrives via the restaurant-side QR
+  // (LIFF URL with ?r=ZL / SD / WR / HW / BL). Tony 2026-05-18 — replaces
+  // the "type table:ZL05 in LINE chat" step with a single scan.
+  useEffect(() => {
+    const code = searchParams.get("r")?.toUpperCase();
+    if (!code || userId === "anonymous") return;
+    let cancelled = false;
+    (async () => {
+      const result = await bindRestaurant(code);
+      if (cancelled) return;
+      if (result.ok) {
+        // Strip ?r= so subsequent reloads don't re-bind
+        searchParams.delete("r");
+        setSearchParams(searchParams, { replace: true });
+        const niceName: Record<string, string> = {
+          ZL: "湛露中餐廳", WR: "WA-RA 日式餐廳", SD: "SEEDS 大地全日餐廳",
+          HW: "HAWKER 南洋料理", BL: "BLT33 大廳酒吧",
+        };
+        setStatusMessage(`✅ 已綁定 ${niceName[code] ?? code} — 結帳後即可開始遊戲`);
+        setStatusType("success");
+      }
+      // Failure: keep the ?r= so user can retry if needed; show silent warning in console
+      else {
+        console.warn("[bindRestaurant] failed:", result.reason);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [searchParams, userId, setSearchParams]);
 
   // Auto-redeem when customer lands here from a staff-issued checkout QR.
   //

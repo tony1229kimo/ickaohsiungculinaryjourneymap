@@ -189,6 +189,26 @@ export async function bindTableUser(tableId: string, userId: string): Promise<bo
   return true;
 }
 
+/**
+ * Restaurant-level binding (Tony 2026-05-18) — no need to track per-table.
+ * Picks the restaurant's first table (e.g. ZL01) as a synthetic binding target;
+ * since fraud locks key off (user_id, table_id) the table identity doesn't
+ * matter for correctness — what matters is that all redemptions are tied to
+ * the right restaurant for marketing audit.
+ *
+ * Returns the underlying table_id used, or null if the restaurant doesn't exist.
+ */
+export async function bindUserToRestaurant(restaurantCode: string, userId: string): Promise<string | null> {
+  const r = await pool.query(
+    `SELECT id FROM tables WHERE restaurant_id = $1 ORDER BY id ASC LIMIT 1`,
+    [restaurantCode],
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  const tableId = r.rows[0].id as string;
+  const ok = await bindTableUser(tableId, userId);
+  return ok ? tableId : null;
+}
+
 export interface BindingRow {
   id: number;
   table_id: string;
