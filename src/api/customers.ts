@@ -82,8 +82,13 @@ export interface StatsOverview {
   };
   by_restaurant: Array<{
     restaurant_id: string;
+    name_zh: string;
+    name_en: string;
     unique_visitors: number;
-    visits: number;
+    binds: number;
+    redeems: number;
+    rolls: number;
+    rewards: number;
     spend: number;
   }>;
 }

@@ -206,15 +206,35 @@ router.get("/_stats/overview", ...staffAuth, async (_req, res) => {
       COALESCE(SUM(total_rewards_earned), 0)::int AS total_rewards
     FROM customer_profiles
   `);
+  // Tony 2026-05-21: per-restaurant rollup pinned to dashboard top.
+  // Counts the modern event types (bind / invoice_redeem / roll / reward_*) —
+  // the old `activate` event from the deprecated /admin/tables flow is no
+  // longer the source of truth. Also LEFT JOIN restaurants to surface all 5
+  // outlets even when they have zero events (HAWKER + BLT33 currently).
   const byRestaurant = await pool.query(`
-    SELECT restaurant_id,
-           COUNT(DISTINCT user_id)::int AS unique_visitors,
-           COUNT(*) FILTER (WHERE event_type='activate')::int AS visits,
-           COALESCE(SUM(amount) FILTER (WHERE event_type='activate'), 0)::int AS spend
-    FROM customer_events
-    WHERE restaurant_id IS NOT NULL
-    GROUP BY restaurant_id
-    ORDER BY spend DESC
+    SELECT r.id AS restaurant_id,
+           r.name_zh,
+           r.name_en,
+           COALESCE(s.unique_visitors, 0)::int  AS unique_visitors,
+           COALESCE(s.binds, 0)::int            AS binds,
+           COALESCE(s.redeems, 0)::int          AS redeems,
+           COALESCE(s.rolls, 0)::int            AS rolls,
+           COALESCE(s.rewards, 0)::int          AS rewards,
+           COALESCE(s.spend, 0)::int            AS spend
+    FROM restaurants r
+    LEFT JOIN (
+      SELECT restaurant_id,
+             COUNT(DISTINCT user_id)::int                                      AS unique_visitors,
+             COUNT(*) FILTER (WHERE event_type='bind')::int                    AS binds,
+             COUNT(*) FILTER (WHERE event_type='invoice_redeem')::int          AS redeems,
+             COUNT(*) FILTER (WHERE event_type='roll')::int                    AS rolls,
+             COUNT(*) FILTER (WHERE event_type IN ('reward_lottery','reward_fixed'))::int AS rewards,
+             COALESCE(SUM(amount) FILTER (WHERE event_type='invoice_redeem'),0)::int AS spend
+      FROM customer_events
+      WHERE restaurant_id IS NOT NULL
+      GROUP BY restaurant_id
+    ) s ON s.restaurant_id = r.id
+    ORDER BY r.id
   `);
   res.json({ summary: summary.rows[0], by_restaurant: byRestaurant.rows });
 });

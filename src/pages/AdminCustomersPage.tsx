@@ -125,32 +125,60 @@ const AdminCustomersPage = () => {
         <p className="text-xs opacity-80 mt-0.5">{user?.displayName ?? "服務人員"}</p>
       </div>
 
-      {/* Stats overview cards */}
+      {/* 📌 PINNED: 各餐廳活動次數 — pinned to top per Tony 2026-05-21 */}
+      {stats && stats.by_restaurant.length > 0 && (
+        <div className="p-3">
+          <div className="rounded-2xl border-2 border-primary/30 bg-card shadow-md overflow-hidden">
+            <div className="bg-primary text-primary-foreground px-3 py-2">
+              <p className="text-sm font-bold">🏬 各餐廳活動次數 · Restaurants</p>
+              <p className="text-[10px] opacity-80">即時 · 從事件表彙整</p>
+            </div>
+            <div className="divide-y">
+              {stats.by_restaurant.map((r) => {
+                const isActive = r.binds > 0 || r.redeems > 0;
+                return (
+                  <div key={r.restaurant_id} className={`px-3 py-2.5 ${isActive ? "" : "opacity-50"}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-primary text-primary-foreground">
+                          {r.restaurant_id}
+                        </span>
+                        <span className="font-bold text-sm">{r.name_zh}</span>
+                        <span className="text-[10px] text-muted-foreground">{r.name_en}</span>
+                      </div>
+                      {!isActive && (
+                        <span className="text-[10px] text-muted-foreground italic">尚無流量</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-5 gap-1 text-center">
+                      <Mini label="客人" value={r.unique_visitors} />
+                      <Mini label="掃QR" value={r.binds} />
+                      <Mini label="兌換" value={r.redeems} />
+                      <Mini label="擲骰" value={r.rolls} />
+                      <Mini label="領獎" value={r.rewards} />
+                    </div>
+                    {r.spend > 0 && (
+                      <p className="text-[11px] text-emerald-700 mt-1 text-right">
+                        累計消費 {fmtCurrency(r.spend)}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stats overview cards (smaller, secondary) */}
       {stats && (
-        <div className="p-3 grid grid-cols-3 gap-2">
+        <div className="px-3 pb-2 grid grid-cols-3 gap-2">
           <StatCard label="總客戶" value={stats.summary.total_customers} />
           <StatCard label="7 日活躍" value={stats.summary.active_7d} />
           <StatCard label="30 日活躍" value={stats.summary.active_30d} />
           <StatCard label="累計消費" value={fmtCurrency(stats.summary.total_spend)} small />
           <StatCard label="總擲骰" value={stats.summary.total_rolls} />
           <StatCard label="總領獎" value={stats.summary.total_rewards} />
-        </div>
-      )}
-
-      {/* By restaurant */}
-      {stats && stats.by_restaurant.length > 0 && (
-        <div className="px-3 pb-2">
-          <p className="text-xs text-muted-foreground mb-1.5">餐廳業績</p>
-          <div className="space-y-1">
-            {stats.by_restaurant.map((r) => (
-              <div key={r.restaurant_id} className="flex items-center justify-between bg-card rounded-lg px-3 py-2 text-sm">
-                <span className="font-bold">{r.restaurant_id}</span>
-                <span className="text-xs text-muted-foreground">
-                  {r.unique_visitors} 客 · {r.visits} 桌次 · {fmtCurrency(r.spend)}
-                </span>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
@@ -304,6 +332,13 @@ const StatCard = ({ label, value, small }: { label: string; value: string | numb
   <div className="bg-card rounded-xl p-2.5 text-center">
     <p className="text-[10px] text-muted-foreground">{label}</p>
     <p className={`font-bold text-foreground ${small ? "text-sm" : "text-lg"}`}>{value}</p>
+  </div>
+);
+
+const Mini = ({ label, value }: { label: string; value: number }) => (
+  <div className={`rounded ${value > 0 ? "bg-primary/5" : "bg-muted/30"} py-0.5`}>
+    <p className="text-[9px] text-muted-foreground leading-none">{label}</p>
+    <p className={`text-sm font-bold leading-tight ${value > 0 ? "text-primary" : "text-muted-foreground"}`}>{value}</p>
   </div>
 );
 
