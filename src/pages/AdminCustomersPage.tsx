@@ -65,7 +65,12 @@ const AdminCustomersPage = () => {
       .then(setStats)
       .catch((err) => {
         if (/40[13]/.test(err.message)) {
-          setLoadError("您不在服務人員白名單,請聯絡 IT 加入。");
+          // Show userId so IT can add to whitelist without a chat back-and-forth
+          setLoadError(
+            "您不在服務人員白名單,請聯絡 IT 加入。\n\n" +
+            `您的 LINE userId(請複製給 IT):\n${user.userId}\n\n` +
+            `您的顯示名稱:${user.displayName ?? "(無)"}`
+          );
         } else {
           setLoadError("無法載入統計:" + err.message);
         }
@@ -116,7 +121,26 @@ const AdminCustomersPage = () => {
     return <div className="min-h-screen flex items-center justify-center bg-background p-6"><p className="text-destructive text-center">LIFF: {liffError}</p></div>;
   }
   if (loadError) {
-    return <div className="min-h-screen flex items-center justify-center bg-background p-6"><p className="text-destructive text-center">{loadError}</p></div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="max-w-md w-full bg-card border rounded-2xl p-6 shadow-lg">
+          <p className="text-destructive font-bold mb-2">⚠️ 無法載入</p>
+          <pre className="text-sm text-foreground whitespace-pre-wrap break-all font-sans">{loadError}</pre>
+          {user?.userId && (
+            <button
+              onClick={() => {
+                navigator.clipboard?.writeText(user.userId).then(() => {
+                  alert("已複製 userId 到剪貼簿");
+                });
+              }}
+              className="mt-3 w-full px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
+            >
+              📋 複製 userId
+            </button>
+          )}
+        </div>
+      </div>
+    );
   }
 
   return (
