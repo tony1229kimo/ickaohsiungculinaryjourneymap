@@ -218,11 +218,26 @@ router.get("/_stats/overview", ...staffAuth, async (_req, res) => {
       COUNT(*) FILTER (WHERE last_seen_at > NOW() - INTERVAL '7 days')::int AS active_7d,
       COUNT(*) FILTER (WHERE last_seen_at > NOW() - INTERVAL '30 days')::int AS active_30d,
       COUNT(*) FILTER (WHERE total_visits > 0)::int AS has_visited,
+      COUNT(*) FILTER (WHERE total_rewards_earned > 0)::int AS has_rewarded,
       COALESCE(SUM(total_spend), 0)::int AS total_spend,
       COALESCE(SUM(total_dice_rolled), 0)::int AS total_rolls,
       COALESCE(SUM(total_rewards_earned), 0)::int AS total_rewards
     FROM customer_profiles
   `);
+
+  // Tony 2026-05-21: 4-stage funnel for the dashboard top-card.
+  // Stage 2 (bound_to_restaurant) is users who scanned a restaurant QR — they
+  // count distinctly across outlets, so summing by_restaurant.unique_visitors
+  // would over-count if a single user visited multiple outlets.
+  const funnel = await pool.query<{
+    bound_to_restaurant: number;
+  }>(`
+    SELECT COUNT(DISTINCT user_id)::int AS bound_to_restaurant
+    FROM customer_events
+    WHERE restaurant_id IS NOT NULL
+  `);
+  const summaryRow = summary.rows[0];
+  summaryRow.bound_to_restaurant = funnel.rows[0].bound_to_restaurant;
   // Tony 2026-05-21: per-restaurant rollup pinned to dashboard top.
   // Counts the modern event types (bind / invoice_redeem / roll / reward_*) —
   // the old `activate` event from the deprecated /admin/tables flow is no
@@ -253,7 +268,7 @@ router.get("/_stats/overview", ...staffAuth, async (_req, res) => {
     ) s ON s.restaurant_id = r.id
     ORDER BY r.id
   `);
-  res.json({ summary: summary.rows[0], by_restaurant: byRestaurant.rows });
+  res.json({ summary: summaryRow, by_restaurant: byRestaurant.rows });
 });
 
 export default router;

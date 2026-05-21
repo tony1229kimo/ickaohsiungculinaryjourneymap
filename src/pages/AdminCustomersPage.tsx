@@ -160,6 +160,48 @@ const AdminCustomersPage = () => {
         <p className="text-xs opacity-80 mt-0.5">{user?.displayName ?? "服務人員"}</p>
       </div>
 
+      {/* 🚀 PINNED: 客戶漏斗 — Tony 2026-05-21 */}
+      {stats && (
+        <div className="p-3 pb-0">
+          <div className="rounded-2xl border-2 border-accent/40 bg-card shadow-md overflow-hidden">
+            <div className="bg-accent text-accent-foreground px-3 py-2">
+              <p className="text-sm font-bold">🚀 客戶漏斗 · Conversion Funnel</p>
+              <p className="text-[10px] opacity-80">看每一段的轉化率</p>
+            </div>
+            <div className="px-2 py-3">
+              <div className="grid grid-cols-4 gap-1">
+                <FunnelStage label="加好友" value={stats.summary.total_customers} color="bg-primary/10" />
+                <FunnelStage
+                  label="綁餐廳"
+                  value={stats.summary.bound_to_restaurant}
+                  color="bg-primary/20"
+                  drop={stats.summary.total_customers - stats.summary.bound_to_restaurant}
+                />
+                <FunnelStage
+                  label="完成兌換"
+                  value={stats.summary.has_visited}
+                  color="bg-primary/30"
+                  drop={stats.summary.bound_to_restaurant - stats.summary.has_visited}
+                />
+                <FunnelStage
+                  label="領到獎"
+                  value={stats.summary.has_rewarded ?? 0}
+                  color="bg-primary/40"
+                  drop={stats.summary.has_visited - (stats.summary.has_rewarded ?? 0)}
+                />
+              </div>
+              <div className="text-center mt-2 text-[10px] text-muted-foreground">
+                從加好友到完成兌換的 conversion rate: {
+                  stats.summary.total_customers > 0
+                    ? Math.round((stats.summary.has_visited / stats.summary.total_customers) * 1000) / 10
+                    : 0
+                }%
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 📌 PINNED: 各餐廳活動次數 — pinned to top per Tony 2026-05-21 */}
       {stats && stats.by_restaurant.length > 0 && (
         <div className="p-3">
@@ -407,6 +449,18 @@ const Mini = ({ label, value }: { label: string; value: number }) => (
   <div className={`rounded ${value > 0 ? "bg-primary/5" : "bg-muted/30"} py-0.5`}>
     <p className="text-[9px] text-muted-foreground leading-none">{label}</p>
     <p className={`text-sm font-bold leading-tight ${value > 0 ? "text-primary" : "text-muted-foreground"}`}>{value}</p>
+  </div>
+);
+
+const FunnelStage = ({ label, value, color, drop }: { label: string; value: number; color: string; drop?: number }) => (
+  <div className="flex flex-col items-center">
+    <div className={`${color} rounded-lg w-full py-2 text-center`}>
+      <p className="text-[10px] text-muted-foreground leading-none">{label}</p>
+      <p className="text-2xl font-bold text-foreground leading-tight">{value}</p>
+    </div>
+    {drop !== undefined && drop > 0 && (
+      <p className="text-[9px] text-destructive mt-0.5">↓ {drop} 流失</p>
+    )}
   </div>
 );
 

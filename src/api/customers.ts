@@ -78,6 +78,8 @@ export interface StatsOverview {
     active_7d: number;
     active_30d: number;
     has_visited: number;
+    has_rewarded: number;
+    bound_to_restaurant: number;
     total_spend: number;
     total_rolls: number;
     total_rewards: number;
