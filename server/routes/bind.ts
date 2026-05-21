@@ -16,7 +16,7 @@
 
 import { Router, type Request, type Response } from "express";
 import { requireLiffAuth } from "../middleware/liffAuth.js";
-import { bindUserToRestaurant, recordEvent } from "../db.js";
+import { bindUserToRestaurant, recordEvent, upsertProfile } from "../db.js";
 
 const router = Router();
 
@@ -24,7 +24,12 @@ const VALID_RESTAURANTS = new Set(["ZL", "WR", "SD", "HW", "BL"]);
 
 router.post("/restaurant", requireLiffAuth(), async (req: Request, res: Response) => {
   try {
-    const userId = (req as Request & { lineUserId?: string }).lineUserId;
+    const r = req as Request & {
+      lineUserId?: string;
+      lineDisplayName?: string;
+      linePictureUrl?: string;
+    };
+    const userId = r.lineUserId;
     if (!userId) return res.status(401).json({ ok: false, reason: "no_user" });
 
     const code = (req.body?.code as string | undefined)?.toUpperCase().trim();
@@ -33,7 +38,15 @@ router.post("/restaurant", requireLiffAuth(), async (req: Request, res: Response
       return res.status(400).json({ ok: false, reason: "invalid_restaurant_code" });
     }
 
-    console.log(`[bind/restaurant] user=${userId} code=${code}`);
+    console.log(`[bind/restaurant] user=${userId} name=${r.lineDisplayName ?? "?"} code=${code}`);
+
+    // Tony 2026-05-21: capture name + picture from LIFF token so customer_profiles
+    // gets populated immediately when the QR is scanned, not later when the LIFF
+    // game state happens to save. Fixes the "未提供名稱" gap.
+    if (r.lineDisplayName || r.linePictureUrl) {
+      await upsertProfile(userId, r.lineDisplayName, r.linePictureUrl);
+    }
+
     const tableId = await bindUserToRestaurant(code, userId);
     if (!tableId) {
       return res.status(404).json({ ok: false, reason: "restaurant_not_found" });

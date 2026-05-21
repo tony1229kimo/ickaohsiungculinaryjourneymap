@@ -97,6 +97,40 @@ async function replyBindSuccess(replyToken: string, tableId: string): Promise<vo
   ]);
 }
 
+// Tony 2026-05-21: actively fetch the customer's LINE display name + picture
+// when they add us as a friend or bind a table via chat. Without this,
+// customer_profiles.display_name stays empty for anyone who doesn't fully
+// enter LIFF and save game state.
+//
+// Uses the Messaging API channel access token (LINE_MESSAGING_ACCESS_TOKEN_KH),
+// NOT the LIFF channel. Best-effort: any failure just logs + returns null,
+// the bind/follow flow continues without the name.
+export interface LineProfile {
+  displayName?: string;
+  pictureUrl?: string;
+}
+export async function fetchLineProfile(userId: string): Promise<LineProfile | null> {
+  const token = process.env.LINE_MESSAGING_ACCESS_TOKEN_KH;
+  if (!token) {
+    console.warn("[webhook] LINE_MESSAGING_ACCESS_TOKEN_KH not set — can't fetch profile");
+    return null;
+  }
+  try {
+    const res = await fetch(`https://api.line.me/v2/bot/profile/${encodeURIComponent(userId)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      console.warn(`[webhook] LINE profile fetch ${res.status} for user=${userId}`);
+      return null;
+    }
+    const data = (await res.json()) as { displayName?: string; pictureUrl?: string };
+    return { displayName: data.displayName, pictureUrl: data.pictureUrl };
+  } catch (err) {
+    console.warn("[webhook] LINE profile fetch failed:", err);
+    return null;
+  }
+}
+
 async function sendLineReply(replyToken: string, messages: unknown[]): Promise<void> {
   const token = process.env.LINE_MESSAGING_ACCESS_TOKEN_KH;
   if (!token) {
@@ -135,14 +169,16 @@ interface LineEvent {
 async function handleFollow(event: LineEvent) {
   if (!event.replyToken) return;
 
-  // Record the new follower in profile + events for marketing analytics
+  // Record the new follower in profile + events for marketing analytics.
+  // Also fetch their LINE display name so customer_profiles isn't all "未提供名稱".
   const userId = event.source?.userId;
   if (userId) {
-    await upsertProfile(userId);
+    const profile = await fetchLineProfile(userId);
+    await upsertProfile(userId, profile?.displayName, profile?.pictureUrl);
     await recordEvent({
       userId,
       eventType: "bind",
-      payload: { source: "follow" },
+      payload: { source: "follow", display_name: profile?.displayName ?? null },
     });
   }
 
@@ -180,6 +216,10 @@ async function handleMessage(event: LineEvent) {
     }
     return;
   }
+
+  // Capture display name + picture on bind so customer_profiles is never blank.
+  const profile = await fetchLineProfile(userId);
+  if (profile) await upsertProfile(userId, profile.displayName, profile.pictureUrl);
 
   // Marketing audit — track every table binding by restaurant prefix
   const restaurantId = tableId.replace(/\d+$/, "");

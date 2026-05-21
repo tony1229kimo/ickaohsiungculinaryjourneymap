@@ -85,7 +85,17 @@ export function requireLiffAuth() {
         });
       }
 
-      (req as Request & { lineUserId?: string }).lineUserId = data.sub;
+      // Stash userId + LINE profile (name, picture) on the request so downstream
+      // handlers can save them. Tony 2026-05-21: this fixes "未提供名稱" rows
+      // in customer_profiles for any LIFF-auth-gated endpoint.
+      const r = req as Request & {
+        lineUserId?: string;
+        lineDisplayName?: string;
+        linePictureUrl?: string;
+      };
+      r.lineUserId = data.sub;
+      r.lineDisplayName = data.name;
+      r.linePictureUrl = data.picture;
       next();
     } catch (err) {
       console.error("[liffAuth] verify call failed:", err);
