@@ -58,6 +58,9 @@ const AdminCustomersPage = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<CustomerDetail | null>(null);
   const [downloading, setDownloading] = useState(false);
+  // Tony 2026-05-21: diagnostic — show what backend actually sees on 403
+  const [whoami, setWhoami] = useState<unknown>(null);
+  const [whoamiLoading, setWhoamiLoading] = useState(false);
 
   useEffect(() => {
     if (!isInitialized || !user) return;
@@ -76,6 +79,22 @@ const AdminCustomersPage = () => {
         }
       });
   }, [isInitialized, user]);
+
+  const runWhoami = async () => {
+    setWhoamiLoading(true);
+    try {
+      const { getLineIdToken } = await import("@/contexts/LiffContext");
+      const token = getLineIdToken();
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/admin/customers/_debug/whoami`, { headers });
+      const json = await res.json();
+      setWhoami({ status: res.status, body: json });
+    } catch (err) {
+      setWhoami({ error: (err as Error).message });
+    } finally {
+      setWhoamiLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (loadError || !isInitialized) return;
@@ -137,6 +156,18 @@ const AdminCustomersPage = () => {
             >
               📋 複製 userId
             </button>
+          )}
+          <button
+            onClick={runWhoami}
+            disabled={whoamiLoading}
+            className="mt-2 w-full px-3 py-2 rounded-lg border border-primary/40 text-primary text-sm font-medium"
+          >
+            {whoamiLoading ? "診斷中..." : "🔍 跑後端診斷 (whoami)"}
+          </button>
+          {whoami !== null && (
+            <pre className="mt-3 text-[10px] bg-muted/40 rounded-lg p-2 overflow-auto max-h-72 whitespace-pre-wrap break-all">
+              {JSON.stringify(whoami, null, 2)}
+            </pre>
           )}
         </div>
       </div>

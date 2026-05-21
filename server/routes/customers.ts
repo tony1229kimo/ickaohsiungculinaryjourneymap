@@ -36,6 +36,57 @@ async function requireStaffWhitelist(req: Request, res: Response, next: NextFunc
 const staffAuth = [liffAuth, requireStaffWhitelist];
 
 // ─────────────────────────────────────────────────────────────────
+// GET /api/admin/customers/_debug/whoami
+//
+// Tony 2026-05-21: Debug endpoint — LIFF-gated ONLY (does NOT require
+// staff_whitelist). Returns the userId the backend extracted from the
+// id_token + whether that userId is in staff_whitelist + the actual
+// whitelist row if any. Use this to diagnose "我明明在白名單但被擋" cases:
+//   1. Hit /api/admin/customers/_debug/whoami from the rejecting Chrome
+//   2. Compare `verified_user_id` with what AdminCustomersPage shows
+//   3. Check `in_whitelist` + `whitelist_row` to confirm DB state
+//
+// Each char's hex code-point is included so we can spot zero-width or
+// look-alike characters that would silently break the equality check.
+// ─────────────────────────────────────────────────────────────────
+router.get("/_debug/whoami", liffAuth, async (req, res) => {
+  const r = req as Request & {
+    lineUserId?: string;
+    lineDisplayName?: string;
+    linePictureUrl?: string;
+  };
+  const userId = r.lineUserId;
+  if (!userId) {
+    return res.status(401).json({ error: "Missing line user (liffAuth did not set lineUserId)" });
+  }
+
+  const wlQ = await pool.query(
+    `SELECT user_id, name, role, restaurant_id, added_at
+     FROM staff_whitelist WHERE user_id = $1`,
+    [userId],
+  );
+  const allStaffQ = await pool.query<{ user_id: string; name: string }>(
+    `SELECT user_id, name FROM staff_whitelist ORDER BY added_at DESC LIMIT 20`,
+  );
+
+  res.json({
+    verified_user_id: userId,
+    verified_user_id_len: userId.length,
+    verified_user_id_codepoints: Array.from(userId).map((ch) => ({
+      ch,
+      hex: "U+" + ch.codePointAt(0)!.toString(16).toUpperCase().padStart(4, "0"),
+    })),
+    verified_display_name: r.lineDisplayName ?? null,
+    verified_picture_url: r.linePictureUrl ?? null,
+    in_whitelist: (wlQ.rowCount ?? 0) > 0,
+    whitelist_row: wlQ.rows[0] ?? null,
+    all_staff: allStaffQ.rows,
+    node_env: process.env.NODE_ENV ?? "(unset)",
+    db_host_hint: (process.env.DATABASE_URL ?? "").replace(/\/\/[^@]+@/, "//***@").slice(0, 80),
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
 // GET /api/admin/customers
 //   query: ?sort=last_seen|total_spend|total_visits|total_rewards (default last_seen)
 //          &order=desc|asc (default desc)
