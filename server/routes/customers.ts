@@ -33,7 +33,26 @@ async function requireStaffWhitelist(req: Request, res: Response, next: NextFunc
   return res.status(403).json({ error: "Not authorized as staff" });
 }
 
-const staffAuth = [liffAuth, requireStaffWhitelist];
+// Tony 2026-05-21: View-only URL token bypass.
+//
+// `?key=<ADMIN_VIEW_KEY>` lets Tony share a single secret URL with
+// trusted external viewers (行銷部主管 etc.) without managing LINE userIds
+// in staff_whitelist. PII risk is on the URL holder — see CLAUDE.md.
+//
+// Precedence: if `?key=` matches env var → bypass LIFF + whitelist entirely.
+// Otherwise fall through to the normal (LIFF + whitelist) chain.
+const VIEW_KEY = process.env.ADMIN_VIEW_KEY;
+
+function gateRead(req: Request, res: Response, next: NextFunction) {
+  if (VIEW_KEY && typeof req.query.key === "string" && req.query.key === VIEW_KEY) {
+    (req as Request & { isViewToken?: boolean }).isViewToken = true;
+    return next();
+  }
+  // Fall through: liffAuth → requireStaffWhitelist → original next
+  liffAuth(req, res, () => {
+    void requireStaffWhitelist(req, res, next);
+  });
+}
 
 // ─────────────────────────────────────────────────────────────────
 // GET /api/admin/customers/_debug/whoami
@@ -102,7 +121,7 @@ const ALLOWED_SORTS = new Set([
   "total_rewards_earned", "total_seasons",
 ]);
 
-router.get("/", ...staffAuth, async (req, res) => {
+router.get("/", gateRead, async (req, res) => {
   const sortCol = ALLOWED_SORTS.has(String(req.query.sort)) ? String(req.query.sort) : "last_seen_at";
   const order = req.query.order === "asc" ? "ASC" : "DESC";
   const limit = Math.min(200, parseInt(String(req.query.limit), 10) || 50);
@@ -172,7 +191,7 @@ router.get("/", ...staffAuth, async (req, res) => {
 // GET /api/admin/customers/:userId — profile + recent events timeline
 // ─────────────────────────────────────────────────────────────────
 
-router.get("/:userId", ...staffAuth, async (req, res) => {
+router.get("/:userId", gateRead, async (req, res) => {
   const userId = req.params.userId;
 
   const prof = await pool.query(
@@ -209,7 +228,7 @@ router.get("/:userId", ...staffAuth, async (req, res) => {
 // CSV download. Same filters as list.
 // ─────────────────────────────────────────────────────────────────
 
-router.get("/export.csv", ...staffAuth, async (req, res) => {
+router.get("/export.csv", gateRead, async (req, res) => {
   const since = typeof req.query.since === "string" ? req.query.since : null;
   const params: unknown[] = [];
   let whereClause = "";
@@ -262,7 +281,7 @@ router.get("/export.csv", ...staffAuth, async (req, res) => {
 // Top-line numbers for dashboard summary card
 // ─────────────────────────────────────────────────────────────────
 
-router.get("/_stats/overview", ...staffAuth, async (_req, res) => {
+router.get("/_stats/overview", gateRead, async (_req, res) => {
   const summary = await pool.query(`
     SELECT
       COUNT(*)::int AS total_customers,

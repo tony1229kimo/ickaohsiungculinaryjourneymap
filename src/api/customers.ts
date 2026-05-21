@@ -2,6 +2,20 @@ import { getLineIdToken } from "@/contexts/LiffContext";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
+// Tony 2026-05-21: read `?key=<ADMIN_VIEW_KEY>` from URL at module load.
+// When present we're in "view-only mode" — skip LIFF auth header and
+// auto-append `&key=...` to every admin call. See server/routes/customers.ts
+// gateRead() for the backend side.
+const VIEW_KEY = typeof window !== "undefined"
+  ? new URLSearchParams(window.location.search).get("key")
+  : null;
+
+function withViewKey(url: string): string {
+  if (!VIEW_KEY) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}key=${encodeURIComponent(VIEW_KEY)}`;
+}
+
 function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const token = getLineIdToken();
   return token ? { ...extra, Authorization: `Bearer ${token}` } : extra;
@@ -22,11 +36,13 @@ export const ERR_TOKEN_EXPIRED = "LIFF_TOKEN_EXPIRED";
  * the redirect that's about to happen.
  */
 async function authFetch(input: RequestInfo, init: RequestInit = {}): Promise<Response> {
-  const res = await fetch(input, {
+  const finalUrl = typeof input === "string" ? withViewKey(input) : input;
+  const res = await fetch(finalUrl, {
     ...init,
     headers: { ...(init.headers ?? {}), ...authHeaders() },
   });
-  if (res.status === 401) {
+  // IdToken expired only matters in LIFF mode — view-key mode has no token
+  if (res.status === 401 && !VIEW_KEY) {
     let detail: string | undefined;
     try {
       const body = await res.clone().json();

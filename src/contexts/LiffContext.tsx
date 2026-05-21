@@ -48,6 +48,23 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const init = async () => {
+      // Tony 2026-05-21: ?key=<ADMIN_VIEW_KEY> → external viewer mode.
+      // Skip LIFF entirely so non-LINE-user can view /admin/customers via
+      // a shared URL token. The api layer auto-appends the key to all calls.
+      if (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("key")) {
+        console.warn("[LIFF] ?key= detected — view-only mode, skipping LIFF init");
+        currentIdToken = null;
+        setState({
+          user: { userId: "view_only", displayName: "唯讀檢視" },
+          idToken: null,
+          isInitialized: true,
+          isLoggedIn: false,
+          isInClient: false,
+          error: null,
+        });
+        return;
+      }
+
       // Dev mode: no LIFF ID configured — use mock user
       if (!LIFF_ID) {
         console.warn("[LIFF] No VITE_LIFF_ID set, using dev mock user");
