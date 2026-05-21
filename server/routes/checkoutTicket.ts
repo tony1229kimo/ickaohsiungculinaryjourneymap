@@ -41,21 +41,29 @@ export function requireStaffPin(req: Request, res: Response, next: NextFunction)
 }
 
 // Issue a new amount-bearing ticket. Staff-only via numeric PIN.
-// Tony 2026-05-17: invoice_no is now REQUIRED — see issueCheckoutTicket() in db.ts.
+// Tony 2026-05-17: invoice_no required for normal checkout flow.
+// Tony 2026-05-21: source='room_charge' skips invoice (hotel guests sign
+// to room, no 統一發票 issued). See server/db.ts issueCheckoutTicket().
 router.post("/issue", requireStaffPin, async (req: Request, res: Response) => {
   try {
     const amount = Number(req.body?.amount);
     if (!Number.isFinite(amount) || amount <= 0) {
       return res.status(400).json({ ok: false, reason: "invalid_amount" });
     }
-    const invoiceNo = (req.body?.invoice_no as string | undefined)?.trim();
-    if (!invoiceNo) {
+    const rawSource = (req.body?.source as string | undefined) ?? "checkout";
+    if (rawSource !== "checkout" && rawSource !== "room_charge") {
+      return res.status(400).json({ ok: false, reason: "invalid_source" });
+    }
+    const source: "checkout" | "room_charge" = rawSource;
+
+    const invoiceNo = (req.body?.invoice_no as string | undefined)?.trim() || null;
+    if (source === "checkout" && !invoiceNo) {
       return res.status(400).json({ ok: false, reason: "invoice_required" });
     }
     const restaurantId = (req.body?.restaurant_id as string | undefined) ?? null;
     const issuedBy = (req.body?.issued_by as string | undefined) ?? "numeric_password";
 
-    const result = await issueCheckoutTicket(amount, issuedBy, restaurantId, invoiceNo);
+    const result = await issueCheckoutTicket(amount, issuedBy, restaurantId, invoiceNo, source);
     if ("error" in result) {
       const status = result.error === "invoice_already_used" ? 409 :
                      result.error === "invoice_already_pending" ? 409 :
@@ -68,6 +76,7 @@ router.post("/issue", requireStaffPin, async (req: Request, res: Response) => {
       dice_to_issue: result.diceToIssue,
       amount: result.amount,
       expires_at: result.expiresAt,
+      source,
     });
   } catch (err) {
     console.error("[checkout-ticket/issue] failed:", err);

@@ -731,8 +731,10 @@ export interface IssuedTicket {
   expiresAt: string;
 }
 
+export type CheckoutTicketSource = "checkout" | "room_charge";
+
 export interface IssueError {
-  error: "amount_below_threshold" | "invoice_format_invalid" | "invoice_already_used" | "invoice_already_pending";
+  error: "amount_below_threshold" | "invoice_format_invalid" | "invoice_already_used" | "invoice_already_pending" | "invoice_required";
   existing?: InvoiceLookupResult;  // populated for invoice_already_used so UI can show details
 }
 
@@ -751,39 +753,49 @@ export async function issueCheckoutTicket(
   amount: number,
   issuedBy: string,
   restaurantId: string | null,
-  invoiceNo: string,
+  invoiceNo: string | null,
+  source: CheckoutTicketSource = "checkout",
 ): Promise<IssuedTicket | IssueError> {
-  // Validate invoice_no format up front (BM-XXXXXXXX, VH-XXXXXXXX, etc — caller strips the dash)
-  const normalized = invoiceNo.toUpperCase().replace(/-/g, "");
-  if (!INVOICE_NO_PATTERN.test(normalized)) {
-    return { error: "invoice_format_invalid" };
-  }
-
   const dice = diceForAmount(amount);
   if (dice <= 0) return { error: "amount_below_threshold" };
 
-  // Lock against double-issue (Tony 2026-05-17):
-  // a) if invoice was already redeemed (full success) — block + return details
-  // b) if invoice is currently pending in another unused ticket — block
-  const already = await lookupInvoice(normalized);
-  if (already.used) {
-    return { error: "invoice_already_used", existing: already };
-  }
-  const pending = await pool.query(
-    `SELECT token, expires_at FROM checkout_tickets
-     WHERE invoice_no = $1 AND used_at IS NULL AND expires_at > NOW() LIMIT 1`,
-    [normalized],
-  );
-  if ((pending.rowCount ?? 0) > 0) {
-    return { error: "invoice_already_pending" };
+  // Tony 2026-05-21: room_charge flow has NO 統一發票 (hotel guest signs to
+  // room, Front Office settles at checkout). So we skip every invoice
+  // validation + double-redeem protection that the normal `checkout` source
+  // uses. The only guards left are amount threshold + TTL + unique token.
+  let normalized: string | null = null;
+  if (source === "room_charge") {
+    // Ignore any invoiceNo the caller sent — it has no meaning here.
+    normalized = null;
+  } else {
+    if (!invoiceNo) return { error: "invoice_required" };
+    normalized = invoiceNo.toUpperCase().replace(/-/g, "");
+    if (!INVOICE_NO_PATTERN.test(normalized)) {
+      return { error: "invoice_format_invalid" };
+    }
+    // Lock against double-issue (Tony 2026-05-17):
+    // a) if invoice was already redeemed (full success) — block + return details
+    // b) if invoice is currently pending in another unused ticket — block
+    const already = await lookupInvoice(normalized);
+    if (already.used) {
+      return { error: "invoice_already_used", existing: already };
+    }
+    const pending = await pool.query(
+      `SELECT token, expires_at FROM checkout_tickets
+       WHERE invoice_no = $1 AND used_at IS NULL AND expires_at > NOW() LIMIT 1`,
+      [normalized],
+    );
+    if ((pending.rowCount ?? 0) > 0) {
+      return { error: "invoice_already_pending" };
+    }
   }
 
   const token = randomToken();
   const r = await pool.query(
-    `INSERT INTO checkout_tickets (token, amount, dice_to_issue, issued_by, restaurant_id, invoice_no, expires_at)
-     VALUES ($1, $2, $3, $4, $5, $6, NOW() + ($7 || ' seconds')::interval)
+    `INSERT INTO checkout_tickets (token, amount, dice_to_issue, issued_by, restaurant_id, invoice_no, source, expires_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW() + ($8 || ' seconds')::interval)
      RETURNING expires_at`,
-    [token, amount, dice, issuedBy, restaurantId, normalized, String(CHECKOUT_TICKET_TTL_SEC)],
+    [token, amount, dice, issuedBy, restaurantId, normalized, source, String(CHECKOUT_TICKET_TTL_SEC)],
   );
   return { token, amount, diceToIssue: dice, expiresAt: r.rows[0].expires_at };
 }
@@ -801,7 +813,7 @@ export async function redeemCheckoutTicket(userId: string, token: string): Promi
   try {
     await client.query("BEGIN");
     const sel = await client.query(
-      `SELECT token, amount, dice_to_issue, restaurant_id, invoice_no, expires_at, used_at
+      `SELECT token, amount, dice_to_issue, restaurant_id, invoice_no, source, expires_at, used_at
        FROM checkout_tickets WHERE token = $1 FOR UPDATE`,
       [token],
     );
@@ -871,7 +883,15 @@ export async function redeemCheckoutTicket(userId: string, token: string): Promi
       eventType: "activate",
       restaurantId: row.restaurant_id,
       amount: row.amount,
-      payload: { source: "checkout_qr", token, invoice_no: row.invoice_no ?? null, dice_issued: row.dice_to_issue },
+      payload: {
+        // "checkout_qr" kept for back-compat with existing rows; new room_charge
+        // tickets carry an extra ticket_source so admin/customers can distinguish.
+        source: "checkout_qr",
+        ticket_source: row.source ?? "checkout",
+        token,
+        invoice_no: row.invoice_no ?? null,
+        dice_issued: row.dice_to_issue,
+      },
     });
 
     return { ok: true, diceIssued: row.dice_to_issue, amount: row.amount, restaurantId: row.restaurant_id };

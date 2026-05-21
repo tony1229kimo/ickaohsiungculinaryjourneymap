@@ -18,7 +18,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
-import { issueCheckoutTicket } from "@/api/checkoutTicket";
+import { issueCheckoutTicket, type TicketSource } from "@/api/checkoutTicket";
 
 const PIN_CACHE_KEY = "ickhh.staff_pin";
 // The customer scans QR with LINE camera → opens external browser → LIFF.
@@ -26,13 +26,17 @@ const PIN_CACHE_KEY = "ickhh.staff_pin";
 // just the LIFF webview. window.location.origin works on the LIFF host too.
 const gameOrigin = () => window.location.origin;
 
+const TICKET_TTL_MIN = 2; // sync with server CHECKOUT_TICKET_TTL_SEC=120
+
 const AdminCheckoutQRPage = () => {
   const [pin, setPin] = useState<string>(() => sessionStorage.getItem(PIN_CACHE_KEY) ?? "");
   const [pinLocked, setPinLocked] = useState<boolean>(!!sessionStorage.getItem(PIN_CACHE_KEY));
+  // Tony 2026-05-21: "checkout" = 一般結帳 (需發票), "room_charge" = 掛房帳 (免發票)
+  const [mode, setMode] = useState<TicketSource>("checkout");
   const [invoiceInput, setInvoiceInput] = useState("");
   const [amountInput, setAmountInput] = useState("");
   const [issuing, setIssuing] = useState(false);
-  const [ticket, setTicket] = useState<{ token: string; amount: number; dice: number; expiresAt: number } | null>(null);
+  const [ticket, setTicket] = useState<{ token: string; amount: number; dice: number; expiresAt: number; source: TicketSource } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [duplicateInfo, setDuplicateInfo] = useState<NonNullable<Awaited<ReturnType<typeof issueCheckoutTicket>>["existing"]> | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -69,12 +73,19 @@ const AdminCheckoutQRPage = () => {
       setError("金額需 ≥ NT$2,000 才有擲骰機會");
       return;
     }
-    if (!invoiceLooksValid) {
+    // Room-charge skips the invoice gate — hotel guest charges to room.
+    if (mode === "checkout" && !invoiceLooksValid) {
       setError("發票編號格式錯誤,請輸入 2 字母 + 8 數字(如 BM36258896)");
       return;
     }
     setIssuing(true);
-    const res = await issueCheckoutTicket(amount, pin, normalizedInvoice);
+    const res = await issueCheckoutTicket(
+      amount,
+      pin,
+      mode === "checkout" ? normalizedInvoice : null,
+      null,
+      mode,
+    );
     setIssuing(false);
     if (!res.ok || !res.token || !res.expires_at) {
       if (res.reason === "invalid_pin") {
@@ -113,6 +124,7 @@ const AdminCheckoutQRPage = () => {
       amount: res.amount ?? amount,
       dice: res.dice_to_issue ?? dicePreview,
       expiresAt: new Date(res.expires_at).getTime(),
+      source: res.source ?? mode,
     });
   };
 
@@ -182,11 +194,19 @@ const AdminCheckoutQRPage = () => {
     );
   }
 
+  const isRoomCharge = mode === "room_charge";
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-orange-100 p-4">
+    <div className={`min-h-screen p-4 ${
+      isRoomCharge
+        ? "bg-gradient-to-b from-sky-50 to-indigo-100"
+        : "bg-gradient-to-b from-amber-50 to-orange-100"
+    }`}>
       <div className="mx-auto max-w-sm">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-lg font-bold">💳 結帳 QR</h1>
+          <h1 className="text-lg font-bold">
+            {isRoomCharge ? "🏨 掛房帳 QR" : "💳 結帳 QR"}
+          </h1>
           <button
             onClick={handleLogout}
             className="text-xs text-muted-foreground underline"
@@ -194,6 +214,33 @@ const AdminCheckoutQRPage = () => {
             登出
           </button>
         </div>
+
+        {/* Tony 2026-05-21: mode toggle — 結帳 vs 掛房帳. Hidden in QR view to
+            avoid mid-flow switching that would invalidate the just-shown token. */}
+        {!ticket && (
+          <div className="mb-3 grid grid-cols-2 gap-2 rounded-xl bg-white/60 p-1 shadow-sm">
+            <button
+              onClick={() => { setMode("checkout"); setError(null); setDuplicateInfo(null); }}
+              className={`rounded-lg py-2 text-sm font-medium transition-colors ${
+                mode === "checkout"
+                  ? "bg-amber-500 text-white shadow"
+                  : "text-amber-900 hover:bg-amber-100"
+              }`}
+            >
+              💳 一般結帳
+            </button>
+            <button
+              onClick={() => { setMode("room_charge"); setError(null); setDuplicateInfo(null); }}
+              className={`rounded-lg py-2 text-sm font-medium transition-colors ${
+                mode === "room_charge"
+                  ? "bg-indigo-600 text-white shadow"
+                  : "text-indigo-900 hover:bg-indigo-100"
+              }`}
+            >
+              🏨 掛房帳
+            </button>
+          </div>
+        )}
 
         <AnimatePresence mode="wait">
           {!ticket ? (
@@ -204,31 +251,40 @@ const AdminCheckoutQRPage = () => {
               exit={{ opacity: 0 }}
               className="rounded-2xl bg-card p-5 shadow-lg"
             >
-              <label className="block text-sm font-medium mb-2">
-                發票編號 <span className="text-destructive">*</span>
-                <span className="ml-2 text-[11px] text-muted-foreground font-normal">
-                  小白單上「發票號碼」欄
-                </span>
-              </label>
-              <input
-                type="text"
-                value={invoiceInput}
-                onChange={(e) => setInvoiceInput(e.target.value.toUpperCase())}
-                placeholder="例:BM36258896 或 BM-36258896"
-                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-lg text-center tracking-wider font-mono"
-                maxLength={12}
-              />
-              <div className="mt-1 text-center text-[11px]">
-                {invoiceInput.length === 0 ? (
-                  <span className="text-muted-foreground">2 字母 + 8 數字(系統會自動忽略「-」)</span>
-                ) : invoiceLooksValid ? (
-                  <span className="text-emerald-700">✓ 格式正確</span>
-                ) : (
-                  <span className="text-amber-700">格式還沒完整 / 不符</span>
-                )}
-              </div>
+              {isRoomCharge ? (
+                <div className="mb-4 rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-2 text-[12px] text-indigo-900 leading-relaxed">
+                  🏨 <strong>掛房帳模式</strong> — 房客把餐費掛到房號,退房時由櫃台一起結。
+                  小白單上不會有統一發票號碼,因此<strong>不需填發票編號</strong>。
+                </div>
+              ) : (
+                <>
+                  <label className="block text-sm font-medium mb-2">
+                    發票編號 <span className="text-destructive">*</span>
+                    <span className="ml-2 text-[11px] text-muted-foreground font-normal">
+                      小白單上「發票號碼」欄
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={invoiceInput}
+                    onChange={(e) => setInvoiceInput(e.target.value.toUpperCase())}
+                    placeholder="例:BM36258896 或 BM-36258896"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-lg text-center tracking-wider font-mono"
+                    maxLength={12}
+                  />
+                  <div className="mt-1 text-center text-[11px]">
+                    {invoiceInput.length === 0 ? (
+                      <span className="text-muted-foreground">2 字母 + 8 數字(系統會自動忽略「-」)</span>
+                    ) : invoiceLooksValid ? (
+                      <span className="text-emerald-700">✓ 格式正確</span>
+                    ) : (
+                      <span className="text-amber-700">格式還沒完整 / 不符</span>
+                    )}
+                  </div>
+                </>
+              )}
 
-              <label className="block text-sm font-medium mb-2 mt-4">消費金額 (NT$)</label>
+              <label className={`block text-sm font-medium mb-2 ${isRoomCharge ? "" : "mt-4"}`}>消費金額 (NT$)</label>
               <input
                 type="number"
                 inputMode="numeric"
@@ -278,15 +334,19 @@ const AdminCheckoutQRPage = () => {
 
               <button
                 onClick={handleIssue}
-                disabled={issuing || dicePreview <= 0 || !invoiceLooksValid}
-                className="mt-4 w-full rounded-lg bg-primary text-primary-foreground py-3 font-semibold disabled:opacity-50"
+                disabled={issuing || dicePreview <= 0 || (mode === "checkout" && !invoiceLooksValid)}
+                className={`mt-4 w-full rounded-lg py-3 font-semibold text-white disabled:opacity-50 ${
+                  isRoomCharge ? "bg-indigo-600 hover:bg-indigo-700" : "bg-primary hover:opacity-90"
+                }`}
               >
-                {issuing ? "產生中..." : "✓ 產生 QR Code"}
+                {issuing ? "產生中..." : isRoomCharge ? "🏨 產生掛房帳 QR" : "✓ 產生結帳 QR"}
               </button>
 
               <p className="mt-4 text-[11px] text-muted-foreground leading-relaxed">
-                規則:每 NT$2,000 = 1 次擲骰,上限 5 次。QR 將於 2 分鐘後失效。<br />
-                <strong>同一張發票編號只能用一次</strong> — 防雙領機制。
+                規則:每 NT$2,000 = 1 次擲骰,上限 5 次。QR 將於 {TICKET_TTL_MIN} 分鐘後失效。<br />
+                {isRoomCharge
+                  ? <><strong>掛房帳模式</strong> — 無發票防雙領機制,請工作人員確認金額無誤後再產生。</>
+                  : <><strong>同一張發票編號只能用一次</strong> — 防雙領機制。</>}
               </p>
             </motion.div>
           ) : (
@@ -297,6 +357,19 @@ const AdminCheckoutQRPage = () => {
               exit={{ opacity: 0 }}
               className="rounded-2xl bg-card p-5 shadow-lg text-center"
             >
+              {/* Mode badge — staff knows which kind of QR they're showing */}
+              <div className="mb-2">
+                {ticket.source === "room_charge" ? (
+                  <span className="inline-block rounded-full bg-indigo-100 text-indigo-800 px-3 py-0.5 text-[11px] font-semibold">
+                    🏨 掛房帳
+                  </span>
+                ) : (
+                  <span className="inline-block rounded-full bg-amber-100 text-amber-800 px-3 py-0.5 text-[11px] font-semibold">
+                    💳 一般結帳
+                  </span>
+                )}
+              </div>
+
               <p className="text-sm text-muted-foreground mb-1">消費金額</p>
               <p className="text-3xl font-bold">NT$ {ticket.amount.toLocaleString()}</p>
               <p className="text-sm text-emerald-700 mt-1 mb-4">
@@ -307,16 +380,28 @@ const AdminCheckoutQRPage = () => {
                 <QRCodeSVG value={ticketUrl} size={220} level="M" />
               </div>
 
-              <div className="mt-4">
-                {expired ? (
-                  <p className="text-destructive font-semibold">⏰ 已過期,請重新產生</p>
-                ) : (
-                  <p className="text-sm">
-                    ⏱ 此 QR 將於 <strong className="text-amber-700">{Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}</strong> 後失效
+              {/* Tony 2026-05-21: prominent expiry banner so staff doesn't show a stale QR.
+                  Amber bordered box during countdown → red box on expiry. */}
+              {expired ? (
+                <div className="mt-4 rounded-lg border-2 border-destructive bg-destructive/10 px-3 py-2.5">
+                  <p className="text-destructive font-bold text-base">⏰ QR Code 已過期</p>
+                  <p className="text-xs text-destructive/80 mt-0.5">請按下方「重新產生」</p>
+                </div>
+              ) : (
+                <div className="mt-4 rounded-lg border-2 border-amber-400 bg-amber-50 px-3 py-2.5">
+                  <p className="text-sm text-amber-900">
+                    ⏱ 此 QR Code 將於{" "}
+                    <strong className="text-amber-800 text-base font-mono">
+                      {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}
+                    </strong>
+                    {" "}後失效
                   </p>
-                )}
-                <p className="text-[11px] text-muted-foreground mt-1 break-all">{ticketUrl}</p>
-              </div>
+                  <p className="text-[11px] text-amber-700 mt-0.5">
+                    請客人現場掃描,過期後需請工作人員重新產生
+                  </p>
+                </div>
+              )}
+              <p className="text-[11px] text-muted-foreground mt-2 break-all">{ticketUrl}</p>
 
               <button
                 onClick={handleReset}
