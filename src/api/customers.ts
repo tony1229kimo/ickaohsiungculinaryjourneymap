@@ -35,6 +35,7 @@ export async function listCustomers(opts: {
   limit?: number;
   offset?: number;
   search?: string;
+  restaurant?: string;
 } = {}): Promise<CustomersListResp> {
   const q = new URLSearchParams();
   if (opts.sort) q.set("sort", opts.sort);
@@ -42,6 +43,7 @@ export async function listCustomers(opts: {
   if (opts.limit) q.set("limit", String(opts.limit));
   if (opts.offset) q.set("offset", String(opts.offset));
   if (opts.search) q.set("search", opts.search);
+  if (opts.restaurant) q.set("restaurant", opts.restaurant);
   const res = await fetch(`${API_BASE}/api/admin/customers?${q}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();

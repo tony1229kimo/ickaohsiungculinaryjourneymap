@@ -59,6 +59,16 @@ router.get("/", ...staffAuth, async (req, res) => {
   const since = typeof req.query.since === "string" ? req.query.since : null;
   const search = typeof req.query.search === "string" ? req.query.search.trim() : null;
 
+  // Tony 2026-05-21: ?restaurant=XX drill-down — filter to customers who have
+  // at least one event at that restaurant. Whitelist against the known 5
+  // outlet codes so the parameter can't be used to inject SQL or to probe
+  // for arbitrary table names.
+  const VALID_RESTAURANTS = new Set(["ZL", "WR", "SD", "HW", "BL"]);
+  const restaurant = typeof req.query.restaurant === "string"
+    ? req.query.restaurant.toUpperCase().trim()
+    : null;
+  const restaurantFilter = restaurant && VALID_RESTAURANTS.has(restaurant) ? restaurant : null;
+
   const conditions: string[] = [];
   const params: unknown[] = [];
   if (since) {
@@ -68,6 +78,13 @@ router.get("/", ...staffAuth, async (req, res) => {
   if (search) {
     params.push(`%${search}%`);
     conditions.push(`display_name ILIKE $${params.length}`);
+  }
+  if (restaurantFilter) {
+    params.push(restaurantFilter);
+    conditions.push(`user_id IN (
+       SELECT DISTINCT user_id FROM customer_events
+       WHERE restaurant_id = $${params.length}
+     )`);
   }
   const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 

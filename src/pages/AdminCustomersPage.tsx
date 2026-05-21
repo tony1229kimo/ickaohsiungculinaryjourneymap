@@ -52,6 +52,8 @@ const AdminCustomersPage = () => {
   const [sort, setSort] = useState<SortField>("last_seen_at");
   const [search, setSearch] = useState("");
   const [offset, setOffset] = useState(0);
+  // Tony 2026-05-21: clickable restaurant cards → filter list
+  const [restaurantFilter, setRestaurantFilter] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<CustomerDetail | null>(null);
@@ -73,14 +75,23 @@ const AdminCustomersPage = () => {
   useEffect(() => {
     if (loadError || !isInitialized) return;
     setLoading(true);
-    listCustomers({ sort, order: "desc", limit: PAGE_SIZE, offset, search: search || undefined })
+    listCustomers({
+      sort, order: "desc", limit: PAGE_SIZE, offset,
+      search: search || undefined,
+      restaurant: restaurantFilter || undefined,
+    })
       .then((d) => { setCustomers(d.customers); setTotal(d.total); })
       .catch((err) => setLoadError(err.message))
       .finally(() => setLoading(false));
-  }, [sort, offset, search, loadError, isInitialized]);
+  }, [sort, offset, search, restaurantFilter, loadError, isInitialized]);
 
   const handleSearch = (v: string) => { setSearch(v); setOffset(0); };
   const handleSort = (s: SortField) => { setSort(s); setOffset(0); };
+  const handleRestaurantClick = (code: string) => {
+    // Toggle: clicking the active one again clears
+    setRestaurantFilter((cur) => cur === code ? null : code);
+    setOffset(0);
+  };
 
   const openDetail = async (userId: string) => {
     try {
@@ -136,8 +147,19 @@ const AdminCustomersPage = () => {
             <div className="divide-y">
               {stats.by_restaurant.map((r) => {
                 const isActive = r.binds > 0 || r.redeems > 0;
+                const isSelected = restaurantFilter === r.restaurant_id;
+                const canClick = isActive; // only allow filtering if there's data to filter to
                 return (
-                  <div key={r.restaurant_id} className={`px-3 py-2.5 ${isActive ? "" : "opacity-50"}`}>
+                  <button
+                    key={r.restaurant_id}
+                    onClick={() => canClick && handleRestaurantClick(r.restaurant_id)}
+                    disabled={!canClick}
+                    className={`w-full text-left px-3 py-2.5 transition-colors ${
+                      isSelected ? "bg-primary/15 ring-2 ring-primary ring-inset" : ""
+                    } ${
+                      canClick ? "hover:bg-primary/5 active:bg-primary/10 cursor-pointer" : "opacity-50 cursor-default"
+                    }`}
+                  >
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-primary text-primary-foreground">
@@ -146,8 +168,12 @@ const AdminCustomersPage = () => {
                         <span className="font-bold text-sm">{r.name_zh}</span>
                         <span className="text-[10px] text-muted-foreground">{r.name_en}</span>
                       </div>
-                      {!isActive && (
+                      {isSelected ? (
+                        <span className="text-[10px] text-primary font-bold">✓ 已篩選</span>
+                      ) : !isActive ? (
                         <span className="text-[10px] text-muted-foreground italic">尚無流量</span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">點此篩選 →</span>
                       )}
                     </div>
                     <div className="grid grid-cols-5 gap-1 text-center">
@@ -162,7 +188,7 @@ const AdminCustomersPage = () => {
                         累計消費 {fmtCurrency(r.spend)}
                       </p>
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -184,6 +210,24 @@ const AdminCustomersPage = () => {
 
       {/* Search + sort */}
       <div className="p-3 space-y-2 bg-card border-t border-b">
+        {restaurantFilter && (
+          <div className="flex items-center justify-between bg-primary/10 border border-primary rounded-lg px-3 py-2">
+            <span className="text-sm">
+              🏬 只看 <strong className="font-mono">{restaurantFilter}</strong>
+              {stats?.by_restaurant.find((r) => r.restaurant_id === restaurantFilter)?.name_zh && (
+                <span className="ml-1 text-xs">
+                  ({stats.by_restaurant.find((r) => r.restaurant_id === restaurantFilter)!.name_zh})
+                </span>
+              )} 的客人  ·  共 {total} 人
+            </span>
+            <button
+              onClick={() => { setRestaurantFilter(null); setOffset(0); }}
+              className="text-xs text-primary font-semibold underline px-2 py-0.5"
+            >
+              ✕ 清除
+            </button>
+          </div>
+        )}
         <input
           type="text"
           placeholder="🔍 搜尋客戶名稱..."
