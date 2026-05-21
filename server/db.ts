@@ -1001,7 +1001,11 @@ export async function recordEvent(opts: RecordEventOpts): Promise<void> {
       opts.amount ?? null,
     ],
   );
-  if (opts.eventType === "activate") {
+  if (opts.eventType === "activate" || opts.eventType === "invoice_redeem") {
+    // Tony 2026-05-21: invoice_redeem (Phase 8.1 small-slip + e-invoice path)
+    // is the modern equivalent of activate — both mean "customer completed
+    // checkout and got dice". Bump the same counters so the summary cards
+    // (total_visits / total_spend) and the per-restaurant card stay in sync.
     await pool.query(
       `UPDATE customer_profiles SET total_visits = total_visits + 1, total_spend = total_spend + $1 WHERE user_id = $2`,
       [opts.amount ?? 0, opts.userId],
