@@ -35,15 +35,23 @@ const fmtDate = (iso: string) => {
   try { return iso.slice(0, 16).replace("T", " "); }
   catch { return iso; }
 };
-const fmtEventType = (t: string) => ({
-  bind: "🔗 加好友",
-  activate: "💳 結帳啟用",
-  roll: "🎲 擲骰",
-  reward_lottery: "🎁 抽中獎品",
-  reward_fixed: "⭐ 固定格獎勵",
-  season_reset: "🔄 新季開始",
-  invoice_redeem: "📄 掃發票",
-}[t] ?? t);
+// Tony 2026-05-21: activate events are emitted by both 一般結帳 and 掛房帳 —
+// peek into payload.ticket_source to distinguish them in the timeline.
+const fmtEvent = (e: { event_type: string; payload?: unknown }) => {
+  if (e.event_type === "activate") {
+    const ticketSource = (e.payload as { ticket_source?: string } | null | undefined)?.ticket_source;
+    if (ticketSource === "room_charge") return "🏨 掛房帳兌換";
+    return "💳 結帳兌換";
+  }
+  return ({
+    bind: "🔗 加好友",
+    roll: "🎲 擲骰",
+    reward_lottery: "🎁 抽中獎品",
+    reward_fixed: "⭐ 固定格獎勵",
+    season_reset: "🔄 新季開始",
+    invoice_redeem: "📄 客人自掃發票",
+  } as Record<string, string>)[e.event_type] ?? e.event_type;
+};
 
 const AdminCustomersPage = () => {
   const { isInitialized, user, error: liffError } = useLiff();
@@ -496,7 +504,7 @@ const AdminCustomersPage = () => {
                     {selected.events.map((e) => (
                       <div key={e.id} className="text-xs flex justify-between bg-muted/40 rounded-lg px-2.5 py-1.5">
                         <div className="flex-1">
-                          <span className="font-bold">{fmtEventType(e.event_type)}</span>
+                          <span className="font-bold">{fmtEvent(e)}</span>
                           {e.restaurant_id && <span className="ml-1 text-muted-foreground">@ {e.restaurant_id}</span>}
                           {e.amount !== null && <span className="ml-1 text-accent-foreground">{fmtCurrency(e.amount)}</span>}
                         </div>
