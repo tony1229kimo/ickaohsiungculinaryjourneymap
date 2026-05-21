@@ -7,6 +7,38 @@ function authHeaders(extra: Record<string, string> = {}): Record<string, string>
   return token ? { ...extra, Authorization: `Bearer ${token}` } : extra;
 }
 
+/**
+ * Sentinel error message used by AdminCustomersPage to render the
+ * "🔄 重新登入" UI. Tony 2026-05-21: LIFF id_token has ~1h TTL and
+ * `liff.getIDToken()` does NOT auto-refresh — staff who leave the
+ * dashboard tab open for an hour will hit "IdToken expired." 401.
+ */
+export const ERR_TOKEN_EXPIRED = "LIFF_TOKEN_EXPIRED";
+
+/**
+ * fetch wrapper that auto-detects expired LIFF id_token and throws a
+ * dedicated error the UI can surface. We deliberately do NOT call
+ * `liff.login()` here — the UI shows a button so the user understands
+ * the redirect that's about to happen.
+ */
+async function authFetch(input: RequestInfo, init: RequestInit = {}): Promise<Response> {
+  const res = await fetch(input, {
+    ...init,
+    headers: { ...(init.headers ?? {}), ...authHeaders() },
+  });
+  if (res.status === 401) {
+    let detail: string | undefined;
+    try {
+      const body = await res.clone().json();
+      detail = (body as { detail?: string })?.detail;
+    } catch { /* not json — ignore */ }
+    if (detail === "IdToken expired.") {
+      throw new Error(ERR_TOKEN_EXPIRED);
+    }
+  }
+  return res;
+}
+
 export interface CustomerProfile {
   user_id: string;
   display_name: string | null;
@@ -44,7 +76,7 @@ export async function listCustomers(opts: {
   if (opts.offset) q.set("offset", String(opts.offset));
   if (opts.search) q.set("search", opts.search);
   if (opts.restaurant) q.set("restaurant", opts.restaurant);
-  const res = await fetch(`${API_BASE}/api/admin/customers?${q}`, { headers: authHeaders() });
+  const res = await authFetch(`${API_BASE}/api/admin/customers?${q}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -65,9 +97,7 @@ export interface CustomerDetail {
 }
 
 export async function getCustomer(userId: string): Promise<CustomerDetail> {
-  const res = await fetch(`${API_BASE}/api/admin/customers/${encodeURIComponent(userId)}`, {
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE}/api/admin/customers/${encodeURIComponent(userId)}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -98,7 +128,7 @@ export interface StatsOverview {
 }
 
 export async function getStats(): Promise<StatsOverview> {
-  const res = await fetch(`${API_BASE}/api/admin/customers/_stats/overview`, { headers: authHeaders() });
+  const res = await authFetch(`${API_BASE}/api/admin/customers/_stats/overview`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
@@ -110,7 +140,7 @@ export function getCsvExportUrl(): string {
 }
 
 export async function downloadCsv(): Promise<void> {
-  const res = await fetch(getCsvExportUrl(), { headers: authHeaders() });
+  const res = await authFetch(getCsvExportUrl());
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);

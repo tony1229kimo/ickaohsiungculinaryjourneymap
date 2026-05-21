@@ -13,6 +13,7 @@ import {
   getCustomer,
   getStats,
   downloadCsv,
+  ERR_TOKEN_EXPIRED,
   type CustomerProfile,
   type CustomerDetail,
   type StatsOverview,
@@ -61,24 +62,54 @@ const AdminCustomersPage = () => {
   // Tony 2026-05-21: diagnostic — show what backend actually sees on 403
   const [whoami, setWhoami] = useState<unknown>(null);
   const [whoamiLoading, setWhoamiLoading] = useState(false);
+  // Tony 2026-05-21: distinguish token-expired (401) from whitelist-reject (403)
+  const [errorKind, setErrorKind] = useState<"expired" | "whitelist" | "other" | null>(null);
+
+  const handleApiError = (err: Error, user: { userId: string; displayName?: string }) => {
+    if (err.message === ERR_TOKEN_EXPIRED) {
+      setErrorKind("expired");
+      setLoadError(
+        "您的 LINE 連線已逾時 (LIFF id_token expired)。\n" +
+        "請點下方「🔄 重新登入」更新 token。"
+      );
+    } else if (/403/.test(err.message)) {
+      setErrorKind("whitelist");
+      setLoadError(
+        "您不在服務人員白名單,請聯絡 IT 加入。\n\n" +
+        `您的 LINE userId(請複製給 IT):\n${user.userId}\n\n` +
+        `您的顯示名稱:${user.displayName ?? "(無)"}`
+      );
+    } else {
+      setErrorKind("other");
+      setLoadError("無法載入:" + err.message);
+    }
+  };
 
   useEffect(() => {
     if (!isInitialized || !user) return;
     getStats()
       .then(setStats)
-      .catch((err) => {
-        if (/40[13]/.test(err.message)) {
-          // Show userId so IT can add to whitelist without a chat back-and-forth
-          setLoadError(
-            "您不在服務人員白名單,請聯絡 IT 加入。\n\n" +
-            `您的 LINE userId(請複製給 IT):\n${user.userId}\n\n` +
-            `您的顯示名稱:${user.displayName ?? "(無)"}`
-          );
-        } else {
-          setLoadError("無法載入統計:" + err.message);
-        }
-      });
+      .catch((err) => handleApiError(err as Error, user));
   }, [isInitialized, user]);
+
+  const relogin = async () => {
+    // Tony 2026-05-21: LIFF id_token expired — force fresh login. If LINE
+    // session is still valid, the user sees a brief LINE redirect then comes
+    // straight back with a fresh token. Otherwise they re-consent.
+    if (!import.meta.env.VITE_LIFF_ID) {
+      // Dev mode (mock user) — nothing to refresh, just reload
+      window.location.reload();
+      return;
+    }
+    try {
+      const liff = (await import("@line/liff")).default;
+      liff.logout();
+      liff.login();
+    } catch (err) {
+      console.error("[relogin] failed:", err);
+      window.location.reload();
+    }
+  };
 
   const runWhoami = async () => {
     setWhoamiLoading(true);
@@ -97,7 +128,7 @@ const AdminCustomersPage = () => {
   };
 
   useEffect(() => {
-    if (loadError || !isInitialized) return;
+    if (loadError || !isInitialized || !user) return;
     setLoading(true);
     listCustomers({
       sort, order: "desc", limit: PAGE_SIZE, offset,
@@ -105,9 +136,10 @@ const AdminCustomersPage = () => {
       restaurant: restaurantFilter || undefined,
     })
       .then((d) => { setCustomers(d.customers); setTotal(d.total); })
-      .catch((err) => setLoadError(err.message))
+      .catch((err) => handleApiError(err as Error, user))
       .finally(() => setLoading(false));
-  }, [sort, offset, search, restaurantFilter, loadError, isInitialized]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, offset, search, restaurantFilter, loadError, isInitialized, user]);
 
   const handleSearch = (v: string) => { setSearch(v); setOffset(0); };
   const handleSort = (s: SortField) => { setSort(s); setOffset(0); };
@@ -143,9 +175,23 @@ const AdminCustomersPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
         <div className="max-w-md w-full bg-card border rounded-2xl p-6 shadow-lg">
-          <p className="text-destructive font-bold mb-2">⚠️ 無法載入</p>
+          <p className="text-destructive font-bold mb-2">
+            {errorKind === "expired" ? "⏰ 連線逾時" : "⚠️ 無法載入"}
+          </p>
           <pre className="text-sm text-foreground whitespace-pre-wrap break-all font-sans">{loadError}</pre>
-          {user?.userId && (
+
+          {/* Token expired → primary action is relogin */}
+          {errorKind === "expired" && (
+            <button
+              onClick={relogin}
+              className="mt-3 w-full px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
+            >
+              🔄 重新登入
+            </button>
+          )}
+
+          {/* Whitelist reject → primary action is copy userId */}
+          {errorKind === "whitelist" && user?.userId && (
             <button
               onClick={() => {
                 navigator.clipboard?.writeText(user.userId).then(() => {
@@ -157,6 +203,8 @@ const AdminCustomersPage = () => {
               📋 複製 userId
             </button>
           )}
+
+          {/* Diagnostic always available as a fallback */}
           <button
             onClick={runWhoami}
             disabled={whoamiLoading}
