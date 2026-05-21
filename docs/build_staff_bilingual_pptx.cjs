@@ -10,7 +10,7 @@
  *   - 加「練習情境」頁讓主管演練
  *
  * Run: NODE_PATH="$(npm root -g)" node build_staff_bilingual_pptx.cjs
- * Output: IC_Kaohsiung_Game_Staff_Bilingual.pptx (20 slides)
+ * Output: IC_Kaohsiung_Game_Staff_Bilingual.pptx (22 slides; v2026-05-21 加入掛房帳 + 後台儀表板)
  */
 
 const pptxgen = require("pptxgenjs");
@@ -153,7 +153,7 @@ async function build() {
       x: 12.3, y: 7.15, w: 0.9, h: 0.3,
       fontSize: 9, color: DARKGREY, align: "right", margin: 0, fontFace: "Consolas",
     });
-    s.addText("IC Kaohsiung · Staff Guide v2026-05-18", {
+    s.addText("IC Kaohsiung · Staff Guide v2026-05-21", {
       x: 0.6, y: 7.15, w: 6, h: 0.3,
       fontSize: 9, color: DARKGREY, margin: 0,
     });
@@ -191,7 +191,7 @@ async function build() {
     }
   }
 
-  const TOTAL = 20;
+  const TOTAL = 22;
   let n = 0;
 
   // ═══════════════════════════════════════════════════════════════
@@ -220,7 +220,7 @@ async function build() {
       fontSize: 13, color: DARKGREY, italic: true, margin: 0 });
 
     s.addShape(pres.shapes.RECTANGLE, { x: 0.8, y: 6.4, w: 11.6, h: 0.04, fill: { color: PINK }, line: { color: PINK } });
-    s.addText("Tony Chen  ·  tony.chen6@ihg.com  ·  v2026-05-18", {
+    s.addText("Tony Chen  ·  tony.chen6@ihg.com  ·  v2026-05-21", {
       x: 0.8, y: 6.55, w: 12, h: 0.3, fontSize: 11, color: LIGHTGREY, margin: 0 });
     s.addText("This guide will teach you EVERY URL, PIN, and action you need.", {
       x: 0.8, y: 6.9, w: 12, h: 0.3, fontSize: 10, color: DARKGREY, italic: true, margin: 0 });
@@ -601,7 +601,110 @@ async function build() {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 8. Task C — Customer Lookup Walkthrough Part 1 (URL + form)
+  // 8 (NEW). TASK B+ · 🏨 掛房帳模式 · Hotel Guest Room-Charge
+  // Tony 2026-05-21 加入: 房客把餐費掛房號, 沒發票 → 走 room_charge 模式
+  // ═══════════════════════════════════════════════════════════════
+  const INDIGO     = "4F46E5";
+  const INDIGO_BG  = "EEF2FF";
+  n++;
+  {
+    const s = pres.addSlide();
+    s.background = { color: WHITE };
+    header(s, "TASK B+ · 掛房帳模式 · 房客專屬流程", "TASK B+ · Room Charge Mode for Hotel Guests");
+
+    // Context banner
+    s.addShape(pres.shapes.RECTANGLE, { x: 0.6, y: 1.85, w: 12.1, h: 0.95,
+      fill: { color: INDIGO_BG }, line: { color: INDIGO, width: 1.5 } });
+    s.addShape(pres.shapes.RECTANGLE, { x: 0.6, y: 1.85, w: 0.15, h: 0.95, fill: { color: INDIGO }, line: { color: INDIGO } });
+    s.addImage({ data: ic.hotel, x: 0.85, y: 2.0, w: 0.65, h: 0.65 });
+    s.addText("什麼時候用 / When to use", { x: 1.65, y: 1.95, w: 10.8, h: 0.3,
+      fontSize: 11, color: INDIGO, bold: true, charSpacing: 2, margin: 0 });
+    s.addText("房客把餐費「掛房號」,退房時跟房費一起在櫃台結 → 小白單沒有統一發票編號", {
+      x: 1.65, y: 2.2, w: 10.8, h: 0.3, fontSize: 12, color: BLACK, bold: true, margin: 0 });
+    s.addText("Hotel guest signs the meal to room. No 統一發票 issued; Front Office settles at checkout.", {
+      x: 1.65, y: 2.5, w: 10.8, h: 0.3, fontSize: 10, color: DARKGREY, italic: true, margin: 0 });
+
+    // Left: mock form (indigo theme, no invoice field)
+    s.addShape(pres.shapes.RECTANGLE, { x: 0.6, y: 3.0, w: 5.8, h: 4.0,
+      fill: { color: SOFT_BG }, line: { color: INDIGO, width: 1 } });
+    s.addText("您手機看到的畫面 (掛房帳模式)", { x: 0.85, y: 3.1, w: 5.3, h: 0.3,
+      fontSize: 11, color: INDIGO, bold: true, charSpacing: 2, margin: 0 });
+    s.addText("What you see (Room Charge mode)", { x: 0.85, y: 3.4, w: 5.3, h: 0.25,
+      fontSize: 9, color: DARKGREY, italic: true, margin: 0 });
+
+    // Mode toggle mock — 掛房帳 highlighted
+    s.addShape(pres.shapes.RECTANGLE, { x: 0.85, y: 3.75, w: 2.55, h: 0.45,
+      fill: { color: WHITE }, line: { color: LIGHTGREY, width: 1 } });
+    s.addText("💳 一般結帳", { x: 0.85, y: 3.75, w: 2.55, h: 0.45,
+      fontSize: 12, color: DARKGREY, align: "center", valign: "middle", margin: 0 });
+    s.addShape(pres.shapes.RECTANGLE, { x: 3.55, y: 3.75, w: 2.55, h: 0.45,
+      fill: { color: INDIGO }, line: { color: INDIGO } });
+    s.addText("🏨 掛房帳", { x: 3.55, y: 3.75, w: 2.55, h: 0.45,
+      fontSize: 12, color: WHITE, bold: true, align: "center", valign: "middle", margin: 0 });
+
+    // PIN
+    s.addText("PIN", { x: 0.85, y: 4.4, w: 5.3, h: 0.25, fontSize: 10, color: DARKGREY, margin: 0 });
+    s.addShape(pres.shapes.RECTANGLE, { x: 0.85, y: 4.65, w: 5.3, h: 0.4, fill: { color: WHITE }, line: { color: LIGHTGREY, width: 1 } });
+    s.addText(PIN, { x: 0.85, y: 4.65, w: 5.3, h: 0.4,
+      fontSize: 14, color: BLACK, fontFace: "Consolas", bold: true, align: "center", valign: "middle", charSpacing: 4, margin: 0 });
+
+    // (No invoice field — that's the key difference!)
+    s.addShape(pres.shapes.RECTANGLE, { x: 0.85, y: 5.2, w: 5.3, h: 0.5,
+      fill: { color: INDIGO_BG }, line: { color: INDIGO, width: 1, dashType: "dash" } });
+    s.addText("✗ 發票編號欄已隱藏 / Invoice field hidden", { x: 0.85, y: 5.2, w: 5.3, h: 0.5,
+      fontSize: 11, color: INDIGO, italic: true, bold: true, align: "center", valign: "middle", margin: 0 });
+
+    // Amount
+    s.addText("消費金額 / Amount (NT$)", { x: 0.85, y: 5.85, w: 5.3, h: 0.25,
+      fontSize: 10, color: DARKGREY, margin: 0 });
+    s.addShape(pres.shapes.RECTANGLE, { x: 0.85, y: 6.1, w: 5.3, h: 0.4, fill: { color: WHITE }, line: { color: LIGHTGREY, width: 1 } });
+    s.addText("3200", { x: 0.85, y: 6.1, w: 5.3, h: 0.4,
+      fontSize: 14, color: BLACK, fontFace: "Consolas", bold: true, align: "center", valign: "middle", margin: 0 });
+
+    // Generate button
+    s.addShape(pres.shapes.RECTANGLE, { x: 0.85, y: 6.6, w: 5.3, h: 0.32, fill: { color: INDIGO } });
+    s.addText("🏨 產生掛房帳 QR", { x: 0.85, y: 6.6, w: 5.3, h: 0.32,
+      fontSize: 11, color: WHITE, bold: true, align: "center", valign: "middle", margin: 0 });
+
+    // Right: 4 steps + warning
+    s.addShape(pres.shapes.RECTANGLE, { x: 6.7, y: 3.0, w: 6.0, h: 2.6,
+      fill: { color: WHITE }, line: { color: INDIGO, width: 1 } });
+    s.addText("操作步驟 / Step-by-step", { x: 6.95, y: 3.1, w: 5.5, h: 0.3,
+      fontSize: 11, color: INDIGO, bold: true, charSpacing: 2, margin: 0 });
+
+    const roomSteps = [
+      { n: "1", cn: "進 /admin/checkout 後,點上方 「🏨 掛房帳」", en: "Tap the 🏨 Room Charge toggle" },
+      { n: "2", cn: "畫面變藍紫色,發票欄消失 ✅", en: "UI turns indigo; invoice field hidden" },
+      { n: "3", cn: "只需輸入消費金額 → 按下方按鈕", en: "Just enter amount → tap button" },
+      { n: "4", cn: "客人掃 → 2 分鐘內入帳", en: "Guest scans within 2 min → done" },
+    ];
+    roomSteps.forEach((stp, i) => {
+      const y = 3.5 + i * 0.5;
+      s.addShape(pres.shapes.OVAL, { x: 6.95, y, w: 0.38, h: 0.38, fill: { color: INDIGO } });
+      s.addText(stp.n, { x: 6.95, y, w: 0.38, h: 0.38, fontSize: 13,
+        color: WHITE, bold: true, fontFace: "Georgia", align: "center", valign: "middle", margin: 0 });
+      s.addText(stp.cn, { x: 7.45, y: y - 0.02, w: 5.1, h: 0.25,
+        fontSize: 11, color: BLACK, margin: 0 });
+      s.addText(stp.en, { x: 7.45, y: y + 0.22, w: 5.1, h: 0.25,
+        fontSize: 9, color: DARKGREY, italic: true, margin: 0 });
+    });
+
+    // Right bottom: warning callout
+    s.addShape(pres.shapes.RECTANGLE, { x: 6.7, y: 5.75, w: 6.0, h: 1.25,
+      fill: { color: DANGER_BG }, line: { color: DANGER_RED, width: 1 } });
+    s.addImage({ data: ic.warn, x: 6.85, y: 5.85, w: 0.45, h: 0.45 });
+    s.addText("⚠️ 與一般結帳不同 · Key Differences", { x: 7.4, y: 5.85, w: 5.2, h: 0.3,
+      fontSize: 12, color: DANGER_RED, bold: true, margin: 0 });
+    s.addText("• 沒有發票編號 → 沒有『同張發票防雙領』機制\n• 工作人員務必確認金額無誤,**確認後再產生**", {
+      x: 7.4, y: 6.15, w: 5.2, h: 0.5, fontSize: 10, color: BLACK, margin: 0 });
+    s.addText("No invoice = no anti-double-redeem. Staff MUST verify amount before generating.", {
+      x: 7.4, y: 6.65, w: 5.2, h: 0.3, fontSize: 8.5, color: DARKGREY, italic: true, margin: 0 });
+
+    footer(s, n, TOTAL);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 9. Task C — Customer Lookup Walkthrough Part 1 (URL + form)
   // ═══════════════════════════════════════════════════════════════
   n++;
   {
@@ -739,7 +842,83 @@ async function build() {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 10. 5 Restaurant QR codes — all in one slide
+  // 10 (NEW). TASK D · 客戶儀表板 · /admin/customers
+  // Tony 2026-05-21 加入: 行銷部即時看誰玩 + 各餐廳轉化 + URL token 分享
+  // ═══════════════════════════════════════════════════════════════
+  const SKY = "0EA5E9";
+  const SKY_BG = "E0F2FE";
+  const VIEW_KEY = "e3a501bd702e51f17c98d071b06beb13"; // ADMIN_VIEW_KEY
+  const qrCustomersTokenURL = URL_CUSTOMERS + "?key=" + VIEW_KEY;
+  const qrCustomersToken = await urlToQR(qrCustomersTokenURL);
+  n++;
+  {
+    const s = pres.addSlide();
+    s.background = { color: WHITE };
+    header(s, "TASK D · 客戶儀表板 · 即時看誰玩了多少", "TASK D · Admin Customer Dashboard");
+
+    // Top URL card (LIFF-gated)
+    urlCard(s, 0.6, 1.85, 12.1, "後台儀表板 / Dashboard URL", "需 LINE 登入 + 服務人員白名單 · LINE login + staff whitelist required",
+      URL_CUSTOMERS, qrCustomers, { color: BLACK, h: 1.35 });
+
+    // 3-column features
+    const features = [
+      {
+        color: BLACK, icon: ic.users, title_cn: "客戶漏斗",
+        title_en: "Conversion Funnel",
+        body_cn: "加好友 → 綁餐廳 → 完成兌換 → 領到獎,每段流失多少看得到",
+        body_en: "4-stage drop-off visible at a glance",
+      },
+      {
+        color: BLACK, icon: ic.utensils, title_cn: "各餐廳活動",
+        title_en: "Per-Restaurant Activity",
+        body_cn: "5 間餐廳即時統計,點任一間 → drill-down 該餐廳客戶",
+        body_en: "Click any outlet → filtered customer list",
+      },
+      {
+        color: BLACK, icon: ic.search, title_cn: "事件區分",
+        title_en: "Event Differentiation",
+        body_cn: "明確顯示 🏨 掛房帳 vs 💳 結帳 vs 📄 自掃,一眼看出來源",
+        body_en: "Labels clearly split the 3 sources",
+      },
+    ];
+    features.forEach((f, i) => {
+      const x = 0.6 + i * 4.05;
+      s.addShape(pres.shapes.RECTANGLE, { x, y: 3.55, w: 3.85, h: 1.95,
+        fill: { color: SOFT_BG }, line: { color: f.color, width: 1 }, shadow: SHADOW() });
+      s.addImage({ data: f.icon, x: x + 0.2, y: 3.7, w: 0.5, h: 0.5 });
+      s.addText(f.title_cn, { x: x + 0.85, y: 3.7, w: 2.9, h: 0.3,
+        fontSize: 13, color: BLACK, bold: true, margin: 0 });
+      s.addText(f.title_en, { x: x + 0.85, y: 4.0, w: 2.9, h: 0.25,
+        fontSize: 9, color: DARKGREY, italic: true, margin: 0 });
+      s.addText(f.body_cn, { x: x + 0.2, y: 4.4, w: 3.5, h: 0.55,
+        fontSize: 10, color: BLACK, margin: 0 });
+      s.addText(f.body_en, { x: x + 0.2, y: 4.95, w: 3.5, h: 0.5,
+        fontSize: 8.5, color: DARKGREY, italic: true, margin: 0 });
+    });
+
+    // Bottom: URL Token sharing section
+    s.addShape(pres.shapes.RECTANGLE, { x: 0.6, y: 5.7, w: 12.1, h: 1.4,
+      fill: { color: SKY_BG }, line: { color: SKY, width: 1.5 } });
+    s.addShape(pres.shapes.RECTANGLE, { x: 0.6, y: 5.7, w: 0.15, h: 1.4, fill: { color: SKY }, line: { color: SKY } });
+    s.addImage({ data: qrCustomersToken, x: 11.0, y: 5.8, w: 1.2, h: 1.2 });
+    s.addText("🔑 想分享給沒 LINE 帳號的同事? 用 URL Token", { x: 0.95, y: 5.8, w: 9.8, h: 0.3,
+      fontSize: 12, color: SKY, bold: true, margin: 0 });
+    s.addText("Share with non-LINE colleagues via URL Token", { x: 0.95, y: 6.1, w: 9.8, h: 0.25,
+      fontSize: 9, color: DARKGREY, italic: true, margin: 0 });
+    s.addShape(pres.shapes.RECTANGLE, { x: 0.95, y: 6.4, w: 9.8, h: 0.4,
+      fill: { color: CODE_BG }, line: { color: SKY, width: 0.5 } });
+    s.addText("/admin/customers?key=" + VIEW_KEY.slice(0, 8) + "...", {
+      x: 0.95, y: 6.4, w: 9.8, h: 0.4,
+      fontSize: 11, color: BLACK, fontFace: "Consolas", bold: true, valign: "middle", margin: 0 });
+    s.addText("⚠ URL 等於萬能鑰匙,只給信任的人,且不要丟群組  ·  URL = master key. DM only, never group chat.", {
+      x: 0.95, y: 6.8, w: 9.8, h: 0.3,
+      fontSize: 9, color: DANGER_RED, italic: true, margin: 0 });
+
+    footer(s, n, TOTAL);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 11. 5 Restaurant QR codes — all in one slide
   // ═══════════════════════════════════════════════════════════════
   n++;
   {
@@ -965,6 +1144,10 @@ async function build() {
       ["圖片不夠清楚",  "Photo unclear",         "重拍 / 結帳 QR"],
       ["不像 IC 的單據","Not an IC slip",        "確認單據完整 / 結帳 QR"],
       ["黃色 請洽服務人員","Yellow staff banner", "直接走 結帳 QR"],
+      // Tony 2026-05-21:
+      ["房客無發票要兌獎","Hotel guest, no invoice","走 🏨 掛房帳模式 / Use Room Charge"],
+      ["連線逾時 / IdToken expired","Token timeout","按 🔄 重新登入 / Tap Re-login"],
+      ["⏰ QR Code 已過期","QR expired (>2 min)",  "按「重新產生」/ Tap Regenerate"],
     ];
 
     s.addShape(pres.shapes.RECTANGLE, { x: 0.6, y: 2.4, w: 12.1, h: 0.45, fill: { color: BLACK } });
@@ -976,15 +1159,15 @@ async function build() {
       fontSize: 11, color: PINK, bold: true, valign: "middle", charSpacing: 2, margin: 0 });
 
     rows.forEach((row, i) => {
-      const y = 2.85 + i * 0.42;
+      const y = 2.85 + i * 0.32;
       const bg = i % 2 === 0 ? SOFT_BG : WHITE;
-      s.addShape(pres.shapes.RECTANGLE, { x: 0.6, y, w: 12.1, h: 0.42, fill: { color: bg } });
-      s.addText(row[0], { x: 0.75, y, w: 4.2, h: 0.42,
-        fontSize: 11, color: BLACK, valign: "middle", margin: 0 });
-      s.addText(row[1], { x: 5.0, y, w: 3.6, h: 0.42,
-        fontSize: 10, color: DARKGREY, italic: true, valign: "middle", margin: 0 });
-      s.addText(row[2], { x: 8.7, y, w: 4.0, h: 0.42,
-        fontSize: 10.5, color: BLACK, bold: true, valign: "middle", margin: 0 });
+      s.addShape(pres.shapes.RECTANGLE, { x: 0.6, y, w: 12.1, h: 0.32, fill: { color: bg } });
+      s.addText(row[0], { x: 0.75, y, w: 4.2, h: 0.32,
+        fontSize: 10.5, color: BLACK, valign: "middle", margin: 0 });
+      s.addText(row[1], { x: 5.0, y, w: 3.6, h: 0.32,
+        fontSize: 9.5, color: DARKGREY, italic: true, valign: "middle", margin: 0 });
+      s.addText(row[2], { x: 8.7, y, w: 4.0, h: 0.32,
+        fontSize: 10, color: BLACK, bold: true, valign: "middle", margin: 0 });
     });
 
     footer(s, n, TOTAL);
@@ -1137,9 +1320,9 @@ async function build() {
       fill: { color: CODE_BG }, line: { color: BLACK, width: 1 } });
     s.addText("/admin/checkout", { x: 1.3, y: 3.05, w: 5.3, h: 0.45,
       fontSize: 14, color: BLACK, fontFace: "Consolas", bold: true, align: "center", valign: "middle", margin: 0 });
-    s.addText("→ 開 QR 幫卡關的客人補擲骰", { x: 1.3, y: 3.55, w: 5.3, h: 0.3,
+    s.addText("→ 一般結帳 / 🏨 掛房帳 切換", { x: 1.3, y: 3.55, w: 5.3, h: 0.3,
       fontSize: 10, color: BLACK, margin: 0 });
-    s.addText("→ Issue QR for stuck customers", { x: 1.3, y: 3.82, w: 5.3, h: 0.25,
+    s.addText("→ Issue QR · 💳 Regular / 🏨 Room Charge toggle", { x: 1.3, y: 3.82, w: 5.3, h: 0.25,
       fontSize: 9, color: DARKGREY, italic: true, margin: 0 });
 
     // Top-right: Lookup URL
@@ -1185,11 +1368,15 @@ async function build() {
         fontSize: 11, color: BLACK, valign: "middle", margin: 0 });
     });
 
-    // Footer band
-    s.addShape(pres.shapes.RECTANGLE, { x: 1.0, y: 6.6, w: 11.3, h: 0.35, fill: { color: PINK_TINT } });
-    s.addText("規則 · NT$2,000 = 1 擲骰  ·  上限 5 次  ·  15 點抽大獎  ·  Tony Chen tony.chen6@ihg.com", {
-      x: 1.0, y: 6.6, w: 11.3, h: 0.35,
-      fontSize: 10, color: BLACK, align: "center", valign: "middle", margin: 0 });
+    // Footer band — v2 added /admin/customers + room_charge note
+    s.addShape(pres.shapes.RECTANGLE, { x: 1.0, y: 6.4, w: 11.3, h: 0.35, fill: { color: PINK_TINT } });
+    s.addText("📊 後台儀表板 / Dashboard:  /admin/customers  ·  需 LIFF 登入 + 白名單 / LIFF + whitelist required", {
+      x: 1.0, y: 6.4, w: 11.3, h: 0.35,
+      fontSize: 9.5, color: BLACK, align: "center", valign: "middle", margin: 0 });
+    s.addShape(pres.shapes.RECTANGLE, { x: 1.0, y: 6.75, w: 11.3, h: 0.2, fill: { color: BLACK } });
+    s.addText("規則 · NT$2,000 = 1 擲骰  ·  上限 5 次  ·  QR 2 分鐘 TTL  ·  Tony Chen tony.chen6@ihg.com", {
+      x: 1.0, y: 6.75, w: 11.3, h: 0.2,
+      fontSize: 9, color: PINK, align: "center", valign: "middle", margin: 0 });
 
     footer(s, n, TOTAL);
   }
@@ -1238,7 +1425,7 @@ async function build() {
         fontSize: 10, color: PINK, fontFace: "Consolas", margin: 0 });
     });
 
-    s.addText("v2026-05-18  ·  Demo 2026-05-31  ·  All 5 F&B outlets ready", {
+    s.addText("v2026-05-21  ·  Demo 2026-05-31  ·  All 5 F&B outlets ready", {
       x: 0.6, y: 7.15, w: 12, h: 0.3,
       fontSize: 10, color: DARKGREY, italic: true, align: "center", margin: 0 });
   }
@@ -1247,7 +1434,7 @@ async function build() {
   await pres.writeFile({
     fileName: "C:/Users/ChenVivi/OneDrive - Six Continents Hotels, Inc/Desktop/Claude/ickaohsiungculinaryjourneymap/docs/IC_Kaohsiung_Game_Staff_Bilingual.pptx",
   });
-  console.log("[OK] Generated IC_Kaohsiung_Game_Staff_Bilingual.pptx (20 slides)");
+  console.log("[OK] Generated IC_Kaohsiung_Game_Staff_Bilingual.pptx (22 slides — v2026-05-21 includes 🏨 掛房帳 + 📊 後台儀表板)");
 }
 
 build().catch((e) => { console.error(e); process.exit(1); });
