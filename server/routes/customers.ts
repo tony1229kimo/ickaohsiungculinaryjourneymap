@@ -291,9 +291,11 @@ router.post("/:userId/grant-reward", ...staffAuthChain(), async (req, res) => {
   // OA as friend), we still record the grant — admin can see push status.
   const push = await pushRewardCoupon("KH", {
     customerUserId,
+    rewardId: reward.id,
     rewardName: reward.name,
     couponLink: reward.couponLink,
     compensationNote: note ?? undefined,
+    source: "compensation",
   });
 
   // Step 2: append to earned_rewards (so LIFF UI also reflects it).

@@ -13,6 +13,7 @@ import checkoutTicketRoutes from "./routes/checkoutTicket.js";
 import staffLookupRoutes from "./routes/staffLookup.js";
 import bindRoutes from "./routes/bind.js";
 import meRoutes from "./routes/me.js";
+import claimRoutes from "./routes/claim.js";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3001");
@@ -50,6 +51,7 @@ app.use("/api/checkout-ticket", checkoutTicketRoutes);
 app.use("/api/staff", staffLookupRoutes);
 app.use("/api/bind", bindRoutes);
 app.use("/api/me", meRoutes);
+app.use("/api/claim", claimRoutes);
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });

@@ -217,9 +217,11 @@ router.post("/grant-reward", requireStaffPin, async (req: Request, res: Response
   // 1) Push to LINE (best-effort — record the grant even if push fails)
   const push = await pushRewardCoupon("KH", {
     customerUserId,
+    rewardId: reward.id,
     rewardName: reward.name,
     couponLink: reward.couponLink,
     compensationNote: note ?? undefined,
+    source: "compensation",
   });
 
   // 2) Append to game_state.earned_rewards (board untouched)

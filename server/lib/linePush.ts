@@ -23,8 +23,10 @@ interface FlexInvitePayload {
 interface RewardCouponPayload {
   customerUserId: string;
   rewardName: string;
+  rewardId?: string;          // for claim_tokens row provenance
   couponLink: string;
   compensationNote?: string;  // populated when admin manually granted as compensation
+  source?: "lottery" | "fixed_tile" | "compensation"; // claim_tokens.source
 }
 
 /**
@@ -71,6 +73,11 @@ export async function checkFriendship(
  * Push a Flex Message containing a single reward coupon. Auto-fires when
  * the game detects a new entry in earned_rewards (P1 自動推送), or when the
  * admin compensates a customer via /admin grant-reward (P2 補發).
+ *
+ * Tony 2026-05-23: wraps the OmniChat couponLink with a single-use claim
+ * token so customers can't tap the Flex button infinitely. The wrapper URL
+ * (api/claim/:token) atomically marks the token used and redirects to
+ * OmniChat exactly once. See migration 009.
  */
 export async function pushRewardCoupon(
   hotelId: string,
@@ -81,7 +88,44 @@ export async function pushRewardCoupon(
   if (!token) {
     return { ok: false, reason: `${tokenEnv} not configured` };
   }
-  const message = buildFlexReward(payload);
+
+  // Generate single-use claim token + persist it. If DB call fails we fall
+  // back to the raw OmniChat URL — better-than-nothing rather than skipping
+  // the whole push.
+  let wrappedLink = payload.couponLink;
+  try {
+    const { Pool } = await import("pg");
+    const p = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.PGSSLMODE === "require" ? { rejectUnauthorized: false } : false,
+    });
+    const claimToken = Array.from({ length: 16 }, () =>
+      Math.floor(Math.random() * 36).toString(36),
+    ).join("");
+    await p.query(
+      `INSERT INTO claim_tokens (token, user_id, reward_id, reward_name, coupon_link, source)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        claimToken,
+        payload.customerUserId,
+        payload.rewardId ?? "unknown",
+        payload.rewardName,
+        payload.couponLink,
+        payload.source ?? null,
+      ],
+    );
+    await p.end();
+    // Build the public wrapper URL. GAME_BASE_URL env var (set by Tony in
+    // Zeabur) gives the customer-facing host.
+    const base = process.env.GAME_BASE_URL ?? "https://ickhh-culinary-game-v2.zeabur.app";
+    wrappedLink = `${base}/api/claim/${claimToken}`;
+  } catch (e) {
+    console.warn("[pushRewardCoupon] claim_token insert failed, falling back to direct OmniChat URL:", e);
+    // wrappedLink stays as the raw OmniChat URL — coupon still delivers,
+    // just no single-use protection. We'd rather degrade than break delivery.
+  }
+
+  const message = buildFlexReward({ ...payload, couponLink: wrappedLink });
   try {
     const resp = await fetch("https://api.line.me/v2/bot/message/push", {
       method: "POST",

@@ -11,6 +11,7 @@ import AdminTablesPage from "./pages/AdminTablesPage";
 import AdminCustomersPage from "./pages/AdminCustomersPage";
 import AdminCheckoutQRPage from "./pages/AdminCheckoutQRPage";
 import AdminLookupPage from "./pages/AdminLookupPage";
+import CouponUsedPage from "./pages/CouponUsedPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,6 +60,8 @@ const App = () => (
           <Route path="/admin/checkout" element={<AdminCheckoutQRPage />} />
           {/* Customer-complaint lookup (Phase 8.3) — PIN gated, no LIFF */}
           <Route path="/admin/lookup" element={<AdminLookupPage />} />
+          {/* Tony 2026-05-23: landing page when claim_token has been used. */}
+          <Route path="/coupon-used" element={<CouponUsedPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

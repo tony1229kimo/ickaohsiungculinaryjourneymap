@@ -147,8 +147,10 @@ export async function saveGameState(state: GameState): Promise<void> {
       if (catalogEntry) {
         const push = await pushRewardCoupon("KH", {
           customerUserId: state.userId,
+          rewardId: catalogEntry.id,
           rewardName: catalogEntry.name,
           couponLink: catalogEntry.couponLink,
+          source: "lottery",
         });
         if (!push.ok) {
           console.warn(`[saveGameState] reward push failed for ${state.userId}:`, push.reason);
@@ -176,8 +178,10 @@ export async function claimTile(userId: string, tile: number): Promise<{ success
   if (catalogEntry) {
     const push = await pushRewardCoupon("KH", {
       customerUserId: userId,
+      rewardId: catalogEntry.id,
       rewardName: catalogEntry.name,
       couponLink: catalogEntry.couponLink,
+      source: "fixed_tile",
     });
     if (!push.ok) {
       console.warn(`[claimTile] reward push failed for ${userId} tile=${tile}:`, push.reason);
@@ -973,9 +977,11 @@ export async function redeemCheckoutTicket(userId: string, token: string): Promi
       // Push the coupon to customer's LINE chat (best-effort)
       const push = await pushRewardCoupon("KH", {
         customerUserId: userId,
+        rewardId: reward.id,
         rewardName: reward.name,
         couponLink: reward.couponLink,
         compensationNote: row.comp_note ?? undefined,
+        source: "compensation",
       });
       if (!push.ok) {
         console.warn(`[redeem compensation] push failed for ${userId}:`, push.reason);
