@@ -164,6 +164,37 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
     init();
   }, []);
 
+  // Tony 2026-05-23: 加完好友自動跳轉回遊戲 — 兩種觸發:
+  // (1) 客人從 LINE 加好友頁回到 LIFF tab → visibilitychange 立刻 re-check
+  // (2) 每 5 秒輪詢一次 — 防止 visibilitychange 在某些瀏覽器 / 嵌入式 webview 沒觸發
+  // 一旦 isFriend 變 true,gate 自動消失,客人連點都不用點。
+  useEffect(() => {
+    if (state.isFriend !== false) return;
+    let stopped = false;
+
+    const tick = async () => {
+      if (stopped) return;
+      await checkFriendshipNow();
+    };
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void tick();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    // Also re-check immediately if tab is already visible (covers focus events)
+    window.addEventListener("focus", onVisible);
+
+    const id = setInterval(tick, 5000);
+
+    return () => {
+      stopped = true;
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.isFriend]);
+
   // Loading screen
   if (!state.isInitialized) {
     return (
@@ -232,17 +263,21 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
               ➕ 加入 LINE 好友
             </a>
 
+            <p className="text-[12px] text-emerald-700 mb-3 leading-relaxed">
+              ✨ <strong>加完好友後回到這個畫面,系統會自動偵測,自己跳進遊戲</strong> ✨
+            </p>
+
             <button
               onClick={async () => {
                 await state.recheckFriendship();
               }}
               className="block w-full px-6 py-2.5 rounded-xl border-2 border-primary text-primary font-medium text-sm"
             >
-              ✓ 我已加好友,繼續遊戲
+              ✓ 手動重新檢查(如果遲遲沒跳轉)
             </button>
 
             <p className="mt-4 text-[11px] text-muted-foreground leading-relaxed">
-              如果加好友後還是看到這個畫面,請按上方的「我已加好友」按鈕重新檢查。
+              系統每 5 秒自動檢查一次。如果加好友後 10 秒還沒跳,可以按上方手動檢查。
             </p>
           </div>
         </div>
