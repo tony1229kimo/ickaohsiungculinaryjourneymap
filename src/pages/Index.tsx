@@ -49,6 +49,9 @@ const Index = () => {
   const [totalPoints, setTotalPoints] = useState(0);
   const [statusMessage, setStatusMessage] = useState("正在載入...");
   const [statusType, setStatusType] = useState<"info" | "success" | "error" | "loading">("loading");
+  // Tony 2026-05-23: when compensation redeem succeeds, customer needs to
+  // go to LINE OA chat to see the coupon. Show a dedicated CTA banner.
+  const [compensationSuccess, setCompensationSuccess] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isQRVerified, setIsQRVerified] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
@@ -187,8 +190,9 @@ const Index = () => {
       if (result.ok) {
         if (result.compensation) {
           // Tony 2026-05-23: compensation tickets grant a coupon, not dice
-          setStatusMessage(`🎁 已收到補發優惠券:${result.reward_name ?? "(未知獎品)"}\n請查看 LINE 聊天視窗`);
+          setStatusMessage(`🎁 已收到補發優惠券:${result.reward_name ?? "(未知獎品)"}`);
           setStatusType("success");
+          setCompensationSuccess(result.reward_name ?? "優惠券");
           // No dice refetch needed — the coupon goes via LINE chat + earned_rewards
         } else {
           await refetchDice();
@@ -513,6 +517,47 @@ const Index = () => {
           <div className="mt-5">
             <StatusMessage message={statusMessage} type={statusType} />
           </div>
+
+          {/* Tony 2026-05-23: 補發成功後跳明顯 CTA 讓客人直接去看 LINE OA */}
+          {compensationSuccess && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-4 mx-auto max-w-sm rounded-2xl border-2 border-emerald-400 bg-emerald-50 p-4 shadow-lg"
+            >
+              <p className="text-emerald-900 font-bold text-center mb-1">
+                🎁 已補發「{compensationSuccess}」
+              </p>
+              <p className="text-emerald-800 text-xs text-center leading-relaxed mb-3">
+                您的優惠券已送到 LINE 聊天視窗,請點下方按鈕關閉這個畫面,
+                即可在「<strong>高雄洲際酒店</strong>」LINE 對話內看到您的券。
+              </p>
+              <button
+                onClick={async () => {
+                  try {
+                    const liff = (await import("@line/liff")).default;
+                    if (liff.isInClient && liff.isInClient()) {
+                      liff.closeWindow();
+                      return;
+                    }
+                  } catch (e) {
+                    console.warn("[compensation CTA] liff.closeWindow failed:", e);
+                  }
+                  // Fallback for non-LIFF environments — open the OA add-friend URL
+                  window.location.href = "https://lin.ee/uKzkNI9";
+                }}
+                className="w-full rounded-xl bg-emerald-600 text-white py-3 font-bold text-base shadow-md hover:bg-emerald-700 transition-colors"
+              >
+                📨 打開 LINE 看我的優惠券
+              </button>
+              <button
+                onClick={() => setCompensationSuccess(null)}
+                className="w-full mt-2 text-xs text-emerald-700 underline"
+              >
+                關閉此提示繼續玩遊戲
+              </button>
+            </motion.div>
+          )}
         </div>
 
         {/* 遊戲規則彈出視窗 */}

@@ -115,9 +115,12 @@ export async function pushRewardCoupon(
       ],
     );
     await p.end();
-    // Build the public wrapper URL. GAME_BASE_URL env var (set by Tony in
-    // Zeabur) gives the customer-facing host.
-    const base = process.env.GAME_BASE_URL ?? "https://ickhh-culinary-game-v2.zeabur.app";
+    // Build the public wrapper URL. The wrapper lives on the BACKEND host
+    // (Express serves /api/claim/*) — pointing it at the frontend host gives
+    // 404 because the SPA doesn't proxy /api in production.
+    // Hard-coded production hostname so a stale GAME_BASE_URL env var can't
+    // break delivery. Env override available for staging/local.
+    const base = process.env.CLAIM_BASE_URL ?? "https://ickhh-culinary-api-v2.zeabur.app";
     wrappedLink = `${base}/api/claim/${claimToken}`;
   } catch (e) {
     console.warn("[pushRewardCoupon] claim_token insert failed, falling back to direct OmniChat URL:", e);
