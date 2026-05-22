@@ -20,6 +20,119 @@ interface FlexInvitePayload {
   liffUrl: string;
 }
 
+interface RewardCouponPayload {
+  customerUserId: string;
+  rewardName: string;
+  couponLink: string;
+  compensationNote?: string;  // populated when admin manually granted as compensation
+}
+
+/**
+ * Tony 2026-05-23: check whether the given LINE userId is a friend of our
+ * OA. Used for the gating page so guests must add the OA before playing —
+ * non-friends can't receive any coupon push, defeating the whole reward
+ * mechanic.
+ *
+ * LINE API: GET /v2/bot/friendship/{userId}/status
+ * Auth: Messaging API Channel access token (same one used by pushGameInvite).
+ */
+export async function checkFriendship(
+  hotelId: string,
+  userId: string,
+): Promise<{ ok: true; isFriend: boolean } | { ok: false; reason: string }> {
+  const tokenEnv = `LINE_MESSAGING_ACCESS_TOKEN_${hotelId.toUpperCase()}`;
+  const token = process.env[tokenEnv];
+  if (!token) {
+    return { ok: false, reason: `${tokenEnv} not configured` };
+  }
+  try {
+    const resp = await fetch(`https://api.line.me/v2/bot/friendship/${encodeURIComponent(userId)}/status`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!resp.ok) {
+      const errBody = await resp.text().catch(() => "");
+      return { ok: false, reason: `HTTP ${resp.status} ${errBody.slice(0, 200)}` };
+    }
+    const data = (await resp.json()) as { friendFlag?: boolean };
+    return { ok: true, isFriend: !!data.friendFlag };
+  } catch (err) {
+    return { ok: false, reason: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/**
+ * Push a Flex Message containing a single reward coupon. Auto-fires when
+ * the game detects a new entry in earned_rewards (P1 自動推送), or when the
+ * admin compensates a customer via /admin grant-reward (P2 補發).
+ */
+export async function pushRewardCoupon(
+  hotelId: string,
+  payload: RewardCouponPayload,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const tokenEnv = `LINE_MESSAGING_ACCESS_TOKEN_${hotelId.toUpperCase()}`;
+  const token = process.env[tokenEnv];
+  if (!token) {
+    return { ok: false, reason: `${tokenEnv} not configured` };
+  }
+  const message = buildFlexReward(payload);
+  try {
+    const resp = await fetch("https://api.line.me/v2/bot/message/push", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ to: payload.customerUserId, messages: [message] }),
+    });
+    if (resp.ok) return { ok: true };
+    const errBody = await resp.text().catch(() => "");
+    return { ok: false, reason: `HTTP ${resp.status} ${errBody.slice(0, 200)}` };
+  } catch (err) {
+    return { ok: false, reason: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+function buildFlexReward({ rewardName, couponLink, compensationNote }: RewardCouponPayload) {
+  return {
+    type: "flex",
+    altText: `🎁 您獲得「${rewardName}」`,
+    contents: {
+      type: "bubble",
+      header: {
+        type: "box",
+        layout: "vertical",
+        backgroundColor: "#3D3935",
+        paddingAll: "16px",
+        contents: [
+          { type: "text", text: compensationNote ? "🎁 補發優惠券" : "🎁 恭喜獲獎", color: "#BFB592", size: "lg", weight: "bold", align: "center" },
+          { type: "text", text: "高雄洲際 · 味蕾旅遊地圖", color: "#FFFFFF", size: "xs", align: "center", margin: "sm" },
+        ],
+      },
+      body: {
+        type: "box",
+        layout: "vertical",
+        spacing: "md",
+        paddingAll: "20px",
+        contents: [
+          { type: "text", text: rewardName, size: "md", weight: "bold", color: "#3D3935", align: "center", wrap: true },
+          { type: "text", text: "點下方按鈕領取電子優惠券", size: "xs", color: "#6E6A62", align: "center", wrap: true },
+          ...(compensationNote ? [{ type: "text" as const, text: `備註:${compensationNote}`, size: "xxs" as const, color: "#999999", align: "center" as const, wrap: true, margin: "sm" as const }] : []),
+        ],
+      },
+      footer: {
+        type: "box",
+        layout: "vertical",
+        paddingAll: "16px",
+        contents: [
+          {
+            type: "button",
+            style: "primary",
+            color: "#BFB592",
+            action: { type: "uri", label: "🎫 領取優惠券", uri: couponLink },
+          },
+        ],
+      },
+    },
+  };
+}
+
 /**
  * Send a Flex Message inviting the customer to play.
  *
