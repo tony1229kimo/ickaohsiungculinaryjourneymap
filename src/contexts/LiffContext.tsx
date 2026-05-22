@@ -164,13 +164,16 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
     init();
   }, []);
 
-  // Tony 2026-05-23: 加完好友自動跳轉回遊戲 — 兩種觸發:
-  // (1) 客人從 LINE 加好友頁回到 LIFF tab → visibilitychange 立刻 re-check
-  // (2) 每 5 秒輪詢一次 — 防止 visibilitychange 在某些瀏覽器 / 嵌入式 webview 沒觸發
-  // 一旦 isFriend 變 true,gate 自動消失,客人連點都不用點。
+  // Tony 2026-05-23: 加完好友秒跳轉回遊戲 — 多觸發 + 兩段式 polling:
+  //   (1) `visibilitychange` 「visible」 → 客人切回 LIFF tab 立刻 re-check
+  //   (2) `window.focus` → 補強事件,有些 webview 不發 visibilitychange
+  //   (3) `touchstart` (passive) → 客人在 gate 上點任何位置也重新檢查
+  //   (4) Aggressive 1.5 秒輪詢 30 秒(LINE friendship cache 通常 5-10 秒會 catch up)
+  //   (5) 之後改為 5 秒輪詢 fallback,以省 API quota
   useEffect(() => {
     if (state.isFriend !== false) return;
     let stopped = false;
+    let currentTimer: ReturnType<typeof setInterval> | null = null;
 
     const tick = async () => {
       if (stopped) return;
@@ -180,17 +183,26 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
     const onVisible = () => {
       if (document.visibilityState === "visible") void tick();
     };
-    document.addEventListener("visibilitychange", onVisible);
-    // Also re-check immediately if tab is already visible (covers focus events)
-    window.addEventListener("focus", onVisible);
+    const onTouch = () => { void tick(); };
 
-    const id = setInterval(tick, 5000);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    document.addEventListener("touchstart", onTouch, { passive: true });
+
+    // Aggressive 1.5s polling for first 30 sec, then back off to 5s
+    currentTimer = setInterval(tick, 1500);
+    const slowdown = setTimeout(() => {
+      if (currentTimer) clearInterval(currentTimer);
+      currentTimer = setInterval(tick, 5000);
+    }, 30_000);
 
     return () => {
       stopped = true;
-      clearInterval(id);
+      if (currentTimer) clearInterval(currentTimer);
+      clearTimeout(slowdown);
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);
+      document.removeEventListener("touchstart", onTouch);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.isFriend]);
@@ -263,9 +275,12 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
               ➕ 加入 LINE 好友
             </a>
 
-            <p className="text-[12px] text-emerald-700 mb-3 leading-relaxed">
-              ✨ <strong>加完好友後回到這個畫面,系統會自動偵測,自己跳進遊戲</strong> ✨
-            </p>
+            <div className="mb-3 flex items-center justify-center gap-2 text-emerald-700">
+              <div className="w-3 h-3 border-2 border-emerald-700 border-t-transparent rounded-full animate-spin" />
+              <p className="text-[12px] leading-relaxed">
+                <strong>等您加好友 — 加完自動跳進遊戲</strong>
+              </p>
+            </div>
 
             <button
               onClick={async () => {
@@ -273,11 +288,12 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
               }}
               className="block w-full px-6 py-2.5 rounded-xl border-2 border-primary text-primary font-medium text-sm"
             >
-              ✓ 手動重新檢查(如果遲遲沒跳轉)
+              ✓ 手動重新檢查
             </button>
 
             <p className="mt-4 text-[11px] text-muted-foreground leading-relaxed">
-              系統每 5 秒自動檢查一次。如果加好友後 10 秒還沒跳,可以按上方手動檢查。
+              加完好友後切回這個畫面,系統會在 1-3 秒內自動偵測並進入遊戲。
+              如果超過 10 秒仍沒跳,可以按上方手動檢查。
             </p>
           </div>
         </div>
