@@ -101,8 +101,14 @@ router.post("/redeem", requireLiffAuth(), async (req: Request, res: Response) =>
         restaurant_id: result.restaurantId,
       });
     }
-    const status = result.reason === "already_used" ? 409 : result.reason === "expired" ? 410 : 404;
-    return res.status(status).json({ ok: false, reason: result.reason });
+    const status =
+      result.reason === "already_used" ? 409 :
+      result.reason === "expired" ? 410 :
+      result.reason === "server_error" ? 500 :
+      404;
+    // Tony 2026-05-22: forward `detail` so the customer's screen tells us
+    // what actually broke instead of the generic "QR Code 無效" mask.
+    return res.status(status).json({ ok: false, reason: result.reason, detail: result.detail });
   } catch (err) {
     console.error("[checkout-ticket/redeem] failed:", err);
     return res.status(500).json({ ok: false, reason: "server_error" });

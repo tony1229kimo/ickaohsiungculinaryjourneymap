@@ -802,7 +802,8 @@ export async function issueCheckoutTicket(
 
 export interface CheckoutRedeemResult {
   ok: boolean;
-  reason?: "not_found" | "expired" | "already_used";
+  reason?: "not_found" | "expired" | "already_used" | "server_error";
+  detail?: string;  // Tony 2026-05-22: surface real error so we stop guessing
   diceIssued?: number;
   amount?: number;
   restaurantId?: string | null;
@@ -896,10 +897,18 @@ export async function redeemCheckoutTicket(userId: string, token: string): Promi
 
     return { ok: true, diceIssued: row.dice_to_issue, amount: row.amount, restaurantId: row.restaurant_id };
   } catch (err) {
-    await client.query("ROLLBACK");
+    try {
+      await client.query("ROLLBACK");
+    } catch { /* connection might already be dead */ }
     client.release();
+    // Tony 2026-05-22: previously this swallowed every error as `not_found`,
+    // making it impossible to tell "row missing" apart from "INSERT INTO
+    // dice_pool failed" / "season-reset UPDATE crashed" / etc. Now we surface
+    // the real message so the frontend can show it and we can fix the actual
+    // problem instead of guessing.
+    const detail = err instanceof Error ? err.message : String(err);
     console.error("[redeemCheckoutTicket] failed:", err);
-    return { ok: false, reason: "not_found" };
+    return { ok: false, reason: "server_error", detail };
   }
 }
 

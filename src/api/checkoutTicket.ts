@@ -54,6 +54,7 @@ export async function issueCheckoutTicket(
 export interface RedeemResponse {
   ok: boolean;
   reason?: string;
+  detail?: string;
   dice_issued?: number;
   amount?: number;
   restaurant_id?: string | null;

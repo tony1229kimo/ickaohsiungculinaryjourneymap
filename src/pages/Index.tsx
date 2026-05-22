@@ -177,8 +177,11 @@ const Index = () => {
           already_used: "此 QR Code 已被使用過,請洽詢餐飲部人員重新取得",
           not_found: "QR Code 無效,請確認是 IC 員工所發",
           no_user: "請重新登入 LINE 後再試",
+          server_error: "後端錯誤,請截圖給 IT",
         };
-        setStatusMessage(reasonText[result.reason ?? ""] ?? `QR Code 驗證失敗 (${result.reason ?? "unknown"})`);
+        const baseMsg = reasonText[result.reason ?? ""] ?? `QR Code 驗證失敗 (${result.reason ?? "unknown"})`;
+        // Tony 2026-05-22: show real error detail to aid diagnosis
+        setStatusMessage(result.detail ? `${baseMsg}\n[${result.detail}]` : baseMsg);
         setStatusType("error");
       }
     })();
