@@ -568,6 +568,14 @@ const Index = () => {
           <QRScanner
             expectedCode={EXPECTED_QR_CODE}
             onSuccess={handleQRSuccess}
+            onTicketScanned={(token) => {
+              // Tony 2026-05-22: customer scanned a staff checkout / room-charge
+              // QR from inside LIFF. Close the scanner and inject ?ticket= so the
+              // existing auto-redeem effect (around line 155) picks it up.
+              setShowScanner(false);
+              searchParams.set("ticket", token);
+              setSearchParams(searchParams, { replace: true });
+            }}
             onClose={() => setShowScanner(false)}
           />
         )}

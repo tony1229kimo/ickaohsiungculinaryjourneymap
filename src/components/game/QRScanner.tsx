@@ -6,10 +6,18 @@ interface QRScannerProps {
   expectedCode: string;
   externalDomain?: string;
   onSuccess: () => void;
+  /**
+   * Tony 2026-05-22: customers already inside LIFF should be able to scan a
+   * staff-issued checkout / room-charge QR without leaving the app. Those QRs
+   * encode `https://.../?ticket=<token>`. When the scanner detects that URL
+   * pattern it calls onTicketScanned(token); the parent then sets ?ticket=
+   * in the URL and the existing useEffect in Index.tsx redeems it.
+   */
+  onTicketScanned?: (token: string) => void;
   onClose: () => void;
 }
 
-const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-map.zeabur.app", onSuccess, onClose }: QRScannerProps) => {
+const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-game-v2.zeabur.app", onSuccess, onTicketScanned, onClose }: QRScannerProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   // Tony 2026-05-22: keep this in state so it doesn't get cleared between renders.
@@ -35,19 +43,31 @@ const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-map.zeabur.a
             qrbox: { width: 250, height: 250 },
           },
           (decodedText) => {
-            // Check if scanned code matches expected text or is from external domain
+            // Priority 1: checkout / room-charge ticket URL (?ticket=<token>).
+            // Customer is already in LIFF and the staff just showed them a
+            // dynamic QR — extract the token and let the parent redeem it.
+            const ticketMatch = decodedText.match(/[?&]ticket=([A-Za-z0-9_-]+)/);
+            if (ticketMatch && onTicketScanned) {
+              stopScanner();
+              onTicketScanned(ticketMatch[1]);
+              return;
+            }
+
+            // Priority 2: restaurant QR — either the exact verification code
+            // (printed on table cards) or a URL pointing back to our domain.
             const isValid = decodedText === expectedCode ||
               (externalDomain && decodedText.includes(externalDomain));
             if (isValid) {
               stopScanner();
               onSuccess();
-            } else {
-              setError("QR Code 不正確，請掃描店家指定的 QR Code");
-              // Debounce: clear any pending timer before scheduling a new one,
-              // otherwise overlapping scans queue multiple re-renders that flash the UI.
-              if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
-              errorTimerRef.current = setTimeout(() => setError(null), 3000);
+              return;
             }
+
+            setError("QR Code 不正確，請對準店家 QR 或結帳 QR");
+            // Debounce: clear any pending timer before scheduling a new one,
+            // otherwise overlapping scans queue multiple re-renders that flash the UI.
+            if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+            errorTimerRef.current = setTimeout(() => setError(null), 3000);
           },
           () => {
             // Ignore scan failures (no QR in frame)
@@ -114,7 +134,7 @@ const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-map.zeabur.a
         className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-2xl"
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-foreground">掃描店家 QR Code</h3>
+          <h3 className="text-lg font-bold text-foreground">掃描 QR Code</h3>
           <button
             onClick={handleClose}
             className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted"
@@ -141,7 +161,7 @@ const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-map.zeabur.a
         </AnimatePresence>
 
         <p className="text-center text-sm text-muted-foreground mb-3">
-          {isScanning ? "📷 請將相機對準店家提供的 QR Code" : "正在啟動相機..."}
+          {isScanning ? "📷 請對準店家 QR 或結帳 QR" : "正在啟動相機..."}
         </p>
 
         {/* Manual code input — ALWAYS visible (Tony 2026-05-22).
