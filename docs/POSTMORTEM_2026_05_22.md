@@ -173,3 +173,100 @@ restaurant_id TEXT NOT NULL REFERENCES restaurants(id),
 ---
 
 *Tony 2026-05-22 22:30 → 隔天 13:00 · 從結帳 QR 全 redeem 失敗到完整流程跑通 🎉*
+
+---
+
+# Day 2 補記:2026-05-23 上線前最後拉鋸戰
+
+當天加了 **P0 強制加好友 / P1 領獎 push LINE / P2 補發 QR** 三大新功能,
+過程中又踩到 4 個微妙 bug。**全部記在這裡免得未來再採坑**。
+
+---
+
+## 🐛 Bug #6:`dedup ref` + `cancelled` flag 互鎖,UI 永遠卡在「正在驗證...」
+
+| | |
+|---|---|
+| **症狀** | 補發 QR 客人掃完後,LINE 收得到優惠券、後端日誌顯示 redeem 成功,**但 LIFF 畫面停在「⏳ 正在驗證掃描的 QR Code...」死不更新** |
+| **根因** | 我前一次為了修「StrictMode 雙呼叫導致 already_used」加了 `attemptedTokensRef` dedup,但**忘了拆掉舊的 `cancelled` flag**。StrictMode 雙 mount 時:Mount#1 加 ref + 啟動 async + `cancelled_1=false`;Cleanup#1 設 `cancelled_1=true`;Mount#2 看 ref 已有 → return(沒新 async);async-1 完成 → `if (cancelled_1) return;` → **永遠不 setStatusMessage** |
+| **修法** | 拆掉 `cancelled` flag。dedup ref 已經保證每個 token 只啟動一個 async,`cancelled` 是多餘的。React 18 hooks 在 unmount 後 setState 是 no-op,不會 crash 也不會 warning,所以可以放心拆 |
+| **Commit** | `73ae98b` |
+| **教訓** | **多個防護機制(ref dedup + flag cancellation)如果各管各的,容易產生意料外的 deadlock**。defensive 寫法不是疊越多越好,要想清楚每一層的責任界線。當你加一層新防護,先確認舊防護是否還必要 |
+
+---
+
+## 🐛 Bug #7:`/v2/bot/friendship/{userId}/status` LINE API 根本不存在
+
+| | |
+|---|---|
+| **症狀** | P0 加好友 gate 永遠把每個人都當「不是好友」並 fallback 成「假裝是好友」(degraded mode)→ 等於 gate 完全沒效果,**所有人都通過** |
+| **根因** | 我憑印象寫了 `GET /v2/bot/friendship/{userId}/status` 期望回 `{ friendFlag: bool }` — **這個 endpoint 在 LINE Messaging API 文件中根本不存在**。LINE 對所有 userId 都回 404 "Not found"。我的程式碼收到 404 視為「API 失敗」→ 進入 degraded 路徑 → 直接 isFriend:true 通過 |
+| **驗證** | 從 Zeabur backend terminal 用 node 打 LINE API,Tony 的 userId、Jessica 的 userId、隨機假 userId,**全部都回 404** → 確認 endpoint bogus |
+| **修法** | 改用 `GET /v2/bot/profile/{userId}` 當 friendship proxy:200 = 加過好友(treat as friend),404 = 從未互動(NOT friend)。caveat:加好友後又封鎖的人 profile 仍回 200,gate 會放行,但 push 會 silently fail — acceptable tradeoff |
+| **Commit** | `a5d1081` |
+| **教訓** | **寫 API 整合時憑印象太危險**。**先用 curl / node fetch 驗證 endpoint 真的回什麼**,再寫程式碼。如果 endpoint 文件查不到,要懷疑自己記錯。LINE 對「特定 user 是否為好友」沒有直接 endpoint,只有 follower list + bot profile lookup |
+
+---
+
+## 🐛 Bug #8:`INSERT INTO game_state (..., display_name, ...) VALUES (..., NULL, ...)` 違反 NOT NULL
+
+| | |
+|---|---|
+| **症狀** | 補發 QR 第一次掃,LIFF 顯示「❌後端錯誤,請截圖給 IT [null value in column "display_name" of relation "game_state" violates not-null constraint]」 |
+| **根因** | `game_state.display_name` schema 是 `TEXT NOT NULL DEFAULT ''`,但我的補發 redeem branch 寫的 INSERT **明確傳 `NULL`** → 違反 NOT NULL。**明確傳 NULL 會 bypass DEFAULT**,不是 "DEFAULT 救你" |
+| **修法** | INSERT 改成**省略 display_name 欄位**,讓 Postgres 自動套用 DEFAULT `''`。同時也省略 `total_points` / `claimed_tiles` — 它們的 DEFAULT 也合理。`ON CONFLICT DO UPDATE` 只動 `earned_rewards`,既有 row 的 display_name 不會被覆蓋 |
+| **Commit** | `39ddeec` |
+| **教訓** | **這就是 lessons_learned D05 的同一個 pattern**(新功能加進來時 schema 也要跟著改)。`NOT NULL DEFAULT ''` 看起來會自動填,**只有當你完全不寫該欄位時才會用 DEFAULT**。寫 `VALUES (..., NULL, ...)` 一定觸發 constraint。修法永遠是「不寫該欄位」或「明確傳合理值」,**不要傳 NULL** |
+
+---
+
+## 🐛 Bug #9:OmniChat 連結 stateless → 無限領券 + `GAME_BASE_URL` 環境變數 stale 指錯網域
+
+| | |
+|---|---|
+| **症狀 A** | 客人 LINE 對話視窗收到的補發優惠券 Flex 卡片,「領取優惠券」按鈕點一次拿一張券、點 N 次拿 N 張券 |
+| **症狀 B** | 修了症狀 A 加 wrapper token 後,客人點 wrapper 按鈕跳 404 HOSTNAME_NOT_FOUND |
+| **根因 A** | OmniChat 的 coupon bind URL (`api.omnichat.ai/restapi/v1/omo/bind/<id>`) 是**完全 stateless** 的,**沒有 per-user-per-coupon dedup**,點幾次發幾次券。LINE Flex 訊息會永遠留在對話歷史中 → 客人能無限重點 |
+| **根因 B** | 我寫 wrapper URL `${process.env.GAME_BASE_URL ?? 'https://ickhh-culinary-game-v2.zeabur.app'}/api/claim/{token}`。Tony 的 Zeabur 上 `GAME_BASE_URL` env var **還停在 v1 時期的 `ickhh-culinary-game.zeabur.app`**(沒 -v2)→ 那個網域早就停掉了 → 404。**而且就算網域對,/api/claim/* 是 backend 路由,frontend SPA 不會 proxy /api/* 給 backend**,所以指向 frontend 網域也是錯 |
+| **修法 A** | Migration 009 新建 `claim_tokens` 表;`pushRewardCoupon` 改成生成 token + INSERT + 把 Flex 按鈕的 URL 換成 `/api/claim/{token}`;backend `GET /api/claim/:token` 用 `UPDATE ... WHERE token=$1 AND claimed_at IS NULL RETURNING coupon_link` 的 atomic update 保證單次性 |
+| **修法 B** | wrapper URL 改寫死 `https://ickhh-culinary-api-v2.zeabur.app/api/claim/{token}` (api host, not game host),env override 仍可用 `CLAIM_BASE_URL`。已用過時 backend 直接 inline HTML 渲染「已領取」頁面,不跨網域 redirect |
+| **Commits** | `a723fe4`(wrapper)+ `4edf490`(404 fix + inline HTML + CTA banner) |
+| **教訓 #1** | **第三方 stateless URL 永遠假設它沒做你想要的 dedup**。要用自己的 token / nonce 包一層才能保證單次有效 |
+| **教訓 #2** | **環境變數遷移時必須同步更新所有地方**。Tony 從 v1 → v2 時更新了大部分 URL,但 `GAME_BASE_URL` 漏改 → 任何用到這個 var 的新功能都會打到 dead host |
+| **教訓 #3** | **Vite SPA 在 production build 不會自動把 /api/* proxy 到 backend**(只有 dev mode 的 vite.config.ts 會)。前端網域 + /api/* 路徑 = 404。要打 backend 一律用 backend 的公開網域 |
+
+---
+
+## ✨ 第 2 天新增的功能(順手記一下)
+
+| Commit | 功能 |
+|---|---|
+| `0e1f7f6` | **P0 加好友 gate** — Bot Profile API 檢查 + 沒加好友的 gate 頁面 |
+| `ceb30ff` | **P1 領獎自動推 LINE Flex** — saveGameState / claimTile 偵測 new earned_rewards 自動推送 |
+| `3878b7a` | **P2 後台補發** — `/admin/customers` modal 加補發按鈕 |
+| `a4959f0` → `dddb480` | **補發 mode 移到 `/admin/checkout`** — 跟 💳 / 🏨 並排同一頁,並改成「產 QR 給客人掃」流程(跟結帳 QR 同樣 UX) |
+| `df5da7b` | **gate 加好友後自動跳轉**(免按按鈕)— `visibilitychange` + `touchstart` + 1.5 秒 aggressive polling |
+| `4edf490` | **補發成功 CTA banner** — 大綠色「📨 打開 LINE 看我的優惠券」按鈕,點了 `liff.closeWindow()` |
+
+---
+
+## 📅 Day 2 commit timeline (重要的 9 個)
+
+```
+0e1f7f6  feat(P0): force-add LINE OA friend before entering game
+ceb30ff  feat(P1): auto-push reward coupons to LINE chat
+3878b7a  feat(P2): admin compensation grant in /admin/customers
+a5d1081  fix(P0): use Bot Profile API as friendship proxy (the bogus URL fix)
+a4959f0  feat(checkout): 補發 mode 進 /admin/checkout (PIN auth)
+dddb480  feat(checkout): 補發改成 QR 流程 (no customer search)
+39ddeec  fix(compensation): omit display_name on INSERT
+ebba118  fix(redeem): client-side dedup ref
+73ae98b  fix(redeem): remove cancelled flag (deadlock fix)
+df5da7b  feat(gate): aggressive 1.5s polling + touch trigger
+a723fe4  fix(coupons): single-use claim token wraps OmniChat link
+4edf490  fix(claim): wrapper URL 404 fix + LINE-jump CTA
+```
+
+---
+
+*Tony 2026-05-23 17:30 · 補發 QR 全流程上線就緒 ✅*
