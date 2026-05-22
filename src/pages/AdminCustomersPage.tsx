@@ -14,10 +14,13 @@ import {
   getStats,
   downloadCsv,
   ERR_TOKEN_EXPIRED,
+  listGrantableRewards,
+  grantReward,
   type CustomerProfile,
   type CustomerDetail,
   type StatsOverview,
   type SortField,
+  type RewardCatalogEntry,
 } from "@/api/customers";
 
 const SORT_OPTIONS: { value: SortField; label: string }[] = [
@@ -48,6 +51,7 @@ const fmtEvent = (e: { event_type: string; payload?: unknown }) => {
     roll: "🎲 擲骰",
     reward_lottery: "🎁 抽中獎品",
     reward_fixed: "⭐ 固定格獎勵",
+    reward_compensation: "📨 管理員補發",
     season_reset: "🔄 新季開始",
     invoice_redeem: "📄 客人自掃發票",
   } as Record<string, string>)[e.event_type] ?? e.event_type;
@@ -66,6 +70,12 @@ const AdminCustomersPage = () => {
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<CustomerDetail | null>(null);
+  // Tony 2026-05-23 P2: 管理員補發優惠券
+  const [rewardCatalog, setRewardCatalog] = useState<RewardCatalogEntry[]>([]);
+  const [grantRewardId, setGrantRewardId] = useState<string>("");
+  const [grantNote, setGrantNote] = useState<string>("");
+  const [grantBusy, setGrantBusy] = useState(false);
+  const [grantResult, setGrantResult] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   // Tony 2026-05-21: diagnostic — show what backend actually sees on 403
   const [whoami, setWhoami] = useState<unknown>(null);
@@ -161,8 +171,45 @@ const AdminCustomersPage = () => {
     try {
       const d = await getCustomer(userId);
       setSelected(d);
+      // Lazy-load the reward catalog the first time anyone opens a detail
+      if (rewardCatalog.length === 0) {
+        try {
+          const c = await listGrantableRewards();
+          setRewardCatalog(c.rewards);
+        } catch (err) {
+          console.warn("[admin] failed to load reward catalog:", err);
+        }
+      }
+      // Reset compensation form state per-customer
+      setGrantRewardId("");
+      setGrantNote("");
+      setGrantResult(null);
     } catch (err) {
       alert("載入客戶詳情失敗:" + (err as Error).message);
+    }
+  };
+
+  const handleGrantReward = async () => {
+    if (!selected || !grantRewardId) return;
+    setGrantBusy(true);
+    setGrantResult(null);
+    try {
+      const r = await grantReward(selected.profile.user_id, grantRewardId, grantNote.trim() || undefined);
+      if (r.ok) {
+        const pushNote = r.push_ok ? "✅ 已送達客人 LINE" : `⚠️ LINE 推送失敗(${r.push_reason ?? "未知"})— 客人可能尚未加好友。優惠券仍會出現在他遊戲畫面。`;
+        setGrantResult(`✅ 已補發「${r.reward?.name}」 · ${pushNote}`);
+        // Refresh customer detail so events timeline + earned rewards update
+        const refreshed = await getCustomer(selected.profile.user_id);
+        setSelected(refreshed);
+        setGrantRewardId("");
+        setGrantNote("");
+      } else {
+        setGrantResult(`❌ 失敗:${r.reason ?? "unknown"}`);
+      }
+    } catch (err) {
+      setGrantResult(`❌ 例外:${(err as Error).message}`);
+    } finally {
+      setGrantBusy(false);
     }
   };
 
@@ -494,6 +541,46 @@ const AdminCustomersPage = () => {
                   <Detail label="完成季數" value={String(selected.profile.total_seasons)} />
                   {selected.game_state && (
                     <Detail label="當前位置" value={`第 ${selected.game_state.total_points} 格`} />
+                  )}
+                </div>
+
+                {/* Tony 2026-05-23 P2: 補發優惠券 */}
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 space-y-2">
+                  <p className="text-xs font-bold text-amber-900">📨 補發優惠券</p>
+                  <p className="text-[10px] text-amber-800/80 leading-relaxed">
+                    給客戶補發指定優惠券 — 不會推進棋盤位置,只把券送到客人 LINE。需客人已加好友才能收到。
+                  </p>
+                  <select
+                    value={grantRewardId}
+                    onChange={(e) => setGrantRewardId(e.target.value)}
+                    disabled={grantBusy || rewardCatalog.length === 0}
+                    className="w-full px-2 py-1.5 rounded-lg border border-amber-300 bg-white text-xs"
+                  >
+                    <option value="">{rewardCatalog.length === 0 ? "載入中..." : "-- 請選擇要補發的優惠券 --"}</option>
+                    {rewardCatalog.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.shortName}  ·  {r.name}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="(選填)備註原因 — 例如:服務瑕疵補償"
+                    value={grantNote}
+                    onChange={(e) => setGrantNote(e.target.value)}
+                    disabled={grantBusy}
+                    maxLength={200}
+                    className="w-full px-2 py-1.5 rounded-lg border border-amber-300 bg-white text-xs"
+                  />
+                  <button
+                    onClick={handleGrantReward}
+                    disabled={grantBusy || !grantRewardId}
+                    className="w-full py-2 rounded-lg bg-amber-600 text-white text-xs font-bold disabled:opacity-50"
+                  >
+                    {grantBusy ? "發送中..." : "📨 確認補發"}
+                  </button>
+                  {grantResult && (
+                    <p className="text-[10px] leading-relaxed bg-white/70 rounded p-1.5 whitespace-pre-wrap">{grantResult}</p>
                   )}
                 </div>
 

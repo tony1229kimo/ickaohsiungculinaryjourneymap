@@ -155,6 +155,43 @@ export function getCsvExportUrl(): string {
   return `${API_BASE}/api/admin/customers/export.csv`;
 }
 
+// Tony 2026-05-23 P2: admin compensation grant
+export interface RewardCatalogEntry {
+  id: string;
+  source: "fixed_tile" | "lottery_chance" | "lottery_fate";
+  tile?: number;
+  name: string;
+  shortName: string;
+}
+
+export interface RewardCatalogResp {
+  rewards: RewardCatalogEntry[];
+}
+
+export async function listGrantableRewards(): Promise<RewardCatalogResp> {
+  const res = await authFetch(`${API_BASE}/api/admin/customers/_catalog/rewards`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+export interface GrantRewardResp {
+  ok: boolean;
+  reward?: { id: string; name: string };
+  push_ok?: boolean;
+  push_reason?: string | null;
+  reason?: string;
+}
+
+export async function grantReward(userId: string, rewardId: string, note?: string): Promise<GrantRewardResp> {
+  const res = await authFetch(`${API_BASE}/api/admin/customers/${encodeURIComponent(userId)}/grant-reward`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reward_id: rewardId, note }),
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok && data.ok === true, ...data };
+}
+
 export async function downloadCsv(): Promise<void> {
   const res = await authFetch(getCsvExportUrl());
   if (!res.ok) throw new Error(`HTTP ${res.status}`);

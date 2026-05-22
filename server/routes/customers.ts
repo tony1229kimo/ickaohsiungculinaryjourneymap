@@ -11,6 +11,16 @@ import { Router, type Request, type Response, type NextFunction } from "express"
 import { Pool } from "pg";
 import { requireLiffAuth } from "../middleware/liffAuth.js";
 import { isStaff } from "../db.js";
+import { GRANTABLE_REWARDS } from "../lib/rewardCatalog.js";
+import { pushRewardCoupon } from "../lib/linePush.js";
+
+// Tony 2026-05-23 P2: grant-reward + reward catalog endpoints require strict
+// staff whitelist (no URL-token bypass — granting coupons is a write op).
+// We define a small helper to spread the (liffAuth, requireStaffWhitelist)
+// pair into router middleware slots.
+function staffAuthChain() {
+  return [liffAuth, requireStaffWhitelist] as const;
+}
 
 const router = Router();
 const liffAuth = requireLiffAuth();
@@ -220,6 +230,108 @@ router.get("/:userId", gateRead, async (req, res) => {
     profile: prof.rows[0],
     events: events.rows,
     game_state: game.rows[0] ?? null,
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// GET /api/admin/customers/_catalog/rewards
+// List of all rewards an admin can grant via the compensation flow.
+// Excludes tile 15 (大獎) per Tony's spec.
+// ─────────────────────────────────────────────────────────────────
+router.get("/_catalog/rewards", ...staffAuthChain(), async (_req, res) => {
+  // Return the catalog with the coupon link redacted — admin only needs name+id
+  res.json({
+    rewards: GRANTABLE_REWARDS.map((r) => ({
+      id: r.id,
+      source: r.source,
+      tile: r.tile,
+      name: r.name,
+      shortName: r.shortName,
+    })),
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// POST /api/admin/customers/:userId/grant-reward
+// Tony 2026-05-23 P2: admin manually grants a coupon to a customer
+// WITHOUT advancing the customer's board position. Used for service
+// recovery — guest had bad experience, comp them a $500 coupon without
+// requiring them to play through.
+//
+// Body: { reward_id: "fixed_6" | "chance_1" | ..., note?: string }
+// Effects:
+//   1) Push the reward Flex message to the customer's LINE chat
+//   2) Append a record to game_state.earned_rewards (so the LIFF page
+//      also shows it under "已獲得獎項")
+//   3) Insert a customer_events row event_type="reward_compensation"
+//      with payload { reward_id, reward_name, granted_by, note }
+//   4) Increment customer_profiles.total_rewards_earned
+// Does NOT touch total_points / claimed_tiles — the board stays put.
+// ─────────────────────────────────────────────────────────────────
+router.post("/:userId/grant-reward", ...staffAuthChain(), async (req, res) => {
+  const customerUserId = req.params.userId;
+  const rewardId = String(req.body?.reward_id ?? "");
+  const note = typeof req.body?.note === "string" ? req.body.note.slice(0, 200) : null;
+
+  const reward = GRANTABLE_REWARDS.find((r) => r.id === rewardId);
+  if (!reward) {
+    return res.status(400).json({ ok: false, reason: "invalid_reward_id" });
+  }
+
+  // Verify customer exists
+  const prof = await pool.query(`SELECT user_id FROM customer_profiles WHERE user_id = $1`, [customerUserId]);
+  if (prof.rowCount === 0) {
+    return res.status(404).json({ ok: false, reason: "customer_not_found" });
+  }
+
+  // Identify the operating staff (the LIFF userId from auth)
+  const grantedBy = (req as Request & { lineUserId?: string }).lineUserId ?? "unknown";
+
+  // Step 1: push the coupon. If this fails (e.g. customer hasn't added the
+  // OA as friend), we still record the grant — admin can see push status.
+  const push = await pushRewardCoupon("KH", {
+    customerUserId,
+    rewardName: reward.name,
+    couponLink: reward.couponLink,
+    compensationNote: note ?? undefined,
+  });
+
+  // Step 2: append to earned_rewards (so LIFF UI also reflects it).
+  // Shape mirrors LotteryResult so frontend can render uniformly.
+  const earnedRewardEntry = {
+    type: "compensation",
+    reward: { id: reward.id, name: reward.name, icon: "🎁" },
+    source: reward.source,
+    grantedBy,
+    grantedAt: new Date().toISOString(),
+    note,
+  };
+  await pool.query(
+    `UPDATE game_state
+     SET earned_rewards = COALESCE(earned_rewards, '[]'::jsonb) || $1::jsonb,
+         updated_at = NOW()
+     WHERE user_id = $2`,
+    [JSON.stringify([earnedRewardEntry]), customerUserId],
+  );
+
+  // Step 3: customer_events audit log
+  await pool.query(
+    `INSERT INTO customer_events (user_id, event_type, payload)
+     VALUES ($1, 'reward_compensation', $2::jsonb)`,
+    [customerUserId, JSON.stringify({ reward_id: reward.id, reward_name: reward.name, granted_by: grantedBy, note, push_ok: push.ok, push_reason: push.ok ? null : push.reason })],
+  );
+
+  // Step 4: counter
+  await pool.query(
+    `UPDATE customer_profiles SET total_rewards_earned = total_rewards_earned + 1 WHERE user_id = $1`,
+    [customerUserId],
+  );
+
+  return res.json({
+    ok: true,
+    reward: { id: reward.id, name: reward.name },
+    push_ok: push.ok,
+    push_reason: push.ok ? null : push.reason,
   });
 });
 
