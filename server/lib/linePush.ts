@@ -33,8 +33,17 @@ interface RewardCouponPayload {
  * non-friends can't receive any coupon push, defeating the whole reward
  * mechanic.
  *
- * LINE API: GET /v2/bot/friendship/{userId}/status
- * Auth: Messaging API Channel access token (same one used by pushGameInvite).
+ * Implementation note: LINE Messaging API does NOT expose a direct
+ * "is this specific user a friend" endpoint. The closest reliable proxy is
+ * `GET /v2/bot/profile/{userId}`:
+ *   - 200 → the user has interacted with this OA (i.e. has at some point
+ *     added it as a friend). Treat as friend.
+ *   - 404 → the OA has no record of this user. Treat as NOT a friend.
+ *   - other → degraded, caller defaults to friend so we don't lock people out.
+ *
+ * Caveat: a user who added and then BLOCKED the OA still returns 200 here.
+ * Their friendship is functionally broken but our gate would let them
+ * through; subsequent reward push attempts will then fail and be logged.
  */
 export async function checkFriendship(
   hotelId: string,
@@ -46,15 +55,13 @@ export async function checkFriendship(
     return { ok: false, reason: `${tokenEnv} not configured` };
   }
   try {
-    const resp = await fetch(`https://api.line.me/v2/bot/friendship/${encodeURIComponent(userId)}/status`, {
+    const resp = await fetch(`https://api.line.me/v2/bot/profile/${encodeURIComponent(userId)}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!resp.ok) {
-      const errBody = await resp.text().catch(() => "");
-      return { ok: false, reason: `HTTP ${resp.status} ${errBody.slice(0, 200)}` };
-    }
-    const data = (await resp.json()) as { friendFlag?: boolean };
-    return { ok: true, isFriend: !!data.friendFlag };
+    if (resp.status === 200) return { ok: true, isFriend: true };
+    if (resp.status === 404) return { ok: true, isFriend: false };
+    const errBody = await resp.text().catch(() => "");
+    return { ok: false, reason: `HTTP ${resp.status} ${errBody.slice(0, 200)}` };
   } catch (err) {
     return { ok: false, reason: err instanceof Error ? err.message : String(err) };
   }
