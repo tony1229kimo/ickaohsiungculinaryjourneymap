@@ -153,7 +153,23 @@ restaurant_id TEXT NOT NULL REFERENCES restaurants(id),
 | `cde1ba0` | Bug #2 修:LIFF scanner now also handles checkout/room-charge QRs |
 | `a1e5906` | Bug #3a 修:surface real error from redeemCheckoutTicket catch |
 | `2746c85` | Bug #3b 修:drop NOT NULL on dice_pool.restaurant_id |
+| `af58d50` | 本份 postmortem 建檔 |
+| `6c7fc88` | Bug #5a 修:小白單日期格式正規化 + surface vision date in stale rejection |
+| `d5fd8fd` | Bug #5b UX:拍照畫面加「鏡頭近拍」提示 |
 
 ---
 
-*Tony 2026-05-22 22:30 · 終於成功兌換第一張結帳 QR 🎉*
+## 🐛 Bug #5(隔天 13:00 補):小白單 OCR 拍太遠 → 假過期
+
+| | |
+|---|---|
+| **症狀** | 今天 (2026-05-22 11:54) 開立的小白單,2 小時後 (13:55) 拍照上傳,顯示「單據日期過期,只能使用今天/昨天的小白單」 |
+| **根因(Tony 自己抓到)** | OCR 在鏡頭離小白單遠 / 字小 / 光線一般時,讀 date 字串會錯位或漏字。Vision 回非預期日期字串 → backend 跟 today/yesterday 比對 false → 誤判 stale |
+| **修法 A(後端防禦性)** | `normalizeDateIso()` 處理 vision 偶爾回 `2026/05/22`、民國 `115-05-22` 等變體 |
+| **修法 B(可觀測性)** | `stale_invoice` 回傳的 `detail` 帶上 `vision_date / normalized / today / yesterday`,未來 debug 不用再猜 |
+| **修法 C(UX,實際解掉問題的關鍵)** | ReceiptCapture 畫面在 file picker 上方加橘色 hint banner:「📸 鏡頭盡量靠近小白單,確認日期/總計/發票號碼看得清楚。離太遠 OCR 會讀不到日期,系統會誤判成過期」 |
+| **教訓** | **OCR 不是萬能,UI 層的拍照指引比後端 fallback 更直接解決問題**。後端 fallback 處理沒拍清楚的圖,UI 提示避免一開始就拍不清楚。兩個都要,但 UI 提示是最低成本最高 ROI 的修法 |
+
+---
+
+*Tony 2026-05-22 22:30 → 隔天 13:00 · 從結帳 QR 全 redeem 失敗到完整流程跑通 🎉*
