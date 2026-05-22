@@ -18,7 +18,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
-import { issueCheckoutTicket, type TicketSource } from "@/api/checkoutTicket";
+import {
+  issueCheckoutTicket,
+  listRecentCustomers,
+  listStaffRewards,
+  staffGrantReward,
+  type TicketSource,
+  type RecentCustomer,
+  type StaffRewardEntry,
+} from "@/api/checkoutTicket";
+
+// Tony 2026-05-23: third mode 補發優惠券 lives on this same page so 可愛員工
+// don't have to learn another URL. "compensation" is the unified mode key.
+type PageMode = TicketSource | "compensation";
 
 const PIN_CACHE_KEY = "ickhh.staff_pin";
 // The customer scans QR with LINE camera → opens external browser → LIFF.
@@ -28,11 +40,34 @@ const gameOrigin = () => window.location.origin;
 
 const TICKET_TTL_MIN = 2; // sync with server CHECKOUT_TICKET_TTL_SEC=120
 
+// Tony 2026-05-23: compact "10m ago" style for the customer picker dropdown
+function fmtRelativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diffMs / 60000);
+  if (m < 1) return "剛剛";
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
 const AdminCheckoutQRPage = () => {
   const [pin, setPin] = useState<string>(() => sessionStorage.getItem(PIN_CACHE_KEY) ?? "");
   const [pinLocked, setPinLocked] = useState<boolean>(!!sessionStorage.getItem(PIN_CACHE_KEY));
   // Tony 2026-05-21: "checkout" = 一般結帳 (需發票), "room_charge" = 掛房帳 (免發票)
-  const [mode, setMode] = useState<TicketSource>("checkout");
+  // Tony 2026-05-23: "compensation" = 補發優惠券
+  const [mode, setMode] = useState<PageMode>("checkout");
+  // Compensation mode state
+  const [customers, setCustomers] = useState<RecentCustomer[]>([]);
+  const [customersLoaded, setCustomersLoaded] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [rewardCatalog, setRewardCatalog] = useState<StaffRewardEntry[]>([]);
+  const [selectedRewardId, setSelectedRewardId] = useState<string>("");
+  const [compNote, setCompNote] = useState("");
+  const [compBusy, setCompBusy] = useState(false);
+  const [compResult, setCompResult] = useState<string | null>(null);
   const [invoiceInput, setInvoiceInput] = useState("");
   const [amountInput, setAmountInput] = useState("");
   const [issuing, setIssuing] = useState(false);
@@ -47,6 +82,54 @@ const AdminCheckoutQRPage = () => {
     const id = setInterval(() => setNow(Date.now()), 500);
     return () => clearInterval(id);
   }, [ticket]);
+
+  // Tony 2026-05-23: lazy-load customers + reward catalog the first time
+  // staff switches to compensation mode (or on PIN unlock if already in mode).
+  useEffect(() => {
+    if (mode !== "compensation" || !pinLocked || customersLoaded) return;
+    void (async () => {
+      const [cust, rew] = await Promise.all([
+        listRecentCustomers(pin),
+        listStaffRewards(pin),
+      ]);
+      if (cust.ok && cust.customers) setCustomers(cust.customers);
+      if (rew.ok && rew.rewards) setRewardCatalog(rew.rewards);
+      setCustomersLoaded(true);
+    })();
+  }, [mode, pinLocked, pin, customersLoaded]);
+
+  // Server-side search when query length > 0 — debounced
+  useEffect(() => {
+    if (mode !== "compensation" || !pinLocked || !customerSearch.trim()) return;
+    const handle = setTimeout(async () => {
+      const r = await listRecentCustomers(pin, customerSearch.trim());
+      if (r.ok && r.customers) setCustomers(r.customers);
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [customerSearch, mode, pinLocked, pin]);
+
+  const handleGrantCompensation = async () => {
+    if (!selectedCustomerId || !selectedRewardId) return;
+    setCompBusy(true);
+    setCompResult(null);
+    try {
+      const r = await staffGrantReward(pin, selectedCustomerId, selectedRewardId, compNote.trim() || undefined);
+      if (r.ok) {
+        const pushMsg = r.push_ok
+          ? "✅ 優惠券已送達客人 LINE 聊天視窗"
+          : `⚠️ LINE 推送失敗 (${r.push_reason ?? "未知"}) — 客人可能尚未加好友,但補發紀錄已存`;
+        setCompResult(`✅ 已補發「${r.reward?.name}」給 ${r.customer_name ?? "(無名)"}\n${pushMsg}`);
+        setSelectedRewardId("");
+        setCompNote("");
+      } else {
+        setCompResult(`❌ 失敗:${r.reason ?? "unknown"}`);
+      }
+    } catch (err) {
+      setCompResult(`❌ 例外:${(err as Error).message}`);
+    } finally {
+      setCompBusy(false);
+    }
+  };
 
   const dicePreview = useMemo(() => {
     const n = parseInt(amountInput, 10);
@@ -195,17 +278,27 @@ const AdminCheckoutQRPage = () => {
   }
 
   const isRoomCharge = mode === "room_charge";
+  const isCompensation = mode === "compensation";
+
+  // Filter customers client-side when no server search is active
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearch.trim()) return customers;
+    const q = customerSearch.trim().toLowerCase();
+    return customers.filter((c) => (c.display_name ?? "").toLowerCase().includes(q));
+  }, [customers, customerSearch]);
 
   return (
     <div className={`min-h-screen p-4 ${
-      isRoomCharge
+      isCompensation
+        ? "bg-gradient-to-b from-emerald-50 to-teal-100"
+        : isRoomCharge
         ? "bg-gradient-to-b from-sky-50 to-indigo-100"
         : "bg-gradient-to-b from-amber-50 to-orange-100"
     }`}>
       <div className="mx-auto max-w-sm">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-lg font-bold">
-            {isRoomCharge ? "🏨 掛房帳 QR" : "💳 結帳 QR"}
+            {isCompensation ? "📨 補發優惠券" : isRoomCharge ? "🏨 掛房帳 QR" : "💳 結帳 QR"}
           </h1>
           <button
             onClick={handleLogout}
@@ -215,13 +308,13 @@ const AdminCheckoutQRPage = () => {
           </button>
         </div>
 
-        {/* Tony 2026-05-21: mode toggle — 結帳 vs 掛房帳. Hidden in QR view to
-            avoid mid-flow switching that would invalidate the just-shown token. */}
+        {/* Tony 2026-05-21: mode toggle — 結帳 / 掛房帳 / 補發. Hidden in QR
+            view to avoid mid-flow switching that would invalidate the token. */}
         {!ticket && (
-          <div className="mb-3 grid grid-cols-2 gap-2 rounded-xl bg-white/60 p-1 shadow-sm">
+          <div className="mb-3 grid grid-cols-3 gap-1.5 rounded-xl bg-white/60 p-1 shadow-sm">
             <button
               onClick={() => { setMode("checkout"); setError(null); setDuplicateInfo(null); }}
-              className={`rounded-lg py-2 text-sm font-medium transition-colors ${
+              className={`rounded-lg py-2 text-xs font-medium transition-colors ${
                 mode === "checkout"
                   ? "bg-amber-500 text-white shadow"
                   : "text-amber-900 hover:bg-amber-100"
@@ -231,7 +324,7 @@ const AdminCheckoutQRPage = () => {
             </button>
             <button
               onClick={() => { setMode("room_charge"); setError(null); setDuplicateInfo(null); }}
-              className={`rounded-lg py-2 text-sm font-medium transition-colors ${
+              className={`rounded-lg py-2 text-xs font-medium transition-colors ${
                 mode === "room_charge"
                   ? "bg-indigo-600 text-white shadow"
                   : "text-indigo-900 hover:bg-indigo-100"
@@ -239,11 +332,116 @@ const AdminCheckoutQRPage = () => {
             >
               🏨 掛房帳
             </button>
+            <button
+              onClick={() => { setMode("compensation"); setError(null); setDuplicateInfo(null); setCompResult(null); }}
+              className={`rounded-lg py-2 text-xs font-medium transition-colors ${
+                mode === "compensation"
+                  ? "bg-emerald-600 text-white shadow"
+                  : "text-emerald-900 hover:bg-emerald-100"
+              }`}
+            >
+              📨 補發
+            </button>
           </div>
         )}
 
         <AnimatePresence mode="wait">
-          {!ticket ? (
+          {isCompensation ? (
+            <motion.div
+              key="compensation"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="rounded-2xl bg-card p-5 shadow-lg space-y-3"
+            >
+              <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-[12px] text-emerald-900 leading-relaxed">
+                📨 <strong>補發優惠券</strong> — 給客人補一張電子優惠券,
+                <strong>不會推進棋盤位置</strong>。客人 LINE 聊天視窗會直接收到券。
+              </div>
+
+              {/* Customer picker */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5">
+                  選擇客戶 <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="輸入客戶 LINE 名稱搜尋..."
+                  value={customerSearch}
+                  onChange={(e) => setCustomerSearch(e.target.value)}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm mb-1.5"
+                />
+                <select
+                  value={selectedCustomerId}
+                  onChange={(e) => setSelectedCustomerId(e.target.value)}
+                  disabled={!customersLoaded || compBusy}
+                  size={5}
+                  className="w-full rounded-lg border border-input bg-background px-2 py-1 text-sm"
+                >
+                  {!customersLoaded && <option value="">載入中...</option>}
+                  {customersLoaded && filteredCustomers.length === 0 && <option value="">(無結果 — 試試其他關鍵字)</option>}
+                  {filteredCustomers.map((c) => (
+                    <option key={c.user_id} value={c.user_id}>
+                      {c.display_name ?? "(無名)"} · NT${c.total_spend.toLocaleString()} · {fmtRelativeTime(c.last_seen_at)}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-[10px] text-muted-foreground">最近活動的前 50 位客戶 · 用上方輸入框搜尋</p>
+              </div>
+
+              {/* Reward picker */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5">
+                  要補發的優惠券 <span className="text-destructive">*</span>
+                </label>
+                <select
+                  value={selectedRewardId}
+                  onChange={(e) => setSelectedRewardId(e.target.value)}
+                  disabled={rewardCatalog.length === 0 || compBusy}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">{rewardCatalog.length === 0 ? "載入中..." : "-- 請選擇優惠券 --"}</option>
+                  {rewardCatalog.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.shortName}  ·  {r.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Note */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5">備註原因(選填)</label>
+                <input
+                  type="text"
+                  placeholder="例:服務瑕疵補償 / 客訴處理"
+                  value={compNote}
+                  onChange={(e) => setCompNote(e.target.value)}
+                  disabled={compBusy}
+                  maxLength={200}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+
+              <button
+                onClick={handleGrantCompensation}
+                disabled={compBusy || !selectedCustomerId || !selectedRewardId}
+                className="w-full rounded-lg bg-emerald-600 text-white py-3 font-semibold disabled:opacity-50"
+              >
+                {compBusy ? "送出中..." : "📨 確認補發"}
+              </button>
+
+              {compResult && (
+                <div className="rounded-lg bg-muted/50 px-3 py-2 text-[11px] whitespace-pre-wrap leading-relaxed">
+                  {compResult}
+                </div>
+              )}
+
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                ⚠️ 客人必須已加 IC 高雄 LINE 好友才收得到 LINE 訊息。若還沒加,優惠券仍會出現在他遊戲畫面內。
+              </p>
+            </motion.div>
+          ) : !ticket ? (
             <motion.div
               key="form"
               initial={{ opacity: 0 }}

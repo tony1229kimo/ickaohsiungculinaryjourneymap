@@ -23,8 +23,18 @@
  */
 
 import { Router, type Request, type Response, type NextFunction } from "express";
+import { Pool } from "pg";
 import { requireLiffAuth } from "../middleware/liffAuth.js";
 import { issueCheckoutTicket, redeemCheckoutTicket } from "../db.js";
+import { GRANTABLE_REWARDS } from "../lib/rewardCatalog.js";
+import { pushRewardCoupon } from "../lib/linePush.js";
+
+// Tony 2026-05-23: dedicated pool for the compensation endpoints — same shape
+// as customers.ts's pool, kept local so the routes file is self-contained.
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.PGSSLMODE === "require" ? { rejectUnauthorized: false } : false,
+});
 
 const router = Router();
 
@@ -113,6 +123,116 @@ router.post("/redeem", requireLiffAuth(), async (req: Request, res: Response) =>
     console.error("[checkout-ticket/redeem] failed:", err);
     return res.status(500).json({ ok: false, reason: "server_error" });
   }
+});
+
+// ─────────────────────────────────────────────────────────────────
+// Tony 2026-05-23: 補發優惠券 — same /admin/checkout page, just a third
+// mode beside 一般結帳 / 掛房帳. Uses staff PIN auth (NOT LIFF whitelist)
+// so 可愛員工 don't have to log into LINE on every shift.
+// ─────────────────────────────────────────────────────────────────
+
+// GET /api/checkout-ticket/rewards — catalog of grantable rewards.
+router.get("/rewards", requireStaffPin, async (_req, res) => {
+  res.json({
+    rewards: GRANTABLE_REWARDS.map((r) => ({
+      id: r.id,
+      source: r.source,
+      tile: r.tile,
+      name: r.name,
+      shortName: r.shortName,
+    })),
+  });
+});
+
+// POST /api/checkout-ticket/recent-customers — list recently-active customers
+// for the staff to pick from when compensating. Limited to 50 most recent.
+// Optional ?q=<text> filter on display_name (ILIKE).
+router.post("/recent-customers", requireStaffPin, async (req: Request, res: Response) => {
+  const search = typeof req.body?.q === "string" ? req.body.q.trim() : "";
+  const params: unknown[] = [];
+  let whereClause = "";
+  if (search) {
+    params.push(`%${search}%`);
+    whereClause = `WHERE display_name ILIKE $1`;
+  }
+  const q = await pool.query(
+    `SELECT user_id, display_name, last_seen_at, total_visits, total_spend
+     FROM customer_profiles
+     ${whereClause}
+     ORDER BY last_seen_at DESC
+     LIMIT 50`,
+    params,
+  );
+  res.json({ customers: q.rows });
+});
+
+// POST /api/checkout-ticket/grant-reward — compensation grant from the
+// staff-facing checkout page. Mirrors /api/admin/customers/:id/grant-reward
+// but uses PIN auth instead of LIFF+whitelist.
+// Body: { pin, user_id, reward_id, note? }
+router.post("/grant-reward", requireStaffPin, async (req: Request, res: Response) => {
+  const customerUserId = String(req.body?.user_id ?? "").trim();
+  const rewardId = String(req.body?.reward_id ?? "").trim();
+  const note = typeof req.body?.note === "string" ? req.body.note.slice(0, 200) : null;
+
+  if (!customerUserId || !/^U[0-9a-f]{32}$/i.test(customerUserId)) {
+    return res.status(400).json({ ok: false, reason: "invalid_user_id" });
+  }
+  const reward = GRANTABLE_REWARDS.find((r) => r.id === rewardId);
+  if (!reward) {
+    return res.status(400).json({ ok: false, reason: "invalid_reward_id" });
+  }
+
+  const prof = await pool.query(`SELECT user_id, display_name FROM customer_profiles WHERE user_id = $1`, [customerUserId]);
+  if (prof.rowCount === 0) {
+    return res.status(404).json({ ok: false, reason: "customer_not_found" });
+  }
+
+  // 1) Push to LINE (best-effort — record the grant even if push fails)
+  const push = await pushRewardCoupon("KH", {
+    customerUserId,
+    rewardName: reward.name,
+    couponLink: reward.couponLink,
+    compensationNote: note ?? undefined,
+  });
+
+  // 2) Append to game_state.earned_rewards (board untouched)
+  const earnedRewardEntry = {
+    type: "compensation",
+    reward: { id: reward.id, name: reward.name, icon: "🎁" },
+    source: reward.source,
+    grantedBy: "staff_pin",
+    grantedAt: new Date().toISOString(),
+    note,
+  };
+  await pool.query(
+    `UPDATE game_state
+     SET earned_rewards = COALESCE(earned_rewards, '[]'::jsonb) || $1::jsonb,
+         updated_at = NOW()
+     WHERE user_id = $2`,
+    [JSON.stringify([earnedRewardEntry]), customerUserId],
+  );
+
+  // 3) Audit log
+  await pool.query(
+    `INSERT INTO customer_events (user_id, event_type, payload)
+     VALUES ($1, 'reward_compensation', $2::jsonb)`,
+    [customerUserId, JSON.stringify({ reward_id: reward.id, reward_name: reward.name, granted_by: "staff_pin", note, push_ok: push.ok, push_reason: push.ok ? null : push.reason })],
+  );
+
+  // 4) Counter
+  await pool.query(
+    `UPDATE customer_profiles SET total_rewards_earned = total_rewards_earned + 1 WHERE user_id = $1`,
+    [customerUserId],
+  );
+
+  return res.json({
+    ok: true,
+    customer_name: prof.rows[0].display_name ?? null,
+    reward: { id: reward.id, name: reward.name },
+    push_ok: push.ok,
+    push_reason: push.ok ? null : push.reason,
+  });
 });
 
 export default router;
