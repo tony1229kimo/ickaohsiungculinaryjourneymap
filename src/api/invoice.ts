@@ -26,6 +26,7 @@ export interface InvoiceRedeemResponse {
     | "not_ic_kaohsiung"
     | "not_a_receipt";
   error?: string;  // populated on server_error
+  detail?: string; // Tony 2026-05-22: surface stale_invoice diagnosis (vision_date / today)
 }
 
 export async function redeemInvoice(rawQR: string): Promise<InvoiceRedeemResponse> {

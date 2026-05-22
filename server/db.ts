@@ -445,6 +445,34 @@ function taipeiTwoDayWindow(): { today: string; yesterday: string } {
   };
 }
 
+/**
+ * Tony 2026-05-22: vision sometimes returns YYYY/MM/DD, MM/DD/YYYY, or
+ * single-digit months. Normalize to YYYY-MM-DD before comparing against
+ * the today/yesterday window. Returns null if unparseable.
+ */
+function normalizeDateIso(raw: string | null | undefined): string | null {
+  if (!raw || typeof raw !== "string") return null;
+  const s = raw.trim().replace(/\//g, "-").replace(/\./g, "-");
+
+  // Already YYYY-MM-DD (or YYYY-M-D)
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) {
+    return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+  }
+  // M-D-YYYY (US style)
+  m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (m) {
+    return `${m[3]}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}`;
+  }
+  // ROC: 115-05-22 (民國)
+  m = s.match(/^(\d{2,3})-(\d{1,2})-(\d{1,2})$/);
+  if (m && parseInt(m[1], 10) < 200) {
+    const year = parseInt(m[1], 10) + 1911;
+    return `${year}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+  }
+  return null;
+}
+
 export interface ParsedInvoice {
   invoiceNo: string;
   invoiceDate: string;
@@ -616,6 +644,7 @@ export interface ReceiptRedeemInput {
 export interface ReceiptRedeemResult {
   ok: boolean;
   reason?: InvoiceRedeemResult["reason"];
+  detail?: string;  // Tony 2026-05-22: surface raw + normalized date for stale_invoice diagnosis
   diceIssued?: number;
   amount?: number;
   restaurantId?: string;
@@ -627,9 +656,17 @@ export async function redeemReceiptImage(userId: string, input: ReceiptRedeemInp
   // Apply the same triple-lock as the e-invoice path, minus seller_vat (the POS
   // slip doesn't print 統編 — IC branding visual check on the image is the
   // replacement, already enforced in receiptVision.analyzeReceipt).
+  // Tony 2026-05-22: normalize first — vision sometimes returns YYYY/MM/DD or
+  // other variants that don't string-equal the YYYY-MM-DD window.
   const { today, yesterday } = taipeiTwoDayWindow();
-  if (dateIso !== today && dateIso !== yesterday) {
-    return { ok: false, reason: "stale_invoice", amount: totalAmount };
+  const normalized = normalizeDateIso(dateIso);
+  if (!normalized || (normalized !== today && normalized !== yesterday)) {
+    return {
+      ok: false,
+      reason: "stale_invoice",
+      amount: totalAmount,
+      detail: `vision_date='${dateIso}' normalized='${normalized}' today='${today}' yesterday='${yesterday}'`,
+    };
   }
 
   const diceIssued = Math.min(Math.floor(totalAmount / DICE_PER_2000), DICE_CAP);

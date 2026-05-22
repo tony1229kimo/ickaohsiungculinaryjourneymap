@@ -101,7 +101,10 @@ const ReceiptCapture = ({ onSuccess, onClose }: Props) => {
       return;
     }
     const baseMsg = REASON_TEXT[result.reason ?? ""] ?? `兌換失敗:${result.reason ?? "未知"}`;
-    setError(baseMsg + (result.error ? ` (${result.error})` : ""));
+    // Tony 2026-05-22: also surface `detail` (e.g. stale_invoice gives the
+    // parsed-date / today/yesterday window so we can see why it rejected).
+    const extra = result.error ?? result.detail;
+    setError(baseMsg + (extra ? `\n[${extra}]` : ""));
     setFailureCount((c) => c + 1);
   };
 

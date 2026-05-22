@@ -140,7 +140,7 @@ router.post("/redeem-receipt", requireLiffAuth(), async (req: Request, res: Resp
       result.reason === "amount_below_threshold" ? 400 :
       result.reason === "stale_invoice" ? 410 :
       422;
-    return res.status(httpStatus).json({ ok: false, reason: result.reason, amount: result.amount });
+    return res.status(httpStatus).json({ ok: false, reason: result.reason, amount: result.amount, detail: result.detail });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error("[invoice/redeem-receipt] uncaught:", err);
