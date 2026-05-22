@@ -168,9 +168,16 @@ const Index = () => {
       setSearchParams(searchParams, { replace: true });
 
       if (result.ok) {
-        await refetchDice();
-        setStatusMessage(`✅ 結帳 QR 已兌換!您獲得 ${result.dice_issued ?? "?"} 次擲骰機會`);
-        setStatusType("success");
+        if (result.compensation) {
+          // Tony 2026-05-23: compensation tickets grant a coupon, not dice
+          setStatusMessage(`🎁 已收到補發優惠券:${result.reward_name ?? "(未知獎品)"}\n請查看 LINE 聊天視窗`);
+          setStatusType("success");
+          // No dice refetch needed — the coupon goes via LINE chat + earned_rewards
+        } else {
+          await refetchDice();
+          setStatusMessage(`✅ 結帳 QR 已兌換!您獲得 ${result.dice_issued ?? "?"} 次擲骰機會`);
+          setStatusType("success");
+        }
       } else {
         const reasonText: Record<string, string> = {
           expired: "此 QR Code 已過期,請洽詢餐飲部人員重新取得",

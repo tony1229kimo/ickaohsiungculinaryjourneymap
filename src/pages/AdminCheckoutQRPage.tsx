@@ -20,11 +20,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import {
   issueCheckoutTicket,
-  listRecentCustomers,
+  issueCompensationTicket,
   listStaffRewards,
-  staffGrantReward,
   type TicketSource,
-  type RecentCustomer,
   type StaffRewardEntry,
 } from "@/api/checkoutTicket";
 
@@ -56,22 +54,18 @@ const AdminCheckoutQRPage = () => {
   const [pin, setPin] = useState<string>(() => sessionStorage.getItem(PIN_CACHE_KEY) ?? "");
   const [pinLocked, setPinLocked] = useState<boolean>(!!sessionStorage.getItem(PIN_CACHE_KEY));
   // Tony 2026-05-21: "checkout" = 一般結帳 (需發票), "room_charge" = 掛房帳 (免發票)
-  // Tony 2026-05-23: "compensation" = 補發優惠券
+  // Tony 2026-05-23: "compensation" = 補發優惠券 (產 QR 給客人掃,跟結帳 QR 同樣流程)
   const [mode, setMode] = useState<PageMode>("checkout");
-  // Compensation mode state
-  const [customers, setCustomers] = useState<RecentCustomer[]>([]);
-  const [customersLoaded, setCustomersLoaded] = useState(false);
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [rewardCatalog, setRewardCatalog] = useState<StaffRewardEntry[]>([]);
+  const [rewardCatalogLoaded, setRewardCatalogLoaded] = useState(false);
   const [selectedRewardId, setSelectedRewardId] = useState<string>("");
   const [compNote, setCompNote] = useState("");
-  const [compBusy, setCompBusy] = useState(false);
-  const [compResult, setCompResult] = useState<string | null>(null);
   const [invoiceInput, setInvoiceInput] = useState("");
   const [amountInput, setAmountInput] = useState("");
   const [issuing, setIssuing] = useState(false);
-  const [ticket, setTicket] = useState<{ token: string; amount: number; dice: number; expiresAt: number; source: TicketSource } | null>(null);
+  // Tony 2026-05-23: compensation tickets reuse this state but have no amount/dice;
+  // instead rewardName for the QR-view body. source widens to PageMode.
+  const [ticket, setTicket] = useState<{ token: string; amount?: number; dice?: number; expiresAt: number; source: PageMode; rewardName?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [duplicateInfo, setDuplicateInfo] = useState<NonNullable<Awaited<ReturnType<typeof issueCheckoutTicket>>["existing"]> | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -83,52 +77,43 @@ const AdminCheckoutQRPage = () => {
     return () => clearInterval(id);
   }, [ticket]);
 
-  // Tony 2026-05-23: lazy-load customers + reward catalog the first time
-  // staff switches to compensation mode (or on PIN unlock if already in mode).
+  // Tony 2026-05-23: lazy-load reward catalog when staff enters compensation mode
   useEffect(() => {
-    if (mode !== "compensation" || !pinLocked || customersLoaded) return;
+    if (mode !== "compensation" || !pinLocked || rewardCatalogLoaded) return;
     void (async () => {
-      const [cust, rew] = await Promise.all([
-        listRecentCustomers(pin),
-        listStaffRewards(pin),
-      ]);
-      if (cust.ok && cust.customers) setCustomers(cust.customers);
+      const rew = await listStaffRewards(pin);
       if (rew.ok && rew.rewards) setRewardCatalog(rew.rewards);
-      setCustomersLoaded(true);
+      setRewardCatalogLoaded(true);
     })();
-  }, [mode, pinLocked, pin, customersLoaded]);
+  }, [mode, pinLocked, pin, rewardCatalogLoaded]);
 
-  // Server-side search when query length > 0 — debounced
-  useEffect(() => {
-    if (mode !== "compensation" || !pinLocked || !customerSearch.trim()) return;
-    const handle = setTimeout(async () => {
-      const r = await listRecentCustomers(pin, customerSearch.trim());
-      if (r.ok && r.customers) setCustomers(r.customers);
-    }, 300);
-    return () => clearTimeout(handle);
-  }, [customerSearch, mode, pinLocked, pin]);
-
-  const handleGrantCompensation = async () => {
-    if (!selectedCustomerId || !selectedRewardId) return;
-    setCompBusy(true);
-    setCompResult(null);
-    try {
-      const r = await staffGrantReward(pin, selectedCustomerId, selectedRewardId, compNote.trim() || undefined);
-      if (r.ok) {
-        const pushMsg = r.push_ok
-          ? "✅ 優惠券已送達客人 LINE 聊天視窗"
-          : `⚠️ LINE 推送失敗 (${r.push_reason ?? "未知"}) — 客人可能尚未加好友,但補發紀錄已存`;
-        setCompResult(`✅ 已補發「${r.reward?.name}」給 ${r.customer_name ?? "(無名)"}\n${pushMsg}`);
-        setSelectedRewardId("");
-        setCompNote("");
-      } else {
-        setCompResult(`❌ 失敗:${r.reason ?? "unknown"}`);
-      }
-    } catch (err) {
-      setCompResult(`❌ 例外:${(err as Error).message}`);
-    } finally {
-      setCompBusy(false);
+  const handleIssueCompensation = async () => {
+    setError(null);
+    if (!selectedRewardId) {
+      setError("請選擇要補發的優惠券");
+      return;
     }
+    setIssuing(true);
+    const res = await issueCompensationTicket(pin, selectedRewardId, compNote.trim() || undefined);
+    setIssuing(false);
+    if (!res.ok || !res.token || !res.expires_at) {
+      if (res.reason === "invalid_pin") {
+        setError("PIN 錯誤,請重新輸入");
+        sessionStorage.removeItem(PIN_CACHE_KEY);
+        setPinLocked(false);
+        setPin("");
+        return;
+      }
+      setError(`產生失敗:${res.reason ?? "unknown"}`);
+      return;
+    }
+    const reward = rewardCatalog.find((r) => r.id === selectedRewardId);
+    setTicket({
+      token: res.token,
+      expiresAt: new Date(res.expires_at).getTime(),
+      source: "compensation",
+      rewardName: reward?.name ?? "(未知獎品)",
+    });
   };
 
   const dicePreview = useMemo(() => {
@@ -280,13 +265,6 @@ const AdminCheckoutQRPage = () => {
   const isRoomCharge = mode === "room_charge";
   const isCompensation = mode === "compensation";
 
-  // Filter customers client-side when no server search is active
-  const filteredCustomers = useMemo(() => {
-    if (!customerSearch.trim()) return customers;
-    const q = customerSearch.trim().toLowerCase();
-    return customers.filter((c) => (c.display_name ?? "").toLowerCase().includes(q));
-  }, [customers, customerSearch]);
-
   return (
     <div className={`min-h-screen p-4 ${
       isCompensation
@@ -346,7 +324,7 @@ const AdminCheckoutQRPage = () => {
         )}
 
         <AnimatePresence mode="wait">
-          {isCompensation ? (
+          {isCompensation && !ticket ? (
             <motion.div
               key="compensation"
               initial={{ opacity: 0 }}
@@ -355,49 +333,20 @@ const AdminCheckoutQRPage = () => {
               className="rounded-2xl bg-card p-5 shadow-lg space-y-3"
             >
               <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-[12px] text-emerald-900 leading-relaxed">
-                📨 <strong>補發優惠券</strong> — 給客人補一張電子優惠券,
-                <strong>不會推進棋盤位置</strong>。客人 LINE 聊天視窗會直接收到券。
-              </div>
-
-              {/* Customer picker */}
-              <div>
-                <label className="block text-sm font-medium mb-1.5">
-                  選擇客戶 <span className="text-destructive">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="輸入客戶 LINE 名稱搜尋..."
-                  value={customerSearch}
-                  onChange={(e) => setCustomerSearch(e.target.value)}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm mb-1.5"
-                />
-                <select
-                  value={selectedCustomerId}
-                  onChange={(e) => setSelectedCustomerId(e.target.value)}
-                  disabled={!customersLoaded || compBusy}
-                  size={5}
-                  className="w-full rounded-lg border border-input bg-background px-2 py-1 text-sm"
-                >
-                  {!customersLoaded && <option value="">載入中...</option>}
-                  {customersLoaded && filteredCustomers.length === 0 && <option value="">(無結果 — 試試其他關鍵字)</option>}
-                  {filteredCustomers.map((c) => (
-                    <option key={c.user_id} value={c.user_id}>
-                      {c.display_name ?? "(無名)"} · NT${c.total_spend.toLocaleString()} · {fmtRelativeTime(c.last_seen_at)}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1 text-[10px] text-muted-foreground">最近活動的前 50 位客戶 · 用上方輸入框搜尋</p>
+                📨 <strong>補發優惠券</strong> — 給客人補一張電子優惠券。
+                <strong>選好獎品後產生 QR Code,讓客人掃</strong> — 跟結帳 QR 一樣的流程,
+                不會推進棋盤位置。
               </div>
 
               {/* Reward picker */}
               <div>
                 <label className="block text-sm font-medium mb-1.5">
-                  要補發的優惠券 <span className="text-destructive">*</span>
+                  要補發哪一張優惠券? <span className="text-destructive">*</span>
                 </label>
                 <select
                   value={selectedRewardId}
                   onChange={(e) => setSelectedRewardId(e.target.value)}
-                  disabled={rewardCatalog.length === 0 || compBusy}
+                  disabled={rewardCatalog.length === 0 || issuing}
                   className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 >
                   <option value="">{rewardCatalog.length === 0 ? "載入中..." : "-- 請選擇優惠券 --"}</option>
@@ -417,28 +366,27 @@ const AdminCheckoutQRPage = () => {
                   placeholder="例:服務瑕疵補償 / 客訴處理"
                   value={compNote}
                   onChange={(e) => setCompNote(e.target.value)}
-                  disabled={compBusy}
+                  disabled={issuing}
                   maxLength={200}
                   className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 />
               </div>
 
               <button
-                onClick={handleGrantCompensation}
-                disabled={compBusy || !selectedCustomerId || !selectedRewardId}
+                onClick={handleIssueCompensation}
+                disabled={issuing || !selectedRewardId}
                 className="w-full rounded-lg bg-emerald-600 text-white py-3 font-semibold disabled:opacity-50"
               >
-                {compBusy ? "送出中..." : "📨 確認補發"}
+                {issuing ? "產生中..." : "📨 產生補發 QR"}
               </button>
 
-              {compResult && (
-                <div className="rounded-lg bg-muted/50 px-3 py-2 text-[11px] whitespace-pre-wrap leading-relaxed">
-                  {compResult}
-                </div>
+              {error && (
+                <p className="text-xs text-destructive text-center">{error}</p>
               )}
 
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                ⚠️ 客人必須已加 IC 高雄 LINE 好友才收得到 LINE 訊息。若還沒加,優惠券仍會出現在他遊戲畫面內。
+                QR 有 {TICKET_TTL_MIN} 分鐘有效期,**請客人現場掃**。
+                客人掃 QR 後優惠券會送到他的 LINE 聊天視窗。
               </p>
             </motion.div>
           ) : !ticket ? (
@@ -557,7 +505,11 @@ const AdminCheckoutQRPage = () => {
             >
               {/* Mode badge — staff knows which kind of QR they're showing */}
               <div className="mb-2">
-                {ticket.source === "room_charge" ? (
+                {ticket.source === "compensation" ? (
+                  <span className="inline-block rounded-full bg-emerald-100 text-emerald-800 px-3 py-0.5 text-[11px] font-semibold">
+                    📨 補發優惠券
+                  </span>
+                ) : ticket.source === "room_charge" ? (
                   <span className="inline-block rounded-full bg-indigo-100 text-indigo-800 px-3 py-0.5 text-[11px] font-semibold">
                     🏨 掛房帳
                   </span>
@@ -568,11 +520,23 @@ const AdminCheckoutQRPage = () => {
                 )}
               </div>
 
-              <p className="text-sm text-muted-foreground mb-1">消費金額</p>
-              <p className="text-3xl font-bold">NT$ {ticket.amount.toLocaleString()}</p>
-              <p className="text-sm text-emerald-700 mt-1 mb-4">
-                掃描後獲 <strong>{ticket.dice}</strong> 次擲骰機會
-              </p>
+              {ticket.source === "compensation" ? (
+                <>
+                  <p className="text-sm text-muted-foreground mb-1">補發的優惠券</p>
+                  <p className="text-xl font-bold leading-tight px-2">{ticket.rewardName}</p>
+                  <p className="text-sm text-emerald-700 mt-2 mb-4">
+                    客人掃描後優惠券會送到 LINE 聊天視窗
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground mb-1">消費金額</p>
+                  <p className="text-3xl font-bold">NT$ {(ticket.amount ?? 0).toLocaleString()}</p>
+                  <p className="text-sm text-emerald-700 mt-1 mb-4">
+                    掃描後獲 <strong>{ticket.dice}</strong> 次擲骰機會
+                  </p>
+                </>
+              )}
 
               <div className={`mx-auto inline-block rounded-xl bg-white p-3 ${expired ? "opacity-30" : ""}`}>
                 <QRCodeSVG value={ticketUrl} size={220} level="M" />

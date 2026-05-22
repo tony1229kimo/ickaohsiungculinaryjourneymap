@@ -25,7 +25,7 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { Pool } from "pg";
 import { requireLiffAuth } from "../middleware/liffAuth.js";
-import { issueCheckoutTicket, redeemCheckoutTicket } from "../db.js";
+import { issueCheckoutTicket, issueCompensationTicket, redeemCheckoutTicket } from "../db.js";
 import { GRANTABLE_REWARDS } from "../lib/rewardCatalog.js";
 import { pushRewardCoupon } from "../lib/linePush.js";
 
@@ -109,6 +109,9 @@ router.post("/redeem", requireLiffAuth(), async (req: Request, res: Response) =>
         dice_issued: result.diceIssued,
         amount: result.amount,
         restaurant_id: result.restaurantId,
+        // Tony 2026-05-23: compensation tickets carry these
+        compensation: result.compensation ?? false,
+        reward_name: result.rewardName,
       });
     }
     const status =
@@ -130,6 +133,29 @@ router.post("/redeem", requireLiffAuth(), async (req: Request, res: Response) =>
 // mode beside 一般結帳 / 掛房帳. Uses staff PIN auth (NOT LIFF whitelist)
 // so 可愛員工 don't have to log into LINE on every shift.
 // ─────────────────────────────────────────────────────────────────
+
+// POST /api/checkout-ticket/issue-compensation
+// Body: { pin, reward_id, note? }
+// Tony 2026-05-23: 服務人員選一個補發獎品 → 後端發 QR ticket → 客人掃 → 拿券。
+// Same UX as 結帳 QR / 掛房帳 QR, just no amount field.
+router.post("/issue-compensation", requireStaffPin, async (req: Request, res: Response) => {
+  const rewardId = String(req.body?.reward_id ?? "").trim();
+  const note = typeof req.body?.note === "string" ? req.body.note.slice(0, 200) : null;
+  if (!rewardId) {
+    return res.status(400).json({ ok: false, reason: "reward_id_required" });
+  }
+  const issuedBy = (req.body?.issued_by as string | undefined) ?? "staff_pin";
+  const result = await issueCompensationTicket(rewardId, issuedBy, note);
+  if ("error" in result) {
+    return res.status(400).json({ ok: false, reason: result.error });
+  }
+  return res.json({
+    ok: true,
+    token: result.token,
+    expires_at: result.expiresAt,
+    reward_id: rewardId,
+  });
+});
 
 // GET /api/checkout-ticket/rewards — catalog of grantable rewards.
 router.get("/rewards", requireStaffPin, async (_req, res) => {

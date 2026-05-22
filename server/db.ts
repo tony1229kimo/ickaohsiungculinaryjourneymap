@@ -16,7 +16,7 @@ import { Pool, type PoolClient } from "pg";
 import fs from "fs";
 import path from "path";
 import { pushRewardCoupon } from "./lib/linePush.js";
-import { findRewardByLotteryName, findRewardByTile } from "./lib/rewardCatalog.js";
+import { findReward as findRewardById, findRewardByLotteryName, findRewardByTile } from "./lib/rewardCatalog.js";
 
 const MIGRATIONS_DIR = path.join(import.meta.dirname, "migrations");
 
@@ -800,7 +800,7 @@ export interface IssuedTicket {
   expiresAt: string;
 }
 
-export type CheckoutTicketSource = "checkout" | "room_charge";
+export type CheckoutTicketSource = "checkout" | "room_charge" | "compensation";
 
 export interface IssueError {
   error: "amount_below_threshold" | "invoice_format_invalid" | "invoice_already_used" | "invoice_already_pending" | "invoice_required";
@@ -817,6 +817,30 @@ function randomToken(): string {
 }
 
 const INVOICE_NO_PATTERN = /^[A-Z]{2}\d{8}$/;
+
+/**
+ * Tony 2026-05-23: 補發優惠券 QR. Reuses checkout_tickets with source=compensation
+ * and reward_id instead of amount. Customer scans the same /?ticket= URL;
+ * redeemCheckoutTicket branches on source to do the reward grant instead of
+ * dice issuance.
+ */
+export async function issueCompensationTicket(
+  rewardId: string,
+  issuedBy: string,
+  note: string | null,
+): Promise<{ token: string; expiresAt: string } | { error: "invalid_reward" }> {
+  // Catalog gating happens in the route. Here we just trust the caller and
+  // store the rewardId on the row.
+  const token = randomToken();
+  const r = await pool.query(
+    `INSERT INTO checkout_tickets
+       (token, amount, dice_to_issue, issued_by, restaurant_id, invoice_no, source, reward_id, comp_note, expires_at)
+     VALUES ($1, NULL, NULL, $2, NULL, NULL, 'compensation', $3, $4, NOW() + ($5 || ' seconds')::interval)
+     RETURNING expires_at`,
+    [token, issuedBy, rewardId, note, String(CHECKOUT_TICKET_TTL_SEC)],
+  );
+  return { token, expiresAt: r.rows[0].expires_at };
+}
 
 export async function issueCheckoutTicket(
   amount: number,
@@ -876,6 +900,9 @@ export interface CheckoutRedeemResult {
   diceIssued?: number;
   amount?: number;
   restaurantId?: string | null;
+  // Tony 2026-05-23: compensation tickets carry these instead of dice/amount
+  compensation?: boolean;
+  rewardName?: string;
 }
 
 export async function redeemCheckoutTicket(userId: string, token: string): Promise<CheckoutRedeemResult> {
@@ -883,7 +910,7 @@ export async function redeemCheckoutTicket(userId: string, token: string): Promi
   try {
     await client.query("BEGIN");
     const sel = await client.query(
-      `SELECT token, amount, dice_to_issue, restaurant_id, invoice_no, source, expires_at, used_at
+      `SELECT token, amount, dice_to_issue, restaurant_id, invoice_no, source, reward_id, comp_note, expires_at, used_at
        FROM checkout_tickets WHERE token = $1 FOR UPDATE`,
       [token],
     );
@@ -902,6 +929,73 @@ export async function redeemCheckoutTicket(userId: string, token: string): Promi
       await client.query("ROLLBACK");
       client.release();
       return { ok: false, reason: "expired" };
+    }
+
+    // Tony 2026-05-23: compensation tickets follow a totally different path —
+    // grant the named reward (push LINE + earned_rewards) without touching
+    // dice_pool / game_state board position.
+    if (row.source === "compensation") {
+      const reward = findRewardById(row.reward_id);
+      if (!reward) {
+        await client.query("ROLLBACK");
+        client.release();
+        return { ok: false, reason: "server_error", detail: `unknown reward_id: ${row.reward_id}` };
+      }
+      await client.query(
+        `UPDATE checkout_tickets SET used_at = NOW(), used_by_user_id = $1 WHERE token = $2`,
+        [userId, token],
+      );
+      // Append to earned_rewards so the customer's LIFF list reflects it
+      const entry = {
+        type: "compensation",
+        reward: { id: reward.id, name: reward.name, icon: "🎁" },
+        source: reward.source,
+        grantedBy: "staff_qr",
+        grantedAt: new Date().toISOString(),
+        note: row.comp_note,
+      };
+      await client.query(
+        `INSERT INTO game_state (user_id, display_name, total_points, earned_rewards, claimed_tiles)
+         VALUES ($1, NULL, 0, $2::jsonb, '[]'::jsonb)
+         ON CONFLICT (user_id) DO UPDATE SET
+           earned_rewards = COALESCE(game_state.earned_rewards, '[]'::jsonb) || EXCLUDED.earned_rewards,
+           updated_at = NOW()`,
+        [userId, JSON.stringify([entry])],
+      );
+      await client.query("COMMIT");
+      client.release();
+
+      // Push the coupon to customer's LINE chat (best-effort)
+      const push = await pushRewardCoupon("KH", {
+        customerUserId: userId,
+        rewardName: reward.name,
+        couponLink: reward.couponLink,
+        compensationNote: row.comp_note ?? undefined,
+      });
+      if (!push.ok) {
+        console.warn(`[redeem compensation] push failed for ${userId}:`, push.reason);
+      }
+      // Audit log
+      await recordEvent({
+        userId,
+        eventType: "reward_compensation",
+        payload: {
+          reward_id: reward.id,
+          reward_name: reward.name,
+          granted_by: "staff_qr",
+          token,
+          note: row.comp_note,
+          push_ok: push.ok,
+          push_reason: push.ok ? null : push.reason,
+        },
+      });
+      // Increment counter
+      await pool.query(
+        `UPDATE customer_profiles SET total_rewards_earned = total_rewards_earned + 1 WHERE user_id = $1`,
+        [userId],
+      );
+
+      return { ok: true, compensation: true, rewardName: reward.name };
     }
 
     const existing = await getGameState(userId);

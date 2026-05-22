@@ -58,6 +58,27 @@ export interface RedeemResponse {
   dice_issued?: number;
   amount?: number;
   restaurant_id?: string | null;
+  // Tony 2026-05-23: compensation tickets carry these (no dice/amount)
+  compensation?: boolean;
+  reward_name?: string;
+}
+
+/**
+ * Issue a compensation QR — staff picks a reward, customer scans, customer
+ * gets the coupon. Same QR-and-scan UX as 結帳/掛房帳 tickets, just no amount.
+ */
+export async function issueCompensationTicket(
+  pin: string,
+  rewardId: string,
+  note?: string,
+): Promise<{ ok: boolean; token?: string; expires_at?: string; reward_id?: string; reason?: string }> {
+  const res = await fetch(`${API_BASE}/api/checkout-ticket/issue-compensation`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Staff-Pin": pin },
+    body: JSON.stringify({ reward_id: rewardId, note }),
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok && data.ok === true, ...data };
 }
 
 export async function redeemCheckoutTicket(token: string): Promise<RedeemResponse> {
