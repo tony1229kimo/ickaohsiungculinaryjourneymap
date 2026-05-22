@@ -152,9 +152,19 @@ const Index = () => {
   // /api/checkout-ticket/redeem atomically marks token used + inserts a
   // dice_pool row, so a successful response means dice are already credited
   // — we just refetch to surface them in the UI.
+  // Tony 2026-05-23: dedup ref — React 18 StrictMode fires effects twice on
+  // mount, which made the redeem hit the backend twice for the same token.
+  // The first call sets used_at = NOW(); the second sees it and returns
+  // "already_used" → frontend shows 「已使用過」 even though the first call
+  // actually succeeded (customer DID receive the coupon in LINE chat).
+  // Skip any token we've already started redeeming for.
+  const attemptedTokensRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     const token = searchParams.get("ticket");
     if (!token || isLoading || !selectedCharacter) return;
+    if (attemptedTokensRef.current.has(token)) return;
+    attemptedTokensRef.current.add(token);
 
     let cancelled = false;
     (async () => {
