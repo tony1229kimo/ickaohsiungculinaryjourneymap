@@ -166,12 +166,19 @@ const Index = () => {
     if (attemptedTokensRef.current.has(token)) return;
     attemptedTokensRef.current.add(token);
 
-    let cancelled = false;
-    (async () => {
+    // Tony 2026-05-23: removed the `cancelled` flag — it was conflicting with
+    // the new dedup ref. In StrictMode the cleanup ran AFTER mount #1 → set
+    // cancelled=true → mount #2 saw the token already attempted and skipped
+    // → mount #1's async resolved but cancelled=true so it returned without
+    // updating UI. Customer got coupon, UI stuck on "正在驗證...".
+    //
+    // The ref-based dedup is sufficient: only one async ever runs per token.
+    // If the component actually unmounts mid-redeem (user closes tab) the
+    // setState calls become no-ops in React 18 hooks — no warning, no crash.
+    void (async () => {
       setStatusMessage("正在驗證掃描的 QR Code...");
       setStatusType("loading");
       const result = await redeemCheckoutTicket(token);
-      if (cancelled) return;
 
       // Always strip ticket from URL so a refresh can't retry the same one
       searchParams.delete("ticket");
@@ -202,10 +209,6 @@ const Index = () => {
         setStatusType("error");
       }
     })();
-
-    return () => {
-      cancelled = true;
-    };
   }, [searchParams, isLoading, selectedCharacter, setSearchParams, refetchDice]);
 
   // Persist state to both localStorage and API
