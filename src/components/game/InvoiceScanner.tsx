@@ -134,7 +134,7 @@ const InvoiceScanner = ({ onSuccess, onClose }: Props) => {
         exit={{ scale: 0.9, opacity: 0 }}
         className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-2xl"
       >
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-bold text-foreground">掃描發票 QR Code</h3>
           <button
             onClick={handleClose}
@@ -142,6 +142,12 @@ const InvoiceScanner = ({ onSuccess, onClose }: Props) => {
           >
             ✕
           </button>
+        </div>
+
+        {/* Tony 2026-05-22: 把客人當小孩看待 — 大部分人不知道發票哪一邊是 QR */}
+        <div className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] text-amber-900 leading-relaxed">
+          📄 <strong>適用情境</strong>:結帳時收到<strong>紙本電子發票</strong>。<br />
+          🎯 <strong>對準方式</strong>:發票<strong>左側</strong>會有一個小的 QR Code(不是右邊 25 位數字那一個),把它擺在綠色掃描框內。
         </div>
 
         <div className="mb-4 overflow-hidden rounded-xl bg-black">

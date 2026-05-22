@@ -409,56 +409,77 @@ const Index = () => {
                 </p>
               </div>
 
+              {/* Tony 2026-05-22: hand-hold the customer — guide which option fits.
+                  Previously they had to figure out 3 cryptic button labels. */}
+              <p className="text-[12px] text-foreground/80 font-medium px-1">
+                請依您的<strong>結帳方式</strong>選擇 ↓
+              </p>
+
               {/* PRIMARY: 掃發票 (紙本發票自助路徑) */}
-              <button
-                onClick={() => {
-                  // Close rules dialog if open — otherwise it covers the camera
-                  setShowRulesDialog(false);
-                  setShowInvoiceScanner(true);
-                }}
-                disabled={isLoading}
-                className="w-full py-3 px-4 rounded-2xl font-bold text-base transition-all duration-300 relative overflow-hidden"
-                style={{
-                  background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
-                  color: "white",
-                  boxShadow: "0 4px 15px hsl(43 85% 55% / 0.4)",
-                }}
-              >
-                <span className="flex items-center justify-center gap-2">📄 掃發票拿擲骰機會</span>
-              </button>
+              <div className="space-y-1">
+                <button
+                  onClick={() => {
+                    // Close rules dialog if open — otherwise it covers the camera
+                    setShowRulesDialog(false);
+                    setShowInvoiceScanner(true);
+                  }}
+                  disabled={isLoading}
+                  className="w-full py-3 px-4 rounded-2xl font-bold text-base transition-all duration-300 relative overflow-hidden"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(43 85% 55%), hsl(40 70% 45%))",
+                    color: "white",
+                    boxShadow: "0 4px 15px hsl(43 85% 55% / 0.4)",
+                  }}
+                >
+                  <span className="flex items-center justify-center gap-2">📄 掃發票拿擲骰機會</span>
+                </button>
+                <p className="text-[11px] text-muted-foreground leading-relaxed px-2">
+                  收到<strong>紙本電子發票</strong> → 對準發票<strong>左側</strong>的 QR 掃
+                </p>
+              </div>
 
               {/* SECONDARY: 載具客拍小白單 (Phase 8.1 AI vision path) */}
-              <button
-                onClick={() => {
-                  setShowRulesDialog(false);
-                  setShowReceiptCapture(true);
-                }}
-                disabled={isLoading}
-                style={{
-                  background: "linear-gradient(135deg, hsl(200 70% 55%), hsl(210 60% 45%))",
-                  color: "white",
-                  boxShadow: "0 3px 10px hsl(200 70% 55% / 0.35)",
-                }}
-                className="w-full py-2.5 px-4 rounded-2xl font-semibold text-sm transition-all duration-300 relative overflow-hidden"
-              >
-                <span className="flex items-center justify-center gap-2">📸 我用載具(拍小白單)</span>
-              </button>
+              <div className="space-y-1">
+                <button
+                  onClick={() => {
+                    setShowRulesDialog(false);
+                    setShowReceiptCapture(true);
+                  }}
+                  disabled={isLoading}
+                  style={{
+                    background: "linear-gradient(135deg, hsl(200 70% 55%), hsl(210 60% 45%))",
+                    color: "white",
+                    boxShadow: "0 3px 10px hsl(200 70% 55% / 0.35)",
+                  }}
+                  className="w-full py-2.5 px-4 rounded-2xl font-semibold text-sm transition-all duration-300 relative overflow-hidden"
+                >
+                  <span className="flex items-center justify-center gap-2">📸 我用載具(拍小白單)</span>
+                </button>
+                <p className="text-[11px] text-muted-foreground leading-relaxed px-2">
+                  用<strong>手機條碼 / 信用卡 / 悠遊卡</strong>存發票 → 只拿到白色小白單 → 拍它
+                </p>
+              </div>
 
               {/* TERTIARY: 備援 / 老流程 */}
               <p className="text-[11px] text-muted-foreground leading-relaxed px-2">
                 若以上都失敗,可洽詢服務人員協助開始,或:
               </p>
-              <button
-                onClick={() => {
-                  setShowRulesDialog(false);
-                  setShowScanner(true);
-                }}
-                disabled={isLoading}
-                style={{ backgroundColor: "#DAD9D6", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}
-                className="w-full py-2 px-4 rounded-2xl font-medium text-sm transition-all duration-300 relative overflow-hidden text-foreground"
-              >
-                <span className="flex items-center justify-center gap-2">📷 掃店家 QR Code</span>
-              </button>
+              <div className="space-y-1">
+                <button
+                  onClick={() => {
+                    setShowRulesDialog(false);
+                    setShowScanner(true);
+                  }}
+                  disabled={isLoading}
+                  style={{ backgroundColor: "#DAD9D6", boxShadow: "0 2px 6px rgba(0,0,0,0.08)" }}
+                  className="w-full py-2 px-4 rounded-2xl font-medium text-sm transition-all duration-300 relative overflow-hidden text-foreground"
+                >
+                  <span className="flex items-center justify-center gap-2">📷 掃店家 QR Code</span>
+                </button>
+                <p className="text-[11px] text-muted-foreground leading-relaxed px-2">
+                  掃<strong>桌邊立牌</strong> / 服務人員開的<strong>結帳 QR</strong>(掛房帳適用)
+                </p>
+              </div>
               <button
                 onClick={() => refetchDice()}
                 disabled={isLoading}

@@ -133,7 +133,7 @@ const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-game-v2.zeab
         exit={{ scale: 0.9, opacity: 0 }}
         className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-2xl"
       >
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-bold text-foreground">掃描 QR Code</h3>
           <button
             onClick={handleClose}
@@ -141,6 +141,15 @@ const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-game-v2.zeab
           >
             ✕
           </button>
+        </div>
+
+        {/* Tony 2026-05-22: 把客人當小孩看待 — 明確告訴他這顆掃描器同時接受兩種 QR */}
+        <div className="mb-3 rounded-lg bg-sky-50 border border-sky-200 px-3 py-2 text-[11px] text-sky-900 leading-relaxed">
+          📷 <strong>這顆同時可以掃兩種 QR:</strong>
+          <ul className="mt-1 ml-3 list-disc space-y-0.5">
+            <li>🏬 <strong>桌邊立牌的店家 QR</strong> — 用來綁定餐廳</li>
+            <li>💳 <strong>服務人員開的結帳 QR</strong> — 直接拿擲骰機會</li>
+          </ul>
         </div>
 
         <div className="mb-4 overflow-hidden rounded-xl bg-black" ref={containerRef}>
