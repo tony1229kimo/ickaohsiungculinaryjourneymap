@@ -142,6 +142,14 @@ const ReceiptCapture = ({ onSuccess, onClose }: Props) => {
           適用情境:您用 <strong>載具</strong>(手機條碼 / 信用卡 / 悠遊卡)存發票,
           只拿到一張白色明細單。請對著小白單拍一張清楚的照片。
         </p>
+        {/* Tony 2026-05-22: 太遠拍 OCR 讀不到 date 會被誤判過期。提醒近拍 */}
+        <div className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+          <p className="text-[11px] text-amber-900 leading-relaxed">
+            📸 <strong>拍照訣竅</strong> — 鏡頭<strong>盡量靠近小白單</strong>,
+            確認「日期」「總計」「發票號碼」這幾欄字看得清楚。離太遠 OCR 會讀不到日期,
+            系統會誤判成「過期」。
+          </p>
+        </div>
 
         <input
           ref={inputRef}
