@@ -954,9 +954,14 @@ export async function redeemCheckoutTicket(userId: string, token: string): Promi
         grantedAt: new Date().toISOString(),
         note: row.comp_note,
       };
+      // Tony 2026-05-23: omit display_name to let the schema DEFAULT '' kick
+      // in for first-time customers. Passing NULL explicitly was bypassing
+      // the default and violating NOT NULL — caught by Tony's test scan.
+      // ON CONFLICT only touches earned_rewards, so existing rows' display_name
+      // (set by other flows like webhook follow / bind / game save) is kept.
       await client.query(
-        `INSERT INTO game_state (user_id, display_name, total_points, earned_rewards, claimed_tiles)
-         VALUES ($1, NULL, 0, $2::jsonb, '[]'::jsonb)
+        `INSERT INTO game_state (user_id, earned_rewards)
+         VALUES ($1, $2::jsonb)
          ON CONFLICT (user_id) DO UPDATE SET
            earned_rewards = COALESCE(game_state.earned_rewards, '[]'::jsonb) || EXCLUDED.earned_rewards,
            updated_at = NOW()`,
