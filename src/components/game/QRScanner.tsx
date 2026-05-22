@@ -12,8 +12,13 @@ interface QRScannerProps {
 const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-map.zeabur.app", onSuccess, onClose }: QRScannerProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  // Tony 2026-05-22: keep this in state so it doesn't get cleared between renders.
+  // Independent from `error` (which auto-clears) so the input never flickers.
+  const [manualCode, setManualCode] = useState("");
+  const [manualError, setManualError] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const startScanner = async () => {
@@ -31,14 +36,17 @@ const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-map.zeabur.a
           },
           (decodedText) => {
             // Check if scanned code matches expected text or is from external domain
-            const isValid = decodedText === expectedCode || 
+            const isValid = decodedText === expectedCode ||
               (externalDomain && decodedText.includes(externalDomain));
             if (isValid) {
               stopScanner();
               onSuccess();
             } else {
               setError("QR Code 不正確，請掃描店家指定的 QR Code");
-              setTimeout(() => setError(null), 3000);
+              // Debounce: clear any pending timer before scheduling a new one,
+              // otherwise overlapping scans queue multiple re-renders that flash the UI.
+              if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+              errorTimerRef.current = setTimeout(() => setError(null), 3000);
             }
           },
           () => {
@@ -55,9 +63,25 @@ const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-map.zeabur.a
     startScanner();
 
     return () => {
+      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
       stopScanner();
     };
   }, [expectedCode, onSuccess]);
+
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = manualCode.trim();
+    if (!trimmed) {
+      setManualError("請輸入驗證碼");
+      return;
+    }
+    if (trimmed === expectedCode) {
+      stopScanner();
+      onSuccess();
+    } else {
+      setManualError("驗證碼不正確，請確認後重試");
+    }
+  };
 
   const stopScanner = async () => {
     if (scannerRef.current?.isScanning) {
@@ -120,38 +144,33 @@ const QRScanner = ({ expectedCode, externalDomain = "ickhh-culinary-map.zeabur.a
           {isScanning ? "📷 請將相機對準店家提供的 QR Code" : "正在啟動相機..."}
         </p>
 
-        {/* Manual code input fallback */}
-        {error && (
-          <div className="mt-2">
-            <p className="text-xs text-muted-foreground text-center mb-2">或手動輸入驗證碼</p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const input = (e.currentTarget.elements.namedItem("code") as HTMLInputElement)?.value;
-                if (input === expectedCode) {
-                  stopScanner();
-                  onSuccess();
-                } else {
-                  setError("驗證碼不正確，請確認後重試");
-                }
-              }}
-              className="flex gap-2"
+        {/* Manual code input — ALWAYS visible (Tony 2026-05-22).
+            Previously was {error && (...)} which made the input flicker every time
+            the auto-clearing error toggled, causing focus loss and staff couldn't
+            type. Now controlled by manualCode state, decoupled from scan errors. */}
+        <div className="mt-2 border-t border-border pt-3">
+          <p className="text-xs text-muted-foreground text-center mb-2">或手動輸入驗證碼</p>
+          <form onSubmit={handleManualSubmit} className="flex gap-2">
+            <input
+              type="text"
+              autoComplete="off"
+              inputMode="text"
+              placeholder="輸入驗證碼"
+              value={manualCode}
+              onChange={(e) => { setManualCode(e.target.value); setManualError(null); }}
+              className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
             >
-              <input
-                name="code"
-                type="text"
-                placeholder="輸入驗證碼"
-                className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm"
-              />
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium"
-              >
-                驗證
-              </button>
-            </form>
-          </div>
-        )}
+              驗證
+            </button>
+          </form>
+          {manualError && (
+            <p className="mt-2 text-xs text-destructive text-center">{manualError}</p>
+          )}
+        </div>
       </motion.div>
     </motion.div>
   );
