@@ -15,6 +15,8 @@
 import { Pool, type PoolClient } from "pg";
 import fs from "fs";
 import path from "path";
+import { pushRewardCoupon } from "./lib/linePush.js";
+import { findRewardByLotteryName, findRewardByTile } from "./lib/rewardCatalog.js";
 
 const MIGRATIONS_DIR = path.join(import.meta.dirname, "migrations");
 
@@ -137,6 +139,24 @@ export async function saveGameState(state: GameState): Promise<void> {
       eventType: "reward_lottery",
       payload: r as Record<string, unknown>,
     });
+    // Tony 2026-05-23 P1: 領獎時自動推送優惠券 Flex 訊息到客人 LINE 聊天視窗。
+    // 之前獎品只存在 LIFF 畫面,客人加好友也收不到 — 因為從來沒推送。
+    const rewardName = (r as { reward?: { name?: string } })?.reward?.name;
+    if (rewardName) {
+      const catalogEntry = findRewardByLotteryName(rewardName);
+      if (catalogEntry) {
+        const push = await pushRewardCoupon("KH", {
+          customerUserId: state.userId,
+          rewardName: catalogEntry.name,
+          couponLink: catalogEntry.couponLink,
+        });
+        if (!push.ok) {
+          console.warn(`[saveGameState] reward push failed for ${state.userId}:`, push.reason);
+        }
+      } else {
+        console.warn(`[saveGameState] unknown lottery reward name (no catalog match):`, rewardName);
+      }
+    }
   }
 }
 
@@ -151,6 +171,18 @@ export async function claimTile(userId: string, tile: number): Promise<{ success
     [JSON.stringify(claimed), userId],
   );
   await recordEvent({ userId, eventType: "reward_fixed", payload: { tile } });
+  // Tony 2026-05-23 P1: 踩到固定獎品格時推送優惠券到 LINE。tile 15 大獎也推。
+  const catalogEntry = findRewardByTile(tile);
+  if (catalogEntry) {
+    const push = await pushRewardCoupon("KH", {
+      customerUserId: userId,
+      rewardName: catalogEntry.name,
+      couponLink: catalogEntry.couponLink,
+    });
+    if (!push.ok) {
+      console.warn(`[claimTile] reward push failed for ${userId} tile=${tile}:`, push.reason);
+    }
+  }
   return { success: true, alreadyClaimed: false };
 }
 

@@ -121,3 +121,14 @@ export const GRANTABLE_REWARDS: RewardDef[] = ALL_REWARDS.filter((r) => r.id !==
 export function findReward(id: string): RewardDef | null {
   return ALL_REWARDS.find((r) => r.id === id) ?? null;
 }
+
+/** Match a lottery result (saved into game_state.earned_rewards as { type, reward: { id, name } })
+ *  back to a catalog entry by name. Returns null if not found (silent skip). */
+export function findRewardByLotteryName(name: string): RewardDef | null {
+  return LOTTERY_REWARDS.find((r) => r.name === name) ?? null;
+}
+
+/** Look up a fixed-tile reward by tile number (2 / 6 / 8 / 11 / 15). */
+export function findRewardByTile(tile: number): RewardDef | null {
+  return FIXED_TILE_REWARDS.find((r) => r.tile === tile) ?? null;
+}
