@@ -31,7 +31,7 @@ export const FIXED_TILE_REWARDS: RewardDef[] = [
     tile: 2,
     name: "Delicatesse 烘焙坊「指定點心」免費兌換券",
     shortName: "烘焙坊點心",
-    couponLink: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba2f6eb38a592f937df5ef?platform=line&channelId=1656533412",
+    couponLink: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba36038e2fbe3c064de78a?platform=line&channelId=1656533412",
   },
   {
     id: "fixed_6",
@@ -78,21 +78,21 @@ export const LOTTERY_REWARDS: RewardDef[] = [
     source: "lottery_chance",
     name: "NT$ 200 餐飲優惠券",
     shortName: "$200 餐飲券",
-    couponLink: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba3373e9a32d659304b5ac?platform=line&channelId=1656533412",
+    couponLink: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba33cd7fa27915d2d94316?platform=line&channelId=1656533412",
   },
   {
     id: "chance_2",
     source: "lottery_chance",
     name: "「招牌飲品」免費兌換券",
     shortName: "招牌飲品",
-    couponLink: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba30fde9a32d659304932b?platform=line&channelId=1656533412",
+    couponLink: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba3373e9a32d659304b5ac?platform=line&channelId=1656533412",
   },
   {
     id: "chance_3",
     source: "lottery_chance",
     name: "「招牌前菜」免費兌換券",
     shortName: "招牌前菜",
-    couponLink: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba36038e2fbe3c064de78a?platform=line&channelId=1656533412",
+    couponLink: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba30fde9a32d659304932b?platform=line&channelId=1656533412",
   },
   {
     id: "chance_5",
@@ -132,3 +132,23 @@ export function findRewardByLotteryName(name: string): RewardDef | null {
 export function findRewardByTile(tile: number): RewardDef | null {
   return FIXED_TILE_REWARDS.find((r) => r.tile === tile) ?? null;
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Tony 2026-06-13: duplicate-link guard. A coupon-link scramble (several
+// rewards pointing at the same OmniChat bind URL) shipped to production and
+// delivered the wrong coupon to customers. This catches a repeat at module
+// load — non-fatal so a bad paste is loud in the logs without taking the API
+// down. Keep rewardCatalog.ts ↔ LotteryCard.tsx ↔ StampCard.tsx in sync.
+// ─────────────────────────────────────────────────────────────────
+(() => {
+  const seen = new Map<string, string>();
+  for (const r of ALL_REWARDS) {
+    const prev = seen.get(r.couponLink);
+    if (prev) {
+      console.error(
+        `[rewardCatalog] ⚠ DUPLICATE couponLink — "${r.id}" shares the same OmniChat link as "${prev}". One of them is almost certainly wrong.`,
+      );
+    }
+    seen.set(r.couponLink, r.id);
+  }
+})();

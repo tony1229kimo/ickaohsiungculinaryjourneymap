@@ -69,7 +69,7 @@ const TILE_GRID: Record<number, {row: number;col: number;}> = {
 };
 
 export const REWARD_LINKS: Record<number, string> = {
-  2: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba2f6eb38a592f937df5ef?platform=line&channelId=1656533412",
+  2: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba36038e2fbe3c064de78a?platform=line&channelId=1656533412",
   6: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba35bec3025130d0f4eddb?platform=line&channelId=1656533412",
   8: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba34b9c3025130d0f4e4f2?platform=line&channelId=1656533412",
   11: "https://api.omnichat.ai/restapi/v1/omo/bind/69ba379adb1d024b62b8b784?platform=line&channelId=1656533412",
