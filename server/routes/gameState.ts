@@ -40,15 +40,22 @@ router.get("/:userId", liffAuth, async (req, res) => {
 });
 
 // PUT /api/game-state/:userId
+// Tony 2026-06-20 (bugfix): PARTIAL update. 之前這裡用 `field ?? default` 整列覆寫,
+// 前端只送部分欄位的存檔(例如擲骰後只送 { totalPoints })會把 selectedCharacter /
+// earnedRewards / claimedTiles 一起洗成 null/[]。症狀:選完角色擲一次骰,背景 refetch
+// 把角色載回成 null → 又跳回「選擇角色」;點數/獎勵也會被偷偷清。現在先讀現有資料,
+// 只覆寫 body 真的有帶的欄位,沒帶的保留原值。
 router.put("/:userId", liffAuth, async (req, res) => {
-  const { displayName, totalPoints, earnedRewards, selectedCharacter, claimedTiles } = req.body;
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const current = await getGameState(req.params.userId);
+  const has = (k: string) => body[k] !== undefined;
   await saveGameState({
     userId: req.params.userId,
-    displayName: displayName ?? "",
-    totalPoints: totalPoints ?? 0,
-    earnedRewards: earnedRewards ?? [],
-    selectedCharacter: selectedCharacter ?? null,
-    claimedTiles: claimedTiles ?? [],
+    displayName: (has("displayName") ? body.displayName : current?.displayName ?? "") as string,
+    totalPoints: (has("totalPoints") ? body.totalPoints : current?.totalPoints ?? 0) as number,
+    earnedRewards: (has("earnedRewards") ? body.earnedRewards : current?.earnedRewards ?? []) as unknown[],
+    selectedCharacter: has("selectedCharacter") ? body.selectedCharacter : current?.selectedCharacter ?? null,
+    claimedTiles: (has("claimedTiles") ? body.claimedTiles : current?.claimedTiles ?? []) as number[],
   });
   res.json({ success: true });
 });
