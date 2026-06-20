@@ -79,17 +79,11 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
     setIsClaiming(true);
 
     if (reward) {
+      // Tony 2026-06-20: 中獎只記錄 + 觸發後端推播。onRewardClaimed 會把獎項寫進
+      // earnedRewards,後端 saveGameState 偵測到新獎項就推一張單次券到客人 LINE。
+      // 不再當場另開 OmniChat 分頁把客人踢出遊戲拖慢流程 —— 已強制加好友,LINE
+      // 推播必達,客人玩完到 LINE 聊天室領券即可。
       onRewardClaimed({ type, reward: { id: reward.id, name: reward.name, icon: reward.icon } });
-      if (reward.link) {
-        // 使用 <a> 模擬點擊,避免被瀏覽器攔截
-        const a = document.createElement("a");
-        a.href = reward.link;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      }
     }
     onClose();
   };
@@ -287,7 +281,7 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
                     boxShadow: "0 4px 20px hsl(0 0% 0% / 0.2), inset 0 1px 0 hsl(0 0% 100%)"
                   }}>
 
-                    {isClaiming ? "領取中..." : "領取獎勵 🎉"}
+                    {isClaiming ? "收下中..." : "收下獎勵 🎉"}
                   </motion.button>
 
                   {/* Note */}
@@ -297,7 +291,7 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
                   transition={{ delay: 0.7 }}
                   className="text-xs mt-4 text-primary">
                   
-                    獎券將發送至您的帳戶
+                    🎉 獎券已送到你的 LINE 聊天室，玩完後打開 LINE 即可領取
                   </motion.p>
                 </motion.div>
               }
