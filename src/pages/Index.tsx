@@ -36,7 +36,7 @@ const Index = () => {
   const { user } = useLiff();
   const userId = user?.userId ?? "anonymous";
   const displayName = user?.displayName ?? "玩家";
-  const { gameState, isLoading: isApiLoading, save: saveToApi } = useGameState(userId);
+  const { gameState, isLoading: isApiLoading, save: saveToApi, claimTile: claimTileApi } = useGameState(userId);
   // Dice pool — primary gate after staff activation pushes a LIFF link.
   // Old QR-Scan flow is kept as backup for stores without staff console.
   const { diceRemaining, refetch: refetchDice, roll: serverRollDice, isRolling } = useDicePool(
@@ -336,6 +336,28 @@ const Index = () => {
     });
   };
 
+  // Tony 2026-06-20: 固定獎格改走後端 claimTile —— 冪等(已領過不重發)+ 推一張
+  // 包過的「單次 token」券到客人 LINE,取代原本在 app 直接開 raw OmniChat 連結的做
+  // 法。raw 連結是「無限領券」的根(無狀態、重開就再發),這裡一律不再使用。失敗
+  // 就讓客人重點(claimTile 冪等、安全),絕不 fallback 開 raw 連結。
+  const claimFixedTile = async (tile: number) => {
+    if (isClaimingFixed) return;
+    setIsClaimingFixed(true);
+    try {
+      await claimTileApi(tile);
+      // 本地標記已領,UI 立刻顯示 ✓(後端 claimTile 已寫入 claimed_tiles,不重複 persist)
+      setClaimedTiles((prev) => new Set(prev).add(tile));
+      setStatusMessage("🎉 獎券已送到你的 LINE 聊天室，玩完後打開 LINE 即可領取");
+      setStatusType("success");
+    } catch (err) {
+      console.error("[claimFixedTile] failed:", err);
+      setStatusMessage("領取失敗,請稍後在棋盤上點該格再試一次");
+      setStatusType("error");
+    } finally {
+      setIsClaimingFixed(false);
+    }
+  };
+
   const handleRewardClaimed = (result: LotteryResult) => {
     const newRewards = [...earnedRewards, result];
     setEarnedRewards(newRewards);
@@ -590,7 +612,7 @@ const Index = () => {
           character={selectedCharacter ?? undefined}
           isMoving={isProcessing}
           claimedTiles={claimedTiles}
-          onClaimTile={markTileClaimed}
+          onClaimTile={claimFixedTile}
         />
 
         {/* Earned rewards — read-only history (NOT a redeem button)
@@ -755,21 +777,11 @@ const Index = () => {
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  // Single-fire guard against double-tap
                   if (isClaimingFixed) return;
-                  setIsClaimingFixed(true);
-
-                  const a = document.createElement("a");
-                  a.href = fixedRewardPopup.link;
-                  a.target = "_blank";
-                  a.rel = "noopener noreferrer";
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  markTileClaimed(fixedRewardPopup.tile);
+                  const tile = fixedRewardPopup.tile;
                   setFixedRewardPopup(null);
-                  // Reset guard for next tile claim
-                  setTimeout(() => setIsClaimingFixed(false), 1000);
+                  // 走後端 claimTile → 單次券推 LINE;不再開 raw OmniChat 分頁
+                  void claimFixedTile(tile);
                 }}
                 className="w-full py-3 rounded-2xl font-bold text-sm transition-all active:scale-95 cursor-pointer mb-3 disabled:opacity-60"
                 style={{
@@ -778,7 +790,7 @@ const Index = () => {
                   boxShadow: "0 4px 12px hsl(43 85% 55% / 0.4)",
                 }}
               >
-                {isClaimingFixed ? "領取中..." : "🎁 領取獎勵"}
+                {isClaimingFixed ? "收下中..." : "🎁 收下獎勵"}
               </button>
             </motion.div>
           </motion.div>

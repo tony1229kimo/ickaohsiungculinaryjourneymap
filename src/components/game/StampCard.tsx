@@ -253,7 +253,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, claimedTiles, onCla
           <DialogDescription asChild>
             <div className="text-center">
               <p className="text-sm font-medium text-foreground mb-1">獲得「招牌餐點免費兌換」</p>
-              <p className="text-xs text-muted-foreground mb-3">最高價值 NT$3,880，點擊下方按鈕立即領取</p>
+              <p className="text-xs text-muted-foreground mb-3">最高價值 NT$3,880，獎券會送到你的 LINE 聊天室領取</p>
             </div>
           </DialogDescription>
           <button
@@ -266,13 +266,8 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, claimedTiles, onCla
               if (isClaimingGrand) return;
               setIsClaimingGrand(true);
 
-              const a = document.createElement("a");
-              a.href = REWARD_LINKS[15];
-              a.target = "_blank";
-              a.rel = "noopener noreferrer";
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
+              // Tony 2026-06-20: 不再開 raw OmniChat 分頁;改由 onClaimTile →
+              // 後端 claimTile 推一張單次券到 LINE(見 Index.claimFixedTile)。
               onClaimTile?.(15);
               setShowGrandPrize(false);
             }}
@@ -343,13 +338,8 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, claimedTiles, onCla
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    const a = document.createElement("a");
-                    a.href = link;
-                    a.target = "_blank";
-                    a.rel = "noopener noreferrer";
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+                    // Tony 2026-06-20: 不再開 raw OmniChat 分頁;改由 onClaimTile →
+                    // 後端 claimTile 推單次券到 LINE。
                     onClaimTile?.(selectedTile);
                   }}
                   className="mt-3 block w-full text-center py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 cursor-pointer"
