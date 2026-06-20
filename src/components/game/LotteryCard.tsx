@@ -56,7 +56,7 @@ const LotteryCard = ({ type, onClose, onRewardClaimed }: LotteryCardProps) => {
       } else {
         setReward(FATE_REWARD);
       }
-    }, 800);
+    }, 400);
 
     return () => clearTimeout(startFlip);
   }, [type]);

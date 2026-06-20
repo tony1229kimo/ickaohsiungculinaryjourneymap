@@ -86,7 +86,7 @@ const DiceRoller = ({ onRoll, disabled, rollFn }: DiceRollerProps) => {
 
     const [serverValue] = await Promise.all([
       serverPromise,
-      new Promise((resolve) => setTimeout(resolve, 1400)),
+      new Promise((resolve) => setTimeout(resolve, 700)),
     ]);
 
     if (serverValue === null) {
@@ -151,7 +151,7 @@ const DiceRoller = ({ onRoll, disabled, rollFn }: DiceRollerProps) => {
             }
             transition={
               isRolling
-                ? { duration: 1.4, ease: [0.22, 1, 0.36, 1] }
+                ? { duration: 0.7, ease: [0.22, 1, 0.36, 1] }
                 : showResult
                 ? { type: "spring", damping: 14, stiffness: 200 }
                 : { duration: 2, ease: "easeInOut", repeat: Infinity }
@@ -215,7 +215,7 @@ const DiceRoller = ({ onRoll, disabled, rollFn }: DiceRollerProps) => {
                 ? { scaleX: [1, 0.5, 1.3, 0.6, 1.1, 0.7, 1], opacity: [0.8, 0.3, 0.9, 0.4, 0.8] }
                 : { scaleX: 1, opacity: 0.8 }
             }
-            transition={isRolling ? { duration: 1.4 } : {}}
+            transition={isRolling ? { duration: 0.7 } : {}}
           />
         </div>
       </div>

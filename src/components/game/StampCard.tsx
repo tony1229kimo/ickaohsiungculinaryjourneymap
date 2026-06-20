@@ -122,7 +122,7 @@ const StampCard = ({ totalPoints, maxPoints = 15, character, claimedTiles, onCla
       setDisplayPosition(nextPos);
 
       if (currentStep < steps) {
-        setTimeout(moveNext, 350);
+        setTimeout(moveNext, 150);
       } else {
         setTimeout(() => setAnimatingTile(null), 400);
       }
