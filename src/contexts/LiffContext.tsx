@@ -1,4 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import bearMascot from "@/assets/bear-celebration.png";
 
 export interface LiffUser {
   userId: string;
@@ -40,6 +42,103 @@ export function getLineIdToken(): string | null {
 export const useLiff = () => useContext(LiffContext);
 
 const LIFF_ID = import.meta.env.VITE_LIFF_ID as string | undefined;
+
+// Tony 2026-06-27: 連線等待畫面。弱網時 LIFF init / 好友檢查可能要等十幾秒到幾分鐘
+// (現場 4G 擁塞常見)。把空白轉圈換成「熊 + 骰子 + 輪播小提示」,讓客人願意等;
+// 連線邏輯完全不變,真的連上才會跳轉。超過 ~22 秒才顯示「重試」給真的卡死的人一個動作。
+const CONNECTING_TIPS = [
+  "正在帶你進入洲際大富翁…",
+  "🎲 每滿 NT$2,000 就能擲一次骰",
+  "🎁 中獎的優惠券會直接送到你的 LINE 聊天室",
+  "♔ 選好夥伴,開始你的味蕾冒險",
+  "📶 連線中,網路較慢時請稍候片刻…",
+];
+
+function ConnectingScreen({ label }: { label: string }) {
+  const [tipIndex, setTipIndex] = useState(0);
+  const [showRetry, setShowRetry] = useState(false);
+
+  useEffect(() => {
+    const rotate = setInterval(
+      () => setTipIndex((i) => (i + 1) % CONNECTING_TIPS.length),
+      2600,
+    );
+    const retryTimer = setTimeout(() => setShowRetry(true), 22000);
+    return () => {
+      clearInterval(rotate);
+      clearTimeout(retryTimer);
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-amber-50 to-orange-100 px-8 text-center">
+      {/* 漂浮的熊 + 光暈 */}
+      <div className="relative mb-6">
+        <motion.div
+          className="absolute inset-0 -m-6 rounded-full"
+          style={{ background: "radial-gradient(circle, hsl(40 80% 65% / 0.25), transparent 70%)" }}
+          animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.85, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.img
+          src={bearMascot}
+          alt=""
+          className="relative w-28 h-28 object-contain"
+          style={{ filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.2))" }}
+          animate={{ y: [0, -12, 0], rotate: [-3, 3, -3] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute -right-1 -bottom-1 text-3xl"
+          style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.25))" }}
+          animate={{ rotate: [0, 360] }}
+          transition={{ duration: 1.4, repeat: Infinity, ease: "linear" }}
+        >
+          🎲
+        </motion.div>
+      </div>
+
+      <p className="text-base font-bold text-foreground mb-2">{label}</p>
+
+      {/* 輪播小提示 */}
+      <div className="h-10 flex items-center justify-center">
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={tipIndex}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.4 }}
+            className="text-sm text-muted-foreground max-w-xs leading-relaxed"
+          >
+            {CONNECTING_TIPS[tipIndex]}
+          </motion.p>
+        </AnimatePresence>
+      </div>
+
+      {/* 超過 ~22 秒才出現的重試提示(網路真的卡住時給客人動作) */}
+      <AnimatePresence>
+        {showRetry && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 rounded-xl bg-amber-100 border border-amber-300 px-4 py-3 max-w-xs"
+          >
+            <p className="text-xs text-amber-900 leading-relaxed mb-2">
+              網路較慢?請確認手機已連上 <strong>Wi-Fi</strong>,再點下方重新連線。
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full rounded-lg bg-primary text-primary-foreground py-2 text-sm font-semibold hover:opacity-90"
+            >
+              🔄 重新連線
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export const LiffProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<LiffContextType>({
@@ -207,16 +306,9 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.isFriend]);
 
-  // Loading screen
+  // Loading screen (Tony 2026-06-27: 換成有品牌感的等待動畫,降低弱網時的跳出率)
   if (!state.isInitialized) {
-    return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-muted-foreground">正在連線至 LINE...</p>
-        </div>
-      </div>
-    );
+    return <ConnectingScreen label="正在連線至 LINE…" />;
   }
 
   // Error screen
@@ -243,12 +335,7 @@ export const LiffProvider = ({ children }: { children: ReactNode }) => {
   if (state.isFriend === null) {
     return (
       <LiffContext.Provider value={state}>
-        <div className="fixed inset-0 flex flex-col items-center justify-center bg-background">
-          <div className="text-center space-y-4">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-sm text-muted-foreground">正在確認 LINE 好友狀態...</p>
-          </div>
-        </div>
+        <ConnectingScreen label="正在確認 LINE 好友狀態…" />
       </LiffContext.Provider>
     );
   }
