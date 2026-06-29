@@ -22,11 +22,11 @@ interface Props {
   onClose: () => void;
 }
 
-// Tony 2026-06-20: 768px / 0.7 — OCR 後端用 detail:"low" 只取 512px,所以
-// 縮到 768 對辨識準度毫無影響,但上傳位元組砍掉約一半,弱網(現場 wifi /
-// 包廂訊號)上傳明顯變快。實測後端辨識本來就只要 1-2 秒,慢的是上傳這段。
-const MAX_DIMENSION_PX = 768;
-const JPEG_QUALITY = 0.7;
+// Tony 2026-06-27: 1024px / 0.85。後端 vision 已改成 detail:"high"(高解析切塊讀),
+// 上傳圖越清楚、小字日期越準 → 畫質調回較高,修正「日期被看錯、誤判過期」。
+// (6/20 曾為上傳速度降到 768/0.7,但搭配當時的 detail:low 本來就讀不準小字,得不償失。)
+const MAX_DIMENSION_PX = 1024;
+const JPEG_QUALITY = 0.85;
 
 const REASON_TEXT: Record<string, string> = {
   not_a_receipt: "照片看不出是收據,請對準小白單再拍一次",

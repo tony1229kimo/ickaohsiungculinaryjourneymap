@@ -137,7 +137,9 @@ export async function analyzeReceipt(imageBase64DataUrl: string): Promise<Receip
             role: "user",
             content: [
               { type: "text", text: "Analyze this receipt photo:" },
-              { type: "image_url", image_url: { url: imageBase64DataUrl, detail: "low" } },
+              // Tony 2026-06-27: detail "high" —— "low"(壓到 512px)會把小字日期看錯
+              // (實例 06-27 → 05-17,被誤判過期)。"high" 用高解析切塊讀,日期準很多。
+              { type: "image_url", image_url: { url: imageBase64DataUrl, detail: "high" } },
             ],
           },
         ],
